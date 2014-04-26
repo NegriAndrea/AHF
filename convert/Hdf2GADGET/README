@@ -1,0 +1,48 @@
+Hdf2GADGET
+
+This small program converts GADGET simulation output Hdf5 files to fortran
+binary files (new format). Currently it reads the following parameters from the
+header (in Hdf5 notation; the naming conventions can be found in the GADGET
+manual written by Volker Springel):
+
+NumPart_ThisFile, MassTable, Time, Redshift, Flag_Sfr, Flag_Feedback,
+NumPart_Total, Flag_Cooling, NumFilesPerSnapshot, BoxSize, Omega0, OmegaLambda,
+HubbleParam, Flag_StellarAge, Flag_Metals, NumPart_Total_HighWord
+
+And these data blocks:
+Coordinates, Velocity, Mass, ParticleIDs, InternalEnergy
+
+
+ 
+Calling sequence:
+Hdf2GADGET.f90 -> Hdf2GADGET_subroutines.f90 -> Hdf2GADGET_io.f90
+
+Hdf2GADGET.f90 is the main program, which calls the subroutine get_gadget_file
+from Hdf2GADGET_subroutines.f90 for each file, then writes the data into the
+binary files. get_gadget_file is essentially a subroutine to read Hdf5 gadget
+files, and can be adapted easily for any purpose.
+
+Hdf2GADGET.f90 requires as input a parameter file called
+Hdf2GADGET_param_file.dat; This file is made up of only three lines:
+
+1. The directory in which the snapshot to be read is located. This is read into
+a character variable, and so should be surrounded by single quote marks. For
+example:
+'/data/snapshot/'
+2. The number of the snapshot to be read. a simple integer.
+3. The location you wish the output files to be written to. For example:
+'/data/output/'
+
+The output files will be named according to the GADGET2 convention, i.e.:
+snapshot_XXX.Y
+
+The program is compiled using the Makefile.
+IMPORTANT:
+The makefile requires the location of the compiler and the Hdf5 libraries. By
+default these are found in a file called make.COSMA4, and need to be changed for
+every machine the program is run on.
+
+
+
+Ofer Metuki, Jerusalem
+1.3.2012

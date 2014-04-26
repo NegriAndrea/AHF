@@ -1,0 +1,20 @@
+Compile:
+gcc -O3 -o tostd tostd.c fio.c -lm
+
+Compile with HDF5 support:
+gcc -DUSE_HDF5 -O3 -o tostd tostd.c fio.c -lhdf5 -lm
+
+Static compilation:
+gcc -static -DUSE_HDF5 -O3 -o tostd tostd.c fio.c -lhdf5 -lm -lz
+
+This utility can convert from Tipsy Native, Tipsy Standard, pkdgrav2 HDF5
+and GRAFIC1 IC format to Tipsy Native, Tipsy Standard and Tipsy HDF5. The
+format of the input file is detected automatically.
+
+Examples:
+
+  tostd output.h5 output.std    # HDF5 to standard
+  tostd -5 file.std file.h5     # Standard to HDF5
+  tostd -n file.std file.nat    # Standard to native
+  tostd level0/ ic.std		# GRAFIC1 to standard
+
