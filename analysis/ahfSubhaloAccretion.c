@@ -706,14 +706,14 @@ int qcompareMtreeIDs(const void *mtree1, const void *mtree2)
 int bcompareMtreeIDs(const void *id, const void *mtree)
 {
   const uint64_t haloid = ((mtree_t *)mtree)->haloid;
-	const uint64_t *i    = (const uint64_t *)id;
+	const uint64_t *i     = (const uint64_t *)id;
   
 	return *i < haloid ? -1 : (*i > haloid ? 1 : 0);
 }
 int bcompareMtreeIDsOLD(const void *mtree, const void *id)
 {
   const uint64_t haloid = ((mtree_t *)mtree)->haloid;
-	const uint64_t *i    = (const uint64_t *)id;
+	const uint64_t *i     = (const uint64_t *)id;
   
 	return *i > haloid ? -1 : (*i < haloid ? 1 : 0);
 }

@@ -13,9 +13,12 @@ typedef struct patch_s{
   UT_array  *psubcubes;                //pointers to subcubes contained in the patch.
   uint64_t   n_subcubes;
   psubcube_t most_particles_subcube;
-  int64_t    patch_id;                 // allow for largest possible number (reserving highest bit for flagging things)
-  int8_t     patch_level;              // maximum = MAX_DEPTH
+  int64_t    id;                 // allow for largest possible number (reserving highest bit for flagging things)
+  int32_t    level;              // maximum = MAX_DEPTH
 
+
+  // stuff needed by AK
+  //====================
 
   // this is the patch tree
   struct     patch_s*  parent;     // there should only be one parent (otherwise the tree/simulation is screwed)
@@ -24,12 +27,13 @@ typedef struct patch_s{
 
   int32_t    trunk;                // needed to follow the trunk of each patch
   
+  int8_t     periodic[3];          // records whether the patch wraps around the periodic boundaries
+  int8_t     periodic_shift[3];    // periodic shift to be applied (either +1 or -1, coordinates are in [0,1]!)
   
-  // stuff needed by AK
-  //====================
-  //uint64_t   ncubes; // this is n_subcubes defined above amongst the FC stuff
-  uint64_t   Npart;    // total number of particles on patch
-  uint32_t   Nmax;     // number of particles in subcube with the most particles
+  //uint64_t   ncubes;      // this is n_subcubes defined above amongst the FC stuff
+  uint64_t   Npart;         // total number of particles on patch
+  uint64_t   Npart_stored;  // the actual number of particles we have access to (if there is a sub-patch, there will be a "particle hole")
+  uint32_t   Nmax;          // number of particles in subcube with the most particles
   double     Xmin,Xmax,Ymin,Ymax,Zmin,Zmax; // dimensions of rectangle fully containing patch
   
   struct {
@@ -55,7 +59,15 @@ typedef struct patch_s{
   
 } patch_t;
 
+//ahf2_patches_t is the data structure storing the patches tree and the number of patches at each level
+typedef struct ahf2_patches {
+  patch_t    *tree[NLEVELS];
+  uint64_t    n_patches[NLEVELS];
+  uint64_t    n_rejected_patches[NLEVELS];
+} ahf2_patches_t;
+
 #define SIZEOF_PATCH (sizeof(patch_t))
+#define SIZEOF_AHF2_PATCHES (sizeof(ahf2_patches_t))
 
 //Patch manipulation
 //pointers to subcubes array manipulation
@@ -67,8 +79,12 @@ psubcube_t* patch_next_psubcube(patch_t*, psubcube_t*);
 void patch_create(patch_t**, int, int);
 void patch_init(patch_t*, int, int);
 void patch_clear(patch_t*);
-int  patch_get_num_psubcubes(patch_t*);
+uint64_t  patch_get_num_psubcubes(patch_t*);
 void patch_free_psubcubes_array(patch_t*);
+void patch_connect_tree(patch_t**,subcube_t**, uint64_t*);
+int  patch_connect_my_parent(patch_t**, subcube_t**, patch_t*);
+void patch_connection_review(ahf2_patches_t*);
+void patch_formation_review(ahf2_patches_t*);
 
 // routines added by AK
 void init_patch_physics(patch_t *);

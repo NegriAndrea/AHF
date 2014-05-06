@@ -909,7 +909,8 @@ io_tipsy_scale_particles(io_logging_t log,
 	uint64_t i;
   
 	/* Now we can do the scaling */
-  B      = boxsize;
+  B      = 1.0; // the standard szenario is that we do not want to scale the positions
+  
 	box[0] = fabs(maxpos[0] - minpos[0]);
 	box[1] = fabs(maxpos[1] - minpos[1]);
 	box[2] = fabs(maxpos[2] - minpos[2]);

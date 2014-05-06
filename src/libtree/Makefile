@@ -14,7 +14,7 @@ AR?=ar
 
 ## Modified by F.Campos: subcube.o move to the first position trying to avoid 
 ## linking error: undefined reference to `table_find_subcube' in generate_tree function
-OBJS = generate_tree.o cubekey.o subcube.o patch.o utilities.o set_patch_radii.o set_patch_trunk.o
+OBJS = generate_tree.o cubekey.o subcube.o patch.o utilities.o set_patch_pos.o set_patch_radii.o set_patch_trunk.o
 
 # Catch empty make call
 all:
@@ -40,6 +40,9 @@ cubekey.o:	cubekey.c
 
 patch.o:	patch.c
 	$(CC) $(CFLAGS) -c patch.c
+
+set_patch_pos.o:	set_patch_pos.c
+	$(CC) $(CFLAGS) -c set_patch_pos.c
 
 set_patch_radii.o:	set_patch_radii.c
 	$(CC) $(CFLAGS) -c set_patch_radii.c

@@ -1,4 +1,4 @@
-#ifdef AHF
+#ifdef AHF2
 
 /***********************************************************************
  *    Includes                                                         *
@@ -2275,4 +2275,4 @@ void write_halos_line(FILE *fout, HALO *halos, long unsigned j, long unsigned i,
   fprintf(fout, "\n");
 }
 
-#endif /* AHF */
+#endif /* AHF2 */

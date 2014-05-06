@@ -22,7 +22,7 @@ typedef struct subcube_s{
   UT_array *particles; //particles contained in the subcube. NULL if the subcube have been refined
   uint64_t nparticles;
   UT_hash_handle hh;
-  int patch_id;
+  uint64_t patch_id;
   //int level;
 } subcube_t;
 
@@ -45,7 +45,7 @@ typedef subcube_t* psubcube_t;
 void table_add_subcube(subcube_t**,subcube_t*);
 void table_find_subcube(subcube_t*, cubekey_t*, subcube_t**);
 void table_del_subcube(subcube_t*, subcube_t*);
-uint32_t table_get_num_subcubes(subcube_t*);
+uint64_t table_get_num_subcubes(subcube_t*);
 //void table_iterate_subcube(subcube_t* sc_table, subcube_t** sc_aux, subcube_t** sc_tmp){
 //HASH_ITER macro implements a for statement waiting for the sentences block. 
 //We MUST implement table_iterate_subcube as a macro in subcube.h
@@ -58,6 +58,7 @@ void subcube_create(subcube_t**,cubekey_t);
 void subcube_add_particle(subcube_t*, partptr*);
 partptr* subcube_next_particle(subcube_t*, partptr*);
 uint64_t subcube_get_num_particles(subcube_t*);
+uint64_t subcube_get_num_stored_particles(subcube_t*);
 void subcube_free_particles_array(subcube_t*);
 void subcube_free(subcube_t**);
 

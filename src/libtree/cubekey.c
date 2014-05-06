@@ -9,7 +9,7 @@
  * the depth of the subcube. 
  * 
  * The uint64 variable will contain 21 bits per dimension (x,y,z)
- * and 1 unused bit (left most)
+ * and 1 flag bit (left most)
  * 
  */
 #include "cubekey.h"
@@ -47,14 +47,13 @@ inline int get_bit32(uint32_t x, uint8_t pos) {
 }
 
 /*
- * TO DO: Use intrinsic clz for 64 bits
+ * TO DO: Use intrinsic clz
  */
-#ifdef __GNUC__
-	#include <x86intrin.h>
-	#define clz(x) /*fprintf(stderr,"clzl builtin\n");*/ \
-								__builtin_clzl(x)
+//#ifdef __GNUC__
+//	#include <x86intrin.h>
+//	#define clz(x) /*fprintf(stderr,"clzl builtin\n");*/ __builtin_clzl(x)
 //#define ctz(x) __builtin_ctz(x)
-#else
+//#else
 inline int clz(uint64_t x){
 	int n=0;
 	if (x == 0) return 64;
@@ -64,10 +63,10 @@ inline int clz(uint64_t x){
 	if ((x & 0xF000000000000000) == 0){ n+=4;  x<<= 4;}
 	if ((x & 0xC000000000000000) == 0){ n+=2;  x<<= 2;}
 	if ((x & 0x8000000000000000) == 0){ n+=1;  x<<= 1;}
-	fprintf(stderr,"clz not builtin\n");
+	//fprintf(stderr,"clz not builtin\n");
 	return n;
 }
-#endif
+//#endif
 
 inline int ck_get_flag_pos(cubekey_t ck){
 	int lz;
@@ -184,7 +183,6 @@ int_fast8_t coor2ck(uint64_t* ckey, const flouble xcoor, const flouble ycoor, co
 	uint64_t i=0;
 	flouble cur_x=0, cur_y=0, cur_z=0;
 	uint64_t local_ckey=0;
-	//float edge_length=getBoxSize();
 	flouble edge_length=1.0;
 	flouble half;
 	*ckey=0;
@@ -373,10 +371,6 @@ inline void ck_get_parent(cubekey_t ck, cubekey_t* ck_parent){
 		*ck_parent=0;
 		return;
 	}
-	//printf("\nck   :     ");
-	//printbits_cubekey_3block(ck);
-	//ck2coor(&x,&y,&z,&edge,ck);
-	//fprintf(stdout,"\t%4.8f %4.8f %4.8f (%4.8f)", x,y,z,edge);
 
 	/*Move Flag from original cubekey to less deep level (ckFlagPos-3) 
 	 * and clear the in between bits: ckFlagPos,ckFlagPos-1(X),ckFlagPos-2(Y).
@@ -417,7 +411,7 @@ inline void ck_get_shifts(cubekey_t ck, uint32_t* ckX,uint32_t* ckY,uint32_t* ck
 	
 }
 
-inline void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
+void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
   int i=0;
   cubekey_t *p_ck_iter=NULL;
   int depth=ck_get_depth(ck);
@@ -457,25 +451,6 @@ inline void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 	 */
 	
 	ck_get_shifts(ck,&ckX,&ckY,&ckZ);
-	//
-	//for(i=0;i<ckFlagPos;i+=3){
-		//Shift to the left the corresponding per-coordinate cubekey and copy the bit from cubekey
-		//Z bit
-		//ckZ<<=1;
-		//if(get_bit64(ck,i)!=0){
-				//set_bit32(&ckZ,0);
-		//}
-		//Y bit
-		//ckY<<=1;
-		//if(get_bit64(ck,i+1)!=0){
-			//set_bit32(&ckY,0);
-		//}
-		//X bit
-		//ckX<<=1;
-		//if(get_bit64(ck,i+2)!=0){
-			//set_bit32(&ckX,0);
-		//}
-	//}//for i
 	
 	/*
 	 * For periodic boundary condition, we must consider -1 (backward) and +1 (forward) shifts, even in the limits of the cube
@@ -495,16 +470,6 @@ inline void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 	ckZ_S=ckZ;
 	ckZ_B=(ckZ-1)%(module);
 	ckZ_F=(ckZ+1)%(module);
-	
-	//printf("\nckX: %d"); printbits_ckcoor(ckX);   printf("ckY:   "); printbits_ckcoor(ckY);   printf("ckZ:   "); printbits_ckcoor(ckZ);
-	//printf("\nckX_B: "); printbits_ckcoor(ckX_B); printf("ckX_S: "); printbits_ckcoor(ckX_S); printf("ckX_F: "); printbits_ckcoor(ckX_F);
-	//printf("\nckY_B: "); printbits_ckcoor(ckY_B); printf("ckY_S: "); printbits_ckcoor(ckY_S); printf("ckY_F: "); printbits_ckcoor(ckY_F);
-	//printf("\nckZ_B: "); printbits_ckcoor(ckZ_B); printf("ckZ_S: "); printbits_ckcoor(ckZ_S); printf("ckZ_F: "); printbits_ckcoor(ckZ_F);
-
-	//printf("\nckX:   %u ",ckX); printf("ckY:   %u ",ckY); printf("ckZ:   %u ",ckZ);
-	//printf("\nckX_B: %u ",ckX_B);printf("ckX_S: %u ",ckX_S); printf("ckX_F: %u ",ckX_F);
-	//printf("\nckY_B: %u ",ckY_B);printf("ckY_S: %u ",ckY_S); printf("ckY_F: %u ",ckY_F);
-	//printf("\nckZ_B: %u ",ckZ_B);printf("ckZ_S: %u ",ckZ_S); printf("ckZ_F: %u ",ckZ_F);
 
 //Compose cubekeys for 26 adjacent subcubes
 
@@ -655,3 +620,19 @@ inline void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 		}
 	}	
 }
+
+void ck_get_adjacents_side_edge(cubekey_t ck, ck_adjacents_t* ck_adjacents){
+	//Calculate 26 adjacents and clear those connected by corners
+	ck_get_adjacents(ck,ck_adjacents);
+	
+	//When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents ck
+	ck_adjacents->ckBBB=0;
+	ck_adjacents->ckBBF=0;
+	ck_adjacents->ckBFB=0;
+	ck_adjacents->ckBFF=0;
+	ck_adjacents->ckFBB=0;
+	ck_adjacents->ckFBF=0;
+	ck_adjacents->ckFFB=0;
+	ck_adjacents->ckFFF=0;
+}
+

@@ -11,7 +11,14 @@
 #	include "comm.h"
 #endif
 
+#ifdef AHF
 #include "libahf/ahf.h"
+#endif
+
+#ifdef AHF2
+#include "libahf2/ahf.h"
+#endif
+
 #include "libsfc/sfc.h"
 #include "startrun.h"
 #include "libutility/utility.h"
@@ -55,6 +62,10 @@ int main(int argc, char **argv)
   
 #ifdef WITH_MPI
   uint64_t newparts;
+#endif
+
+#ifdef NEWAMR
+  ahf2_patches_t *patches=NULL;
 #endif
   
   /*============================================================ 
@@ -555,12 +566,26 @@ int main(int argc, char **argv)
 #ifdef NEWAMR
 {
   io_logging_msg(global_io.log, INT32_C(0), "### Executing with NEWAMR ###\n");
-  /* 1. organize the particles into a tree */
-  generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom);
-
-  /* 2. percolate the tree to find isolated patches on each level */
   
-  /* 3. transfer isolated patches to halo structures */
+  /* 1. organize the particles into a tree */
+  patches=generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom, simu.AHF_MINPART);
+
+  patch_connection_review(patches);
+  
+  /* 2. moving things around */
+	global.fst_part     = global_info.fst_part;
+  global.no_part      = global_info.no_part;
+  global.total_time   = 0.;
+  global.output_count = 0;
+  global.no_timestep  = no_first_timestep;
+
+  /* 3. perform halo analysis */
+  fprintf(stderr,"\nmain: calling ahf_halos():\n");
+  ahf.time -= time(NULL);
+  timing.ahf_halos -= time(NULL);
+  ahf_halos(*patches);
+  timing.ahf_halos += time(NULL);
+  ahf.time += time(NULL);
 }
 #else /* NEWAMR */
   

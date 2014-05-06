@@ -7,6 +7,8 @@
 #define END_OF_TRUNK                 -1
 #define NO_SINGLE_TRUNK              -2
 
-double patch_property(patch_t);
-
+void   get_patch_level_range (patch_t **, uint64_t *, int *, int *);
+double patch_property        (patch_t);
+void   write_patch_geom      (char *, patch_t );
+void   get_patch_centre      (patch_t , double *, double *, double *);
 #endif

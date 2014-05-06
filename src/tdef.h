@@ -775,6 +775,10 @@ typedef struct {
   
 } HALO;
 
+typedef struct {
+  HALO    *halos;
+  uint64_t nhalos;
+} halo_s;
 
 typedef struct {
   int x,y,z;
@@ -814,19 +818,25 @@ typedef struct info_timing
   time_t      sfckey;
   time_t      distribution;
   
+  // AHF1 only timings
   time_t    gendomgrids;
   time_t    ll;
   time_t    genrefgrids;
   time_t    densrecovery;
   time_t    potcentre;
   time_t    ahf_gridinfo;
-  
-  time_t      ahf_halos;
   time_t      RefCentre;
   time_t      analyseRef;
   time_t      spatialRef2halos;
+
+  // AHF2 only timings
+  time_t      patchtree2halos;
+  
+  // AHF1 and AHF2
+  time_t      ahf_halos;
   time_t      ahf_halos_sfc_constructHalo;
   time_t      ahf_io;
+  
 } info_timing;
 
 

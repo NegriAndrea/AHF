@@ -14,7 +14,7 @@
 #define MIN(A,B)        ((A)<(B)?(A):(B))
 #define MAX(A,B)        ((A)>(B)?(A):(B))
 #define FUNC(x)         ((*func)(x))
-#define SWAP(a,b,temp)  temp=(a);(a)=(b);(b)=temp;
+#define SWAP(a,b,temp)  {temp=(a);(a)=(b);(b)=temp;}
 #define Re(ix,iy,iz,L)  (2*((iz)*(L)*(L) + (iy)*(L) + (ix))    )
 #define Im(ix,iy,iz,L)  (2*((iz)*(L)*(L) + (iy)*(L) + (ix)) + 1)
 #define FRAC(x)         (((x)>1.)?(1./(x)):(x))

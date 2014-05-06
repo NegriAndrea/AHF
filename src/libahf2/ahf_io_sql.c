@@ -1,4 +1,5 @@
-#ifdef AHF
+#ifdef AHF2
+
 #ifdef AHF_SQL
 /*--- Includes ----------------------------------------------------------*/
 #define _POSIX_C_SOURCE 199309L
@@ -632,4 +633,5 @@ local_createTableHalosParticlesRel(sqlite3_t db)
 }
 
 #endif /* AHF_SQL */
-#endif // AHF
+
+#endif // AHF2

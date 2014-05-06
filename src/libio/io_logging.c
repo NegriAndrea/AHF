@@ -21,6 +21,7 @@
 #include "io_logging_defs.h"
 #include "io_defs.h"
 
+#define AHF2_overwrite_logfiles
 
 /***********************************************************************\
  *    Local defines, structure definitions and typedefs                * 
@@ -208,6 +209,13 @@ io_logging_start(char *stem,
 		fclose(log->logfile);
 		log->logfile = fopen(log->fname, "a");
 		appending = 1;
+    
+#ifdef AHF2_overwrite_logfiles
+    // this opens a new logfile irrespective of whether it exists or not
+		log->logfile = fopen(log->fname, "w+");
+		appending = 0;
+#endif
+    
 	}
 	if (log->logfile == NULL) {
 		fprintf(stderr,

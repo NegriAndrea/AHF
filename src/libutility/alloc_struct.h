@@ -30,7 +30,7 @@ void    free_cquad   (cqptr cur_cquad);
 void    free_grid    (gridls *cur_grid,   int *no_grids);
 
 
-#if defined AHF
+#if (defined AHF || defined AHF2)
 void    c_profile(HALO *cur_halo, int nbins);
 void    dest_profile(HALO *cur_halo);
 #endif

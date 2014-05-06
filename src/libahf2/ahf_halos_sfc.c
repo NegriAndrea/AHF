@@ -1,6 +1,6 @@
 /* See ahf_halos_sfc.h for a general description. */
 
-#ifdef AHF
+#ifdef AHF2
 
 /***********************************************************************\
  *    Includes                                                         * 
@@ -122,17 +122,6 @@ ahf_halos_sfc_constructHalo(HALO *halo)
   if(halo->npart == 0)
     return;
   
-	/* Init the halo structure */
-	halo->nll   = 0;
-	halo->ll    = NULL;
-	halo->npart = 0;
-	halo->ipart = NULL;
-
-#ifdef VERBOSE2
-	fprintf(io.logfile,"\n    ahf_halos_sfc_constructHalo:   x=%g y=%g z=%g r=%g\n", halo->pos.x*x_fac,halo->pos.y*x_fac,halo->pos.z*x_fac,halo->gatherRad*x_fac);
-	fflush(io.logfile);
-#endif
-
 	/* Get all particles inside the gather radius */
 	ahf_halos_sfc_gatherParts(halo);
 	
@@ -179,6 +168,18 @@ ahf_halos_sfc_gatherParts(HALO *halo)
 	sfc_curve_t ctype;
 	int i;
 
+#ifdef VERBOSE2
+	fprintf(io.logfile,"\n    ahf_halos_sfc_constructHalo:   x=%g y=%g z=%g r=%g (npart=%d)  ",
+          halo->pos.x*x_fac,halo->pos.y*x_fac,halo->pos.z*x_fac,halo->gatherRad*x_fac,halo->npart);
+	fflush(io.logfile);
+#endif
+  
+	/* Init the halo structure */
+	halo->nll   = 0;
+	halo->ll    = NULL;
+	halo->npart = 0;
+	halo->ipart = NULL;
+  
 	/*--- INIT --------------------------------------------------------*/
 	/* Do that once: Set the SFC type */
 #	if (!defined WITH_MPI)
@@ -229,7 +230,7 @@ ahf_halos_sfc_gatherParts(HALO *halo)
 	/*--- FINISHING ---------------------------------------------------*/
 	/* Done we are */
 #ifdef VERBOSE2
-	fprintf(io.logfile,"%12ld\n", halo->npart);
+	fprintf(io.logfile,"  -> collected %ld particles\n", halo->npart);
 	fflush(io.logfile);
 #endif
   
@@ -412,5 +413,5 @@ local_findMinOffset(partptr fstPart,
 	return minOffset;
 }
 
-#endif // AHF
+#endif // AHF2
 

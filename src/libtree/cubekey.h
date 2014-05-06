@@ -33,7 +33,7 @@
 //by 3 dimensions
 #define SIZEOF_CUBEKEY (sizeof(cubekey_t))
 #define MAX_DEPTH 21
-//#define COOR_LENGTH 21
+#define NLEVELS MAX_DEPTH+1
 
 #define NUM_DAUGHTERS 8
 #define NUM_ADJACENT 26
@@ -127,6 +127,7 @@ void ck2coor(flouble*, flouble*, flouble*, flouble*, cubekey_t);
 void ck2coor_center(flouble*, flouble*, flouble*, cubekey_t);
 void ck_get_daughters(cubekey_t, ck_daughters_t*);
 void ck_get_adjacents(cubekey_t, ck_adjacents_t*);
+void ck_get_adjacents_side_edge(cubekey_t, ck_adjacents_t*);
 void ck_get_parent(cubekey_t, cubekey_t*);
 
 #endif

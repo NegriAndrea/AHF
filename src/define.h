@@ -5,7 +5,12 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   82
+#define BUILD   83
+
+#ifdef AHF2
+#define VERSION 2.0
+#define BUILD   0
+#endif
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)
@@ -35,6 +40,23 @@
 #define FOPENCLOSE                   // open/close files, rather than opening multiple simulation files at the same time
 #define BCASTHEADER                  // only one MPI task will read all the relevant header information and then broadcast
 //#define NCPUREADING_EQ_NFILES        // this should speed up I/O of multiple snapshot files, but only works for this condition
+
+/*--------------------------------------------------
+ *                     AHF2
+ *--------------------------------------------------*/
+#ifdef AHF2
+
+#undef AHF
+#define NEWAMR
+
+#define MERGER_NPART_FRAC  0.75   // overlap in number of particles for patches to be considered a merger
+#define MERGER_VOL_FRAC    0.75   // overlap in volume for patches to be considered a merger
+
+#define AHF2_libtree_18neighbours
+#define AHF2_hostradius_is_patchdiagonal
+//#define AHF2_overwrite_logfiles // define.h is *not* included in io_logging.c and hence this define has to happen in there!
+
+#endif
 
 /*--------------------------------------------------
  *                     AHF
@@ -100,8 +122,6 @@
 //#define AHFgridtreefile           /* file containing information about grid-tree       */
 
 //#define DPhalos   /* writes DPhalos file (cf. Avila Perez et al., in prep.)      */
-
-//#define NEWAMR // this is the AHF2
 
 
 

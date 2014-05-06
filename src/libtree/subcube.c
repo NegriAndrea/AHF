@@ -51,8 +51,8 @@ void table_del_subcube(subcube_t* sc_table, subcube_t* sc){
   HASH_DEL(sc_table,sc);
 }
 
-uint32_t table_get_num_subcubes(subcube_t* sc_table){
-  return (uint32_t) HASH_COUNT(sc_table);
+uint64_t table_get_num_subcubes(subcube_t* sc_table){
+  return (uint64_t) HASH_COUNT(sc_table);
 }
 
 //HASH_ITER macro implements a for statement waiting for the sentences block. 
@@ -73,6 +73,10 @@ partptr* subcube_next_particle(subcube_t* sc, partptr* part_it){
 }
 
 uint64_t subcube_get_num_particles(subcube_t* sc){
+  return sc->nparticles;
+}
+
+uint64_t subcube_get_num_stored_particles(subcube_t* sc){
   if(sc->particles==NULL) return 0;
   return utarray_len(sc->particles);
 }
@@ -87,6 +91,7 @@ void subcube_free(subcube_t** sc){
   if(*sc!=NULL){
     subcube_free_particles_array(*sc);
     free(*sc);
-    *sc=NULL;
+    //We cannot set this pointer to NULL because it could be used as aux pointer in UThash iteration
+    //*sc=NULL; 
   }
 }

@@ -2054,8 +2054,11 @@ int ptree_min_level(double Nthreshold)
 {
   double a, a3, omega, ovlim, rho_vir, refine_mass, refine_ovdens, refine_vol, refine_len, fl1dim;
   int    min_level, max_level, i;
-  
-  fprintf(io.logfile,"determining minimum level for patch-tree:\n");
+
+#ifdef VERBOSE
+  fprintf(stderr,"\nptree_min_level: determining minimum level for patch-tree:\n");
+#endif
+  fprintf(io.logfile,"\nptree_min_level: determining minimum level for patch-tree:\n");
   
   // cosmology related stuff
 	a        = global.a;
@@ -2080,9 +2083,9 @@ int ptree_min_level(double Nthreshold)
     refine_vol    = pow3(refine_len);
     refine_ovdens = (Nthreshold*refine_mass/refine_vol) / rho_vir;
 #ifdef VERBOSE
-    fprintf(stderr,"level = %16d l1dim = %16.0f refine_ovdens = %16.4g ovlim = %16.4g\n", i,fl1dim,refine_ovdens,ovlim);
+    fprintf(stderr,"    level = %16d l1dim = %16.0f refine_ovdens = %16.4g ovlim = %16.4g\n", i,fl1dim,refine_ovdens,ovlim);
 #endif
-    fprintf(io.logfile,"level = %16d l1dim = %16.0f refine_ovdens = %16.4g ovlim = %16.4g\n", i,fl1dim,refine_ovdens,ovlim);
+    fprintf(io.logfile,"    level = %16d l1dim = %16.0f refine_ovdens = %16.4g ovlim = %16.4g\n", i,fl1dim,refine_ovdens,ovlim);
     if ( refine_ovdens <  ovlim )
       min_level = i;
    }
@@ -2093,16 +2096,19 @@ int ptree_min_level(double Nthreshold)
   /* allow some leverage via arc/param.h */
   min_level += AHF_MIN_REF_OFFSET;
   
-  fprintf(io.logfile,"a                = %lf\n",a);
-  fprintf(io.logfile,"omega            = %lf\n",omega);
-  fprintf(io.logfile,"ovlim            = %lf\n",ovlim);
-  fprintf(io.logfile,"rho_vir          = %g\n",rho_vir);
-  fprintf(io.logfile,"simu.pmass       = %g\n",simu.pmass);
-  fprintf(io.logfile,"simu.med_weight  = %lf\n",simu.med_weight);
-  fprintf(io.logfile,"refine_mass      = %g\n",refine_mass);
-  fprintf(io.logfile,"min_level        = %d\n",min_level);
-  fprintf(io.logfile,"max_level        = %d\n\n",max_level);
-
+  fprintf(io.logfile,"\n   Cosmology:\n",a);
+  fprintf(io.logfile,"   ==========\n",a);
+  fprintf(io.logfile,"    a                = %lf\n",a);
+  fprintf(io.logfile,"    omega            = %lf\n",omega);
+  fprintf(io.logfile,"    ovlim            = %lf\n",ovlim);
+  fprintf(io.logfile,"    rho_vir          = %g\n",rho_vir);
+  fprintf(io.logfile,"    simu.pmass       = %g\n",simu.pmass);
+  fprintf(io.logfile,"    simu.med_weight  = %lf\n",simu.med_weight);
+  fprintf(io.logfile,"    refine_mass      = %g\n",refine_mass);
+  fprintf(io.logfile,"    min_level        = %d\n",min_level);
+  fprintf(io.logfile,"    max_level        = %d\n\n",max_level);
+  fflush(io.logfile);
+  
   return(min_level);
 }
 

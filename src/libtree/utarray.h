@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>  /* memset, etc */
 #include <stdlib.h>  /* exit */
 #include <sys/types.h>  /* ssize_t */
+#include <stdint.h>
 
 #define oom() fprintf(stderr,"[utarray.h] OOM\n");exit(-1)
 
@@ -52,7 +53,8 @@ typedef struct {
 } UT_icd;
 
 typedef struct {
-    unsigned i,n;/* i: index of next available slot, n: num slots */
+    //unsigned i,n;/* i: index of next available slot, n: num slots */
+    uint64_t i,n;/* i: index of next available slot, n: num slots */
     UT_icd icd;  /* initializer, copy and destructor functions */
     char *d;     /* n slots of size icd->sz*/
 } UT_array;
