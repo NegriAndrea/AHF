@@ -39,7 +39,7 @@
 // set_patch_pos():
 //    decide which of the various centre definitions to eventually use as patch_tree[][].pos[]
 //*********************************************************************************************************
-void set_patch_pos(patch_t **patch_tree, uint64_t *n_patches)
+void set_patch_pos(patch_t **patch_tree, int64_t *n_patches)
 {
   int initial_level, final_level, ilevel, ipatch;
   

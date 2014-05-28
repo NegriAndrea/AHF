@@ -88,6 +88,7 @@ typedef struct AHFhalos {
 halo_t  *read_halos           (char *, int *);
 int      qcompareHostHaloIDs  (const void *, const void *);
 int      qcompareHaloIDs      (const void *, const void *);
+int      bcompareHostHaloIDs  (const void *, const void *);
 int      bcompareHaloIDs      (const void *, const void *);
 
 /*==================================================================================================
@@ -155,7 +156,7 @@ char **argv;
 #endif
       
       // locate all subhaloes using the hostHalo pointer
-      itmp_halo = (halo_t *) bsearch(&haloid, halos, num_halos, sizeof(halo_t), bcompareHaloIDs);
+      itmp_halo = (halo_t *) bsearch(&haloid, halos, num_halos, sizeof(halo_t), bcompareHostHaloIDs);
 
       if(itmp_halo == NULL) {
 #ifdef VERBOSE
@@ -195,6 +196,9 @@ char **argv;
   /*==================================================================*
    *                     CHECK hostHalo pointer                       *
    *==================================================================*/
+  qsort((void *)halos, num_halos, sizeof(halo_t), qcompareHaloIDs);
+  fprintf(stderr,"\n o sorted haloes according to 'haloid'\n");
+  
   fprintf(stderr,"\n o checking whether all hostHalo pointers point to existing halo\n");
   n_pointer  = 0;
   n_mismatch = 0;
@@ -204,6 +208,7 @@ char **argv;
       haloid    = halos[ihalo].hostHalo;
       itmp_halo = (halo_t *) bsearch(&haloid, halos, num_halos, sizeof(halo_t), bcompareHaloIDs);
       if(itmp_halo == NULL) {
+        fprintf(stderr,"   -> could not find haloid=%"PRIu64" (ihalo=%"PRIu64")\n",haloid,ihalo);
         n_mismatch++;
       }
     }
@@ -213,8 +218,6 @@ char **argv;
   /*==================================================================*
    *                 CHECK FOR DUPLICATE HALOIDS                      *
    *==================================================================*/
-  qsort((void *)halos, num_halos, sizeof(halo_t), qcompareHaloIDs);
-  fprintf(stderr,"\n o sorted haloes according to 'haloid'\n");
 
   fprintf(stderr,"\n o checking for duplicate haloids\n");
   haloid_old   = halos[0].haloid;
@@ -355,12 +358,20 @@ int qcompareHaloIDs(const void *halo1, const void *halo2)
 /*==============================================================================
  *  compare particle ids (used with bsearch)
  *==============================================================================*/
-int bcompareHaloIDs(const void *id, const void *halo)
+int bcompareHostHaloIDs(const void *id, const void *halo)
 {
 	const uint64_t *i       = (const uint64_t *)id;
   const uint64_t hostHalo = ((halo_t *)halo)->hostHalo;
   
 	return *i < hostHalo ? -1 : (*i > hostHalo ? 1 : 0);
+}
+
+int bcompareHaloIDs(const void *id, const void *halo)
+{
+	const uint64_t *i       = (const uint64_t *)id;
+  const uint64_t haloid   = ((halo_t *)halo)->haloid;
+  
+	return *i < haloid ? -1 : (*i > haloid ? 1 : 0);
 }
 
 

@@ -42,7 +42,7 @@ void   write_debuginfo          (patch_t, double, double, double, double );
 //    for each patch on each level calculate the radius of the pathc to be later used
 //    as an initial guess for the radius of the halo
 //*********************************************************************************************************
-void set_patch_radii(patch_t **patch_tree, uint64_t *n_patches)
+void set_patch_radii(patch_t **patch_tree, int64_t *n_patches)
 {
   int      initial_level, final_level, ilevel, iparent;
   patch_t *parent_patch;

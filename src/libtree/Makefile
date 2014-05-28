@@ -1,7 +1,7 @@
 # If ${OPTIMIZE}, ${CCFLAGS} and/or ${DEFINEFLAGS} are set, they will be
 # used for the compilation
 CFLAGS+=${OPTIMIZE} ${CCFLAGS} ${DEFINEFLAGS}
-CFLAGS+=-O2 -g -Wall -Winline
+CFLAGS+=-Wall -Winline -fopenmp
 # If a different MAKE is specified use that one, otherwise try your luck
 # with just make; maybe it will work.
 MAKE?=make
@@ -22,7 +22,7 @@ all:
 
 # Cleaning up
 clean:
-	rm -f libtree.a $(OBJS) *.h.gch
+	rm -f libtree.a $(OBJS) *.h.gch ck2pos.o ck2pos
 
 # The library itself
 libtree.a: $(OBJS)

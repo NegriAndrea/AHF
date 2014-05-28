@@ -10,7 +10,7 @@
 /*-------------------
  * visible functions
  *-------------------*/
-void ahf_halos(ahf2_patches_t);
+void ahf_halos(ahf2_patches_t *);
 
 #endif /* AHF2 */
 

@@ -535,16 +535,18 @@ int read_particles(char filename[MAXSTRING], int isimu)
 int particle_halo_mapping(int isimu)
 {
   int64_t  ihalo;         // the downwards for-loop is running until ihalo=-1
-  uint64_t ipart, jpart;
+  uint64_t ipart, jpart, PidMax_global;
   clock_t  elapsed;
   
   elapsed = clock();
-  fprintf(stderr,"  o creating particle<->halo mapping for file %d (PidMax=%"PRIu64") ...",isimu,PidMax[isimu]);
   
-  parts[isimu] = (PARTptr) calloc(PidMax[isimu]+2, sizeof(PARTS));
+  PidMax_global = MAX(PidMax[0],PidMax[1]);
+  fprintf(stderr,"  o creating particle<->halo mapping for file %d (PidMax=%"PRIu64", PidMax_global=%"PRIu64") ... ",isimu,PidMax[isimu],PidMax_global);
+
+  parts[isimu] = (PARTptr) calloc((PidMax_global+1), sizeof(PARTS)); // +1 because we are accessing an array like [PidMax_global] !
   if(parts[isimu] == NULL) {
     fprintf(stderr,"\nCould not allocate memory for parts[] array of isimu = %d (size = %f GB)\nAborting\n",
-            isimu,(float)((PidMax[isimu]+2)*sizeof(PARTS)/1024./1024./1024.));
+            isimu,(float)((PidMax_global+1)*sizeof(PARTS)/1024./1024./1024.));
     exit(0);
   }
   
@@ -563,7 +565,11 @@ int particle_halo_mapping(int isimu)
 #endif
        {
         parts[isimu][ipart].nhalos++;
-        parts[isimu][ipart].Hid = (uint64_t *) realloc(parts[isimu][ipart].Hid, (parts[isimu][ipart].nhalos+1)*sizeof(uint64_t)); // valgrind says "16 bytes lost"
+        parts[isimu][ipart].Hid = (uint64_t *) realloc(parts[isimu][ipart].Hid, parts[isimu][ipart].nhalos*sizeof(uint64_t)); // valgrind says "16 bytes lost"
+        if(parts[isimu][ipart].Hid == NULL) {
+          fprintf(stderr,"particle_halo_mapping(): could not realloc() memory for Hid array\n");
+          exit(0);
+        }
         
         parts[isimu][ipart].Hid[parts[isimu][ipart].nhalos-1] = ihalo;
        }
@@ -572,7 +578,8 @@ int particle_halo_mapping(int isimu)
    }
   
   elapsed = clock()-elapsed;
-  fprintf(stderr," done in %4.2f sec.\n",(float)elapsed/CLOCKS_PER_SEC);
+  fprintf(stderr,"done in %4.2f sec.\n",(float)elapsed/CLOCKS_PER_SEC);
+  
   return(1);
 }
 
@@ -758,6 +765,8 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
   
   for(jpart=0; jpart<halos[isimu0][ihalo].npart; jpart++) {
     ipart = halos[isimu0][ihalo].Pid[jpart];
+    
+    //fprintf(stderr,"jpart=%"PRIu64" ipart=%"PRIu64"\n",jpart,ipart);
     
     /* ipart belongs to nhalos halos in isimu1 */
     for(jhalo=0; jhalo<parts[isimu1][ipart].nhalos; jhalo++) {  // valgrind says "invalid read of size 4" here!?

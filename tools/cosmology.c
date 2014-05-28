@@ -16,18 +16,24 @@ void create_timeline2(double a_init, double a_fin, tlptr timeline);
 
 int main()
 {
-   int     no_outputs, i;
+   int     no_outputs, i, UseRhoBack;
    double  zred, z_init, z_final, a_init, a_final, a;
    
-   printf("============================\n");
-   printf(" calculate age of Universe\n");
-   printf("============================\n");
-   printf("please give omega0:       ");
+   printf("====================================================\n");
+   printf(" calculate the evolution of cosmological parameters\n");
+   printf("====================================================\n");
+   printf("please give omega0:                            ");
    scanf("%lf",&simu.omega0);
-   printf("please give lambda0:      ");
+   printf("please give lambda0:                           ");
    scanf("%lf",&simu.lambda0);
+   printf("virial in units of RhoBack(1) or RhoCrit(0):   ");
+   scanf("%d",&UseRhoBack);
    printf("\n");
-   
+  
+   simu.UserDvir   = -1;
+   simu.UseRhoBack = UseRhoBack;
+  
+  
    z_init  = 500.;
    z_final = 0.;
    a_init  = 1.0/(1.0+z_init);
@@ -46,8 +52,11 @@ void create_timeline2(double a_init, double a_fin, tlptr timeline)
    
    FILE *fpout;
    fpout = fopen("Cosmology.DAT","w");
-   fprintf(fpout,"#      z             a       t[h^-1 Gyr]     Omega       lambda      hubble      RhoCrit        virial        growth        q\n");
-   
+   if(simu.UseRhoBack)
+     fprintf(fpout,"#     z(1)          a(2)   t[h^-1 Gyr](3)  Omega(4)    Olambda(5)  hubble(6)   RhoCrit(7)     virial_b(8)  growth(9)         q(10)\n");
+   else
+     fprintf(fpout,"#     z(1)          a(2)   t[h^-1 Gyr](3)  Omega(4)    Olambda(5)  hubble(6)   RhoCrit(7)     virial_c(8)  growth(9)         q(10)\n");
+  
    for(iloop=0; iloop<MAXTIME2; iloop++)
      {
       a      = ((double)iloop+1.0)/(double)MAXTIME2 * (a_fin-a_init) + a_init;

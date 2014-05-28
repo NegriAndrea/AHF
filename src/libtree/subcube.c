@@ -33,7 +33,7 @@ void subcube_create(subcube_t** sc,cubekey_t cubekey){
     fprintf(stderr,"[subcube_create] malloc for new subcube structure failed\n");
     return;
   }
-  (*sc)->cubekey=cubekey;
+  memcpy(&(*sc)->cubekey, &cubekey, SIZEOF_CUBEKEY);
   (*sc)->patch_id=NO_PATCH;
   (*sc)->nparticles=0;
   utarray_new((*sc)->particles, &cubekey_icd);
@@ -53,6 +53,10 @@ void table_del_subcube(subcube_t* sc_table, subcube_t* sc){
 
 uint64_t table_get_num_subcubes(subcube_t* sc_table){
   return (uint64_t) HASH_COUNT(sc_table);
+}
+
+uint64_t table_get_overhead(subcube_t* sc_table){
+  return (uint64_t) HASH_OVERHEAD(hh, sc_table);
 }
 
 //HASH_ITER macro implements a for statement waiting for the sentences block. 

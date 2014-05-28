@@ -70,7 +70,8 @@
             goto 777
          endif
       enddo
- 777  print*,'o locating subhaloes of host ',
+ 777  continue
+      print*,'o locating subhaloes of host ',
      &        Xhost,Yhost,Zhost,Rhost,Mhost
       write(12,222)'s ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost
       write(13,222)'s ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost

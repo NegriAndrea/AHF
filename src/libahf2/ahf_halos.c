@@ -70,7 +70,7 @@ double r_fac, x_fac, v_fac, m_fac, rho_fac, phi_fac, u_fac, Hubble;
  *   Implementation of exported functions                                  *
  ***************************************************************************/
 void
-ahf_halos(ahf2_patches_t patches)
+ahf_halos(ahf2_patches_t *patches)
 {
 	long unsigned *idxtmp, *idx, ipart, ifrac, nhalos;
 	double        *fsort;
@@ -167,7 +167,7 @@ ahf_halos(ahf2_patches_t patches)
 	fprintf(io.logfile, "\nConverting the patch_tree[][] to a halos[] array:\n");
 	fflush(io.logfile);
   timing.patchtree2halos -= time(NULL);
-  ptree2halos = patchtree2halos(patches.tree, patches.n_patches);
+  ptree2halos = patchtree2halos(patches->tree, patches->n_patches);
   halos    = ptree2halos->halos;
   numHalos = ptree2halos->nhalos;
   timing.patchtree2halos += time(NULL);
@@ -181,11 +181,21 @@ ahf_halos(ahf2_patches_t patches)
 		exit(-1);
 	}
   
-  // TODO: free patch.tree[][] memory
+  //======================================================================================
+  // remove patchtree[][] from memory
+  //======================================================================================
+#ifdef VERBOSE
+  fprintf(stderr,"Freeing ahf2_halos structure ... ");
+#endif
+  ahf2_patches_free(&patches);
+  patches=NULL;
+#ifdef VERBOSE
+  fprintf(stderr,"done\n");
+#endif
+  //fprintf(stderr,"[%s:%d] MEGA-WARNING!! We are NOT freeing ahf2_halos structure!!!\n", __FILE__, __LINE__);
   
-  // TODO: check_halo_tree()
-
-#ifdef AHF2_ReadPreliminaryHalos
+  
+#ifdef AHF2_read_preliminary_halos
  {
   FILE *fp;
   char infile[MAXSTRING];
@@ -254,6 +264,65 @@ ahf_halos(ahf2_patches_t patches)
  }
 #endif
 
+#ifdef AHF2_write_preliminary_halos
+ {
+  FILE *fp;
+  char outfile[MAXSTRING];
+  long unsigned *idx, *idxtmp;
+  double        *fsort;
+  
+  // sort haloes by npart
+  idx    = (long unsigned *)calloc(numHalos, sizeof(long unsigned));
+  idxtmp = (long unsigned *)calloc(numHalos, sizeof(long unsigned));
+  fsort  = (double *)       calloc(numHalos, sizeof(double));
+  for (i = 0; i < numHalos; i++)
+    fsort[i] = (double)halos[i].npart;
+  indexx(numHalos, fsort-1, idxtmp-1);
+  
+  /* indexx sorts ascending and gives indizes starting at 1 */
+  for (i = 0; i < numHalos; i++)
+    idx[numHalos - i - 1] = idxtmp[i] - 1;
+  free(idxtmp);
+  free(fsort);
+  
+  sprintf(outfile,"%s.AHF_preliminaryhalos",fprefix);
+  fp = fopen(outfile,"w");
+  
+  fprintf(fp,"%d\n",numHalos);
+  for(k=0; k<numHalos; k++) {
+    i = idx[k];
+    fprintf(fp,"%lu %18.14lf %18.14lf %18.14lf %18.14lf %18.14lf %18.14lf %d %d %d %d %d\n",
+            halos[i].npart,
+            halos[i].pos.x,
+            halos[i].pos.y,
+            halos[i].pos.z,
+            halos[i].gatherRad,
+            halos[i].R_vir,
+            halos[i].spaRes,
+            halos[i].refLev,
+            halos[i].numNodes,
+            halos[i].hostHalo,
+            halos[i].hostHaloLevel,
+            halos[i].numSubStruct);
+    
+#ifdef HaloTree
+    if(halos[i].numSubStruct > 0) {
+      for(k=0; k<halos[i].numSubStruct; k++) {
+        fprintf(fp,"  %d\n",halos[i].subStruct[k]);
+      }
+    }
+#endif
+  }
+  free(idx);
+  
+  fclose(fp);
+  //exit(0);
+ }
+#endif
+  
+  
+  
+  
   
   /**************************************************************************/
   /*                CALCULATE ALL RELEVANT HALO PROPERTIES                  */
@@ -273,7 +342,11 @@ ahf_halos(ahf2_patches_t patches)
   /* this construct integral as well as profile properties of each halo */
 	for (i = 0; i < numHalos; i++) {
 		ahf_halos_sfc_constructHalo(halos + i);
-	}  
+	}
+  
+  
+  
+  
   
 #if (defined WITH_MPI || defined AHFrestart)
   /**************************************************************************/
@@ -301,6 +374,10 @@ ahf_halos(ahf2_patches_t patches)
   timing.ahf_halos_sfc_constructHalo += time(NULL);
 #endif
 
+  
+  
+  
+  
 	/**************************************************************************/
   /*                     RE-HASH SUBHALO INFORMATION                        */
   /*          (does not properly function for MPI version yet)              */
@@ -320,8 +397,7 @@ ahf_halos(ahf2_patches_t patches)
     /* deal with substructure IDs and lists */
     numSubStruct = 0;
     SubStruct    = NULL;
-    for(k=0; k<halos[i].numSubStruct; k++)
-     {
+    for(k=0; k<halos[i].numSubStruct; k++) {
       /* quick-and-easy access to host and subhalo in halos[] */
       isub  = halos[i].subStruct[k];
       ihost = halos[isub].hostHalo; // this should be identical to i !?
@@ -342,14 +418,12 @@ ahf_halos(ahf2_patches_t patches)
 #endif
       
       /* if subhalo spawned from AHF_HOSTHALOLEVEL (or below) we check for distance (and mass!) */
-      if(halos[isub].hostHaloLevel >= AHF_HOSTHALOLEVEL)
-       {
-        if(check_subhalo(halos+ihost, halos+isub) == TRUE)
-         {
+      if(halos[isub].hostHaloLevel >= AHF_HOSTHALOLEVEL) {
+        if(check_subhalo(halos+ihost, halos+isub) == TRUE) {
           numSubStruct++;
           SubStruct = (int *) realloc(SubStruct, numSubStruct*sizeof(int));
           SubStruct[numSubStruct-1] = isub;
-
+          
 #ifdef MPI_SUBHALO_FIX
           // if the host halo is not written, also do not write the subhalo
           if(halos[i].ignoreme == TRUE)
@@ -359,40 +433,39 @@ ahf_halos(ahf2_patches_t patches)
           else
             halos[isub].ignoreme = FALSE;
 #endif
-         }
-        else
-         {
+        }
+        else {
           /* if it lies outside mark it as field halo */
           halos[isub].hostHalo = -1;
-         }
-       }
-            
+        }
+      }
+      
       /* if it spawned from above AHF_HOSTHALOLEVEL mark it as field halo */
-      else
-       {
+      else {
         halos[isub].hostHalo = -1;
-       }
-     }
+      }
+    }
     
     /* copy the new substructure list over to host halo structure */
     halos[i].numSubStruct = numSubStruct;
-    if(numSubStruct>0)
-     {
+    if(numSubStruct>0) {
       // remove old subStruct[] array from halos[].
       if(halos[i].subStruct) free(halos[i].subStruct);
       
       // put the new memory for halos[].subStruct[] into place
       halos[i].subStruct = SubStruct;
-
-      // old version that copies the data over
-//      for (k = 0; k < halos[i].numSubStruct; k++)
-//        halos[i].subStruct[k] = SubStruct[k];
-//      free(SubStruct);
       
-     }
+      // old version that copies the data over
+      //      for (k = 0; k < halos[i].numSubStruct; k++)
+      //        halos[i].subStruct[k] = SubStruct[k];
+      //      free(SubStruct);
+      
+    }
   }
   timing.ahf_halos_sfc_constructHalo += time(NULL);
     
+  
+  
   
 #ifdef AHFnewHaloIDs
   /**************************************************************************/
@@ -417,6 +490,9 @@ ahf_halos(ahf2_patches_t patches)
   
   timing.ahf_halos_sfc_constructHalo += time(NULL);
 #endif
+  
+  
+  
   
 #ifdef AHFexciseSubhaloStars // note: this flag also switched on METALHACK and GAS_PARTICLES!!!
   /**************************************************************************/

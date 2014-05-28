@@ -22,29 +22,75 @@
 #include "../common.h"
 #include "../tdef.h"
 
-inline void set_bit64(uint64_t *x, uint8_t pos){
+#ifdef CUBEKEY_128
+//Handle 128bits Cubekeys
+inline int get_bit128(cubekey_t x, uint8_t pos){
+  cubekey_t aux;
+  aux=1; aux<<=pos;
+
+  if (x & aux) return 1;
+  return 0;
+}
+
+inline void set_bit128(cubekey_t* x,uint8_t pos){
+  cubekey_t aux;
+  aux=1;
+  aux<<=pos;
+  *x |= aux;
+}
+inline void clr_bit128(cubekey_t* x, uint8_t pos){
+  cubekey_t aux;
+  aux=1;
+  aux<<=pos;
+  *x &= ~aux;
+}
+
+//Handle 64bits CK_shifts
+inline int get_bit64(ck_shift_t x, uint8_t pos) {
+    if (x & (1L << pos)) return 1;
+    return 0;
+}
+
+inline void set_bit64(ck_shift_t *x, uint8_t pos){
 	*x |= (1L << pos);
 }
 
-inline void set_bit32(uint32_t *x, uint8_t pos){
-	*x |= (1 << pos);
+inline void clr_bit64(ck_shift_t *x, uint8_t pos){
+  *x &= ~(1L << pos);
 }
 
-inline void clr_bit64(uint64_t *x, uint8_t pos){
-	*x &= ~(1L << pos);
+
+#else //#ifdef CUBEKEY_128
+//Handle 64bits Cubekeys
+inline int get_bit64(cubekey_t x, uint8_t pos) {
+    if (x & (1L << pos)) return 1;
+    return 0;
 }
 
-inline void clr_bit32(uint32_t *x, uint8_t pos){
-	*x &= ~(1 << pos);
+inline void set_bit64(cubekey_t *x, uint8_t pos){
+  *x |= (1L << pos);
 }
 
-inline int get_bit64(uint64_t x, uint8_t pos) {
-    return x & (1L << pos);
+inline void clr_bit64(cubekey_t *x, uint8_t pos){
+  *x &= ~(1L << pos);
 }
 
-inline int get_bit32(uint32_t x, uint8_t pos) {
+//Handle 32bits CK_shifts
+inline int get_bit32(ck_shift_t x, uint8_t pos) {
     return x & (1 << pos);
 }
+
+inline void set_bit32(ck_shift_t *x, uint8_t pos){
+  *x |= (1 << pos);
+}
+
+inline void clr_bit32(ck_shift_t *x, uint8_t pos){
+  *x &= ~(1 << pos);
+}//#else #ifdef CUBEKEY_128
+
+#endif
+
+
 
 /*
  * TO DO: Use intrinsic clz
@@ -54,38 +100,90 @@ inline int get_bit32(uint32_t x, uint8_t pos) {
 //	#define clz(x) /*fprintf(stderr,"clzl builtin\n");*/ __builtin_clzl(x)
 //#define ctz(x) __builtin_ctz(x)
 //#else
-inline int clz(uint64_t x){
-	int n=0;
-	if (x == 0) return 64;
-	if ((x & 0xFFFFFFFF00000000) == 0){ n+=32; x<<=32;}
-	if ((x & 0xFFFF000000000000) == 0){ n+=16; x<<=16;}
-	if ((x & 0xFF00000000000000) == 0){ n+=8;  x<<= 8;}
-	if ((x & 0xF000000000000000) == 0){ n+=4;  x<<= 4;}
-	if ((x & 0xC000000000000000) == 0){ n+=2;  x<<= 2;}
-	if ((x & 0x8000000000000000) == 0){ n+=1;  x<<= 1;}
-	//fprintf(stderr,"clz not builtin\n");
-	return n;
+#ifdef CUBEKEY_128
+//Cubekey of 128bits
+inline int clz(cubekey_t x){
+  int n=0;
+  cubekey_t aux;
+
+  aux=0x0000000000000000; aux<<=64;
+  if (x == aux) return CUBEKEY_BITS;
+
+  aux=0xFFFFFFFFFFFFFFFF; aux<<=64;
+  if ((x & aux) == 0){ n+=64; x<<=64;}
+
+  aux=0xFFFFFFFF00000000;
+  aux<<=64;
+  if ((x & aux) == 0){ n+=32; x<<=32;}
+
+  aux=0xFFFF000000000000; aux<<=64;
+  if ((x & aux) == 0){ n+=16; x<<=16;}
+
+  aux=0xFF00000000000000; aux<<=64;
+  if ((x & aux) == 0){ n+=8;  x<<= 8;}
+
+  aux=0xF000000000000000; aux<<=64;
+  if ((x & aux) == 0){ n+=4;  x<<= 4;}
+
+  aux=0xC000000000000000; aux<<=64;
+  if ((x & aux) == 0){ n+=2;  x<<= 2;}
+
+  aux=0x8000000000000000; aux<<=64;
+  if ((x & aux) == 0){ n+=1;  x<<= 1;}
+  //fprintf(stderr,"clz not builtin\n");
+  return n;
+
 }
-//#endif
+
+
+#else //#ifdef CUBEKEY_128
+//Cubekey of 64bits
+
+inline int clz(cubekey_t x){
+  int n=0;
+  if (x == 0) return CUBEKEY_BITS;
+  if ((x & 0xFFFFFFFF00000000) == 0){ n+=32; x<<=32;}
+  if ((x & 0xFFFF000000000000) == 0){ n+=16; x<<=16;}
+  if ((x & 0xFF00000000000000) == 0){ n+=8;  x<<= 8;}
+  if ((x & 0xF000000000000000) == 0){ n+=4;  x<<= 4;}
+  if ((x & 0xC000000000000000) == 0){ n+=2;  x<<= 2;}
+  if ((x & 0x8000000000000000) == 0){ n+=1;  x<<= 1;}
+  //fprintf(stderr,"clz not builtin\n");
+  return n;
+}
+
+#endif //#else #ifdef CUBEKEY_128
+
 
 inline int ck_get_flag_pos(cubekey_t ck){
-	int lz;
-
-	lz=clz(ck);
-	if(lz==64)
-		return 64;
-	else
-		return 63-lz;
+  int lz;
+  lz=clz(ck);
+  if(lz==CUBEKEY_BITS)
+    return 0; //Error code, invalid flag position
+  else
+    return (CUBEKEY_BITS-1)-lz;
 }
 
 inline int ck_get_depth(cubekey_t ck){
-	return ck_get_flag_pos(ck)/3;
+  int ck_flag_pos=ck_get_flag_pos(ck);
+  if(ck_flag_pos%3!=0){
+    fprintf(stderr,"[%s:%d] ERROR: In ck_get_depth, flag_pos(%d) %%3 is not 0! Invalid Flag pos!\n", __FILE__, __LINE__, ck_flag_pos);
+  }else if(ck_flag_pos<3){
+    fprintf(stderr,"[%s:%d] ERROR: In ck_get_depth, flag_pos(%d) < 3! Invalid Flag pos!\n", __FILE__, __LINE__, ck_flag_pos);
+  }
+
+	return ck_flag_pos/3;
 }
 
 void printbits_cubekey(cubekey_t n){
 	cubekey_t i;
 	int count=0;
+#ifdef CUBEKEY_128
+  i = 0x8000000000000000;
+  i=i<<64;
+#else
 	i = 0x8000000000000000;
+#endif
 
 	while (i > 0){
 		if (n & i)
@@ -103,6 +201,11 @@ void fprintbits_cubekey(FILE* f, cubekey_t n){
 	int count=0;
 	i = 0x8000000000000000;
 
+#ifdef CUBEKEY_128
+	i=1;
+  i<<=(CUBEKEY_BITS-1);
+#endif
+
 	while (i > 0){
 		if (n & i)
 			fprintf(f,"1");
@@ -110,7 +213,7 @@ void fprintbits_cubekey(FILE* f, cubekey_t n){
 			fprintf(f, "0");
 		i >>= 1;
 		count++;
-		if(count%8==0) fprintf(f," | ");
+		if(count%8==0) fprintf(f,"- ");
 		else if(count%4==0) fprintf(f," ");
 	}
 }
@@ -118,8 +221,13 @@ void fprintbits_cubekey(FILE* f, cubekey_t n){
 void printbits_cubekey_3block(cubekey_t n){
 	cubekey_t i;
 	int count=0,lz=clz(n);
-	i = 0x8000000000000000;
-	
+#ifdef CUBEKEY_128
+	i=1;
+  i<<=(CUBEKEY_BITS-1);
+#else
+  i = 0x8000000000000000;
+#endif
+
 	i>>=lz+1;
 	count+=lz+1;
 	printf("*|");
@@ -140,8 +248,14 @@ void printbits_cubekey_3block(cubekey_t n){
 void fprintbits_cubekey_3block(FILE* f,cubekey_t n){
 	cubekey_t i;
 	int count=0,lz=clz(n);
-	i = 0x8000000000000000;
-	
+#ifdef CUBEKEY_128
+	i=1;
+  i<<=(CUBEKEY_BITS-1);
+#else
+  i = 0x8000000000000000;
+#endif
+  fprintf(stderr,"[%s:%d] (fprintbits_cubekey_3block) lz=%d\n",__FILE__, __LINE__, lz);
+
 	i>>=lz+1;
 	count+=lz+1;
 	fprintf(f,"*|");
@@ -158,10 +272,19 @@ void fprintbits_cubekey_3block(FILE* f,cubekey_t n){
 	fprintf(f,"\b- ");
 }
 
-void printbits_ckcoor(uint32_t n){
-	uint32_t i;
+void printbits_ck_shift(ck_shift_t n){
+  ck_shift_t i;
 	int count=0;
-	i = 0x80000000;
+
+  i=1;
+  i<<=(CUBEKEY_SHIFT_BITS-1);
+/*
+#ifdef CUBEKEY_128
+	i = 0x8000000000000000;
+#else
+  i = 0x80000000;
+#endif
+*/
 
 	while (i > 0){
 		if (n & i)
@@ -178,11 +301,11 @@ void printbits_ckcoor(uint32_t n){
 /*
  * Given a depth and 3 coordinates, return the corresponding key
  */
-int_fast8_t coor2ck(uint64_t* ckey, const flouble xcoor, const flouble ycoor, const flouble zcoor, const uint_fast8_t depth){
-	uint64_t x=0,y=0,z=0;
-	uint64_t i=0;
+int_fast8_t coor2ck(cubekey_t* ckey, const flouble xcoor, const flouble ycoor, const flouble zcoor, const uint_fast8_t depth){
+//	ck_shift_t x=0,y=0,z=0;
+	int i=0;
 	flouble cur_x=0, cur_y=0, cur_z=0;
-	uint64_t local_ckey=0;
+	cubekey_t local_ckey=0;
 	flouble edge_length=1.0;
 	flouble half;
 	*ckey=0;
@@ -207,49 +330,45 @@ int_fast8_t coor2ck(uint64_t* ckey, const flouble xcoor, const flouble ycoor, co
 	for (i=0; i<depth; i++){
 		half=edge_length/2;
 		//Clear previous depth-FLAG
-		clr_bit64(&local_ckey,3*(i));
+		clr_bit_ck(&local_ckey,3*(i));
 		//Set Depth-FLAG
-		set_bit64(&local_ckey,3*(i+1));
+		set_bit_ck(&local_ckey,3*(i+1));
 
 		#ifdef LIBTREE_DEBUG
-			fprintf(stderr, "Setting flat at pos %llu\t[i=%"PRIu64"]\n", 3*(i+1), i);
+			fprintf(stderr, "Setting flat at pos %d\t[i=%d]\n", 3*(i+1), i);
 		#endif
 
 		#ifdef LIBTREE_DEBUG
-			fprintf(stderr,"X (depth=%"PRIu64")\t%f > %f (%f+%f):\n", i+1, xcoor, cur_x+half, cur_x, half);
+			fprintf(stderr,"X (depth=%d)\t%f > %f (%f+%f):\n", i+1, xcoor, cur_x+half, cur_x, half);
 		#endif
 		if (xcoor >= cur_x + half){
-			//x = x | 1<<i;
-			set_bit64(&x,i);
 			cur_x+=half;
 			#ifdef LIBTREE_DEBUG
 				fprintf(stderr,"\tcur_x=%F\tX = %#08llX MOVE\n", cur_x, x);
 			#endif
-			set_bit64(&local_ckey,3*i+2);
+			set_bit_ck(&local_ckey,3*i+2);
 		}
 
 		#ifdef LIBTREE_DEBUG
 			fprintf(stdout,"Y (depth=%"PRIu64")\t%f > %f (%f+%f):\n", i+1, ycoor, cur_y+half, cur_y, half);
 		#endif
 		if (ycoor > cur_y + half){
-			set_bit64(&y,i);
 			cur_y+=half;
 			#ifdef LIBTREE_DEBUG
 				fprintf(stdout,"\tcur_y=%f\tY = %#08llX MOVE\n", cur_y, y);
 			#endif
-			set_bit64(&local_ckey,3*i+1);
+			set_bit_ck(&local_ckey,3*i+1);
 		}
 
 		#ifdef LIBTREE_DEBUG
 			fprintf(stdout,"Z (depth=%"PRIu64")\t%f > %f (%f+%f):\n", i+1, zcoor, cur_z+half, cur_z, half);
 		#endif
 		if (zcoor > cur_z + half){
-			set_bit64(&z,i);
 			cur_z+=half;
 			#ifdef LIBTREE_DEBUG
 				fprintf(stdout,"\tcur_z=%f\tZ = %#08llX MOVE\n", cur_z, z);
 			#endif
-			set_bit64(&local_ckey,3*i);
+			set_bit_ck(&local_ckey,3*i);
 		}
 		//Update edge_length for the next iteration
 		edge_length=half;
@@ -265,18 +384,18 @@ int_fast8_t coor2ck(uint64_t* ckey, const flouble xcoor, const flouble ycoor, co
 	return 0;
 }
 
-void ck2coor(flouble* x, flouble* y, flouble* z, flouble* edge, uint64_t cubekey){
-	uint_fast8_t flag_pos=0;
+void ck2coor(flouble* x, flouble* y, flouble* z, flouble* edge, cubekey_t cubekey){
+	int flag_pos=0;
 	flouble half;
 
 	/*
 	 * TO-DO: create a ck_is_valid function
 	 */
 	flag_pos=ck_get_flag_pos(cubekey);
-	if(flag_pos%3!=0){
-		fprintf(stderr, "[ck2coor] ERROR: flag_pos not valid. cubekey probably wrong.cubekey=%lu, flag_pos=%u\n",cubekey,flag_pos);
+	if(flag_pos%3!=0 || flag_pos==0){
+		fprintf(stderr, "[ck2coor] ERROR: flag_pos not valid. cubekey probably wrong.cubekey=%"PRIck", flag_pos=%u\n",cubekey,flag_pos);
 		*x=*y=*z=-1.0;
-		*edge=1;
+		*edge=-1.0;
 		return;
 	}
 
@@ -323,44 +442,40 @@ inline void ck_get_daughters(cubekey_t ck, ck_daughters_t* ck_daughters){
 		//ck_daughters->ck111=0;
 		return;
 	}
-	//printf("\nck   :     ");
-	//printbits_cubekey_3block(ck);
-	//ck2coor(&x,&y,&z,&edge,ck);
-	//fprintf(stdout,"\t%4.8f %4.8f %4.8f (%4.8f)", x,y,z,edge);
 
 	//Move Flag from original cubekey to deeper level. Will be the base for daughters ck.
 	//ck is passed by value, no changes outside this function
-	clr_bit64(&ck,ckFlagPos);
-	set_bit64(&ck,ckFlagPos+3);
+	clr_bit_ck(&ck,ckFlagPos);
+	set_bit_ck(&ck,ckFlagPos+3);
 	
 	//ck000
 	memcpy(&(ck_daughters->ck000),&ck,SIZEOF_CUBEKEY);
 	//ck001
 	memcpy(&(ck_daughters->ck001),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck001),ckFlagPos); //Old Flag-pos is Z-pos now
+	set_bit_ck(&(ck_daughters->ck001),ckFlagPos); //Old Flag-pos is Z-pos now
 	//ck010
 	memcpy(&(ck_daughters->ck010),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck010),ckFlagPos+1);
+	set_bit_ck(&(ck_daughters->ck010),ckFlagPos+1);
 	//ck011
 	memcpy(&(ck_daughters->ck011),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck011),ckFlagPos+1);
-	set_bit64(&(ck_daughters->ck011),ckFlagPos);
+	set_bit_ck(&(ck_daughters->ck011),ckFlagPos+1);
+	set_bit_ck(&(ck_daughters->ck011),ckFlagPos);
 	
 	//Set X to 1 in original ck to save set_bit calls
-	set_bit64(&ck,ckFlagPos+2);
+	set_bit_ck(&ck,ckFlagPos+2);
 
 	//ck100
 	memcpy(&(ck_daughters->ck100),&ck,SIZEOF_CUBEKEY);
 	//ck101
 	memcpy(&(ck_daughters->ck101),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck101),ckFlagPos); //Old Flag-pos is Z-pos now
+	set_bit_ck(&(ck_daughters->ck101),ckFlagPos); //Old Flag-pos is Z-pos now
 	//ck110
 	memcpy(&(ck_daughters->ck110),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck110),ckFlagPos+1);
+	set_bit_ck(&(ck_daughters->ck110),ckFlagPos+1);
 	//ck111
 	memcpy(&(ck_daughters->ck111),&ck,SIZEOF_CUBEKEY);
-	set_bit64(&(ck_daughters->ck111),ckFlagPos+1);
-	set_bit64(&(ck_daughters->ck111),ckFlagPos);
+	set_bit_ck(&(ck_daughters->ck111),ckFlagPos+1);
+	set_bit_ck(&(ck_daughters->ck111),ckFlagPos);
 }
 
 inline void ck_get_parent(cubekey_t ck, cubekey_t* ck_parent){
@@ -377,15 +492,13 @@ inline void ck_get_parent(cubekey_t ck, cubekey_t* ck_parent){
 	 * ckFlagPos-3, X bit in original cubekey, will be the Flag for the parent.
 	 */
 	memcpy(ck_parent,&ck,SIZEOF_CUBEKEY);
-	clr_bit64(ck_parent,ckFlagPos);
-	clr_bit64(ck_parent,ckFlagPos-1);
-	clr_bit64(ck_parent,ckFlagPos-2);
-	set_bit64(ck_parent,ckFlagPos-3);
-	
-	//fprintf(stderr,"\n[ck_get_parent] original: ");fprintbits_cubekey_3block(stderr,ck);fprintf(stderr,"\t parent: ");fprintbits_cubekey_3block(stderr,*ck_parent);fprintf(stderr,"\n");
+	clr_bit_ck(ck_parent,ckFlagPos);
+	clr_bit_ck(ck_parent,ckFlagPos-1);
+	clr_bit_ck(ck_parent,ckFlagPos-2);
+	set_bit_ck(ck_parent,ckFlagPos-3);
 }
 
-inline void ck_get_shifts(cubekey_t ck, uint32_t* ckX,uint32_t* ckY,uint32_t* ckZ){
+inline void ck_get_shifts(cubekey_t ck, ck_shift_t* ckX, ck_shift_t* ckY, ck_shift_t* ckZ){
 	uint32_t ckFlagPos=ck_get_flag_pos(ck);
 	int i;
 	*ckX=*ckY=*ckZ=0;
@@ -394,18 +507,18 @@ inline void ck_get_shifts(cubekey_t ck, uint32_t* ckX,uint32_t* ckY,uint32_t* ck
 		//Shift to the left the corresponding per-coordinate cubekey and copy the bit from cubekey
 		//Z bit
 		*ckZ<<=1;
-		if(get_bit64(ck,i)!=0){
-				set_bit32(ckZ,0);
+		if(get_bit_ck(ck,i)!=0){
+				set_bit_ck_shift(ckZ,0);
 		}
 		//Y bit
 		*ckY<<=1;
-		if(get_bit64(ck,i+1)!=0){
-			set_bit32(ckY,0);
+		if(get_bit_ck(ck,i+1)!=0){
+			set_bit_ck_shift(ckY,0);
 		}
 		//X bit
 		*ckX<<=1;
-		if(get_bit64(ck,i+2)!=0){
-			set_bit32(ckX,0);
+		if(get_bit_ck(ck,i+2)!=0){
+			set_bit_ck_shift(ckX,0);
 		}
 	}//for i
 	
@@ -415,11 +528,12 @@ void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
   int i=0;
   cubekey_t *p_ck_iter=NULL;
   int depth=ck_get_depth(ck);
-  uint32_t ckX=0,ckY=0,ckZ=0,ckFlagPos=ck_get_flag_pos(ck);
-  uint32_t ckX_B,ckX_S,ckX_F;
-  uint32_t ckY_B,ckY_S,ckY_F;
-  uint32_t ckZ_B,ckZ_S,ckZ_F;
-  uint32_t module;
+  int ckFlagPos=ck_get_flag_pos(ck);
+  ck_shift_t ckX=0,ckY=0,ckZ=0;
+  ck_shift_t ckX_B,ckX_S,ckX_F;
+  ck_shift_t ckY_B,ckY_S,ckY_F;
+  ck_shift_t ckZ_B,ckZ_S,ckZ_F;
+  int module;
   
 	//Point cubekey pointer iterator to the first adjacent cubekey
 	p_ck_iter=&ck_adjacents->ckBBB;
@@ -429,17 +543,13 @@ void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 	
 	//In the special case depth==1, any subcube has 7 adjacent subcubes. Let's calculate them
 	if(depth==1){
-		//fprintf(stderr,"\n[ck_get_adjacents] Original cubekey: ");fprintbits_cubekey_3block(stderr,ck);
 		//Clear Flag-bit
-		clr_bit64(&ck,ckFlagPos);		
+		clr_bit_ck(&ck,ckFlagPos);
 		for(i=0;i<7;i++){ //7 is the number of adjacent subcubes
 			*p_ck_iter=(ck+i+1)%8;
-			set_bit64(p_ck_iter,ckFlagPos);
-			//fprintf(stderr,"\n[ck_get_adjacents] adjacent %d: ",i+1);;fprintbits_cubekey_3block(stderr,*p_ck_iter);
+			set_bit_ck(p_ck_iter,ckFlagPos);
 			p_ck_iter++;
 		}
-		//fprintf(stderr,"\n");
-		//fprintf(stderr,"[ck_get_adjacents] depth < 2 (%d). Make no sense to ask for adjacents cubekeys at this level\n",depth);
 		return;
 	}
 
@@ -475,148 +585,148 @@ void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 
 	//Set Pos-Flag
 	for(i=0;i<NUM_ADJACENT;i++){
-		set_bit64(p_ck_iter,ckFlagPos);
+		set_bit_ck(p_ck_iter,ckFlagPos);
 		p_ck_iter++;
   }
 	
 	for(i=depth;i>0;i--){
 		//Z Backward (at depth=i)
-		if(get_bit32(ckZ_B,i-1)){
-			set_bit64(&(ck_adjacents->ckBBB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSBB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFBB),(depth-i)*3);
+		if(get_bit_ck_shift(ckZ_B,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBFB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSFB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFFB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBSB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSSB),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFSB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3);
 		}
 		
 		//Z Still (at depth=i)
-		if(get_bit32(ckZ_S,i-1)){
-			set_bit64(&(ck_adjacents->ckBBS),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSBS),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFBS),(depth-i)*3);
+		if(get_bit_ck_shift(ckZ_S,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBFS),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSFS),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFFS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBSS),(depth-i)*3);
-			//set_bit64(&(ck_adjacents->ckSSS),(i*3)-1); SSS is original cubekey-> No sense!
-			set_bit64(&(ck_adjacents->ckFSS),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3);
+			//set_bit_ck(&(ck_adjacents->ckSSS),(i*3)-1); SSS is original cubekey-> No sense!
+			set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3);
 		}
 		
 		//Z Forward (at depth=i)
-		if(get_bit32(ckZ_F,i-1)){
-			set_bit64(&(ck_adjacents->ckBBF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSBF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFBF),(depth-i)*3);
+		if(get_bit_ck_shift(ckZ_F,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBFF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSFF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFFF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3);
 			
-			set_bit64(&(ck_adjacents->ckBSF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckSSF),(depth-i)*3);
-			set_bit64(&(ck_adjacents->ckFSF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3);
+			set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3);
 		}
 
 /*************/
 
 		//Y Backward (at depth=i)
-		if(get_bit32(ckY_B,i-1)){
-			set_bit64(&(ck_adjacents->ckBBB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSBB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFBB),(depth-i)*3+1);
+		if(get_bit_ck_shift(ckY_B,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBBF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSBF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFBF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBBS),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSBS),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFBS),(depth-i)*3+1);			
+			set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3+1);
 		}
 
 		//Y Still (at depth=i)
-		if(get_bit32(ckY_S,i-1)){
-			set_bit64(&(ck_adjacents->ckBSB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSSB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFSB),(depth-i)*3+1);
+		if(get_bit_ck_shift(ckY_S,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBSF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSSF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFSF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBSS),(depth-i)*3+1);
-			//set_bit64(&(ck_adjacents->ckSSS),(i*3)-2); SSS is original cubekey-> No sense!
-			set_bit64(&(ck_adjacents->ckFSS),(depth-i)*3+1);			
+			set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3+1);
+			//set_bit_ck(&(ck_adjacents->ckSSS),(i*3)-2); SSS is original cubekey-> No sense!
+			set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3+1);
 		}
 
 		//Y Forward (at depth=i)
-		if(get_bit32(ckY_F,i-1)){
-			set_bit64(&(ck_adjacents->ckBFB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSFB),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFFB),(depth-i)*3+1);
+		if(get_bit_ck_shift(ckY_F,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBFS),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSFS),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFFS),(depth-i)*3+1);			
+			set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3+1);
 			
-			set_bit64(&(ck_adjacents->ckBFF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckSFF),(depth-i)*3+1);
-			set_bit64(&(ck_adjacents->ckFFF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3+1);
+			set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3+1);
 		}
 		
 /*************/
 
 		//X Backward (at depth=i)
-		if(get_bit32(ckX_B,i-1)){
-			set_bit64(&(ck_adjacents->ckBBB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBSB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBFB),(depth-i)*3+2);
+		if(get_bit_ck_shift(ckX_B,i-1)){
+			set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3+2);
 			
-			set_bit64(&(ck_adjacents->ckBBS),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBSS),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBFS),(depth-i)*3+2);			
+			set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3+2);
 			
-			set_bit64(&(ck_adjacents->ckBBF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBSF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckBFF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3+2);
 		}
 
 		//X Still (at depth=i)
-		if(get_bit32(ckX_S,i-1)){
-			set_bit64(&(ck_adjacents->ckSBB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckSSB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckSFB),(depth-i)*3+2);
+		if(get_bit_ck_shift(ckX_S,i-1)){
+			set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3+2);
 
-			set_bit64(&(ck_adjacents->ckSBS),(depth-i)*3+2);
-			//set_bit64(&(ck_adjacents->ckSSS),(depth-i)*3+2); SSS is original cubekey-> No sense!
-			set_bit64(&(ck_adjacents->ckSFS),(depth-i)*3+2);			
+			set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3+2);
+			//set_bit_ck(&(ck_adjacents->ckSSS),(depth-i)*3+2); SSS is original cubekey-> No sense!
+			set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3+2);
 			
-			set_bit64(&(ck_adjacents->ckSBF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckSSF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckSFF),(depth-i)*3+2);			
+			set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3+2);
 		}
 
 		//X Forward (at depth=i)
-		if(get_bit32(ckX_F,i-1)){
-			set_bit64(&(ck_adjacents->ckFBB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFSB),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFFB),(depth-i)*3+2);
+		if(get_bit_ck_shift(ckX_F,i-1)){
+			set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3+2);
 			
-			set_bit64(&(ck_adjacents->ckFBS),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFSS),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFFS),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3+2);
 			
-			set_bit64(&(ck_adjacents->ckFBF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFSF),(depth-i)*3+2);
-			set_bit64(&(ck_adjacents->ckFFF),(depth-i)*3+2);			
+			set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3+2);
+			set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3+2);
 		}
 	}	
 }
@@ -625,7 +735,7 @@ void ck_get_adjacents_side_edge(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 	//Calculate 26 adjacents and clear those connected by corners
 	ck_get_adjacents(ck,ck_adjacents);
 	
-	//When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents ck
+	//When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents' ck
 	ck_adjacents->ckBBB=0;
 	ck_adjacents->ckBBF=0;
 	ck_adjacents->ckBFB=0;

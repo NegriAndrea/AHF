@@ -1983,12 +1983,12 @@ void read_gadget(FILE *icfile)
       gadget.IDmin = IDmin;
       gadget.IDmax = IDmax;
 
-       fprintf(stderr,"\nUsing mmin=%g, IDmin=%ld, IDmax=%ld\n", gadget.mmin, gadget.IDmin, gadget.IDmax);
+       fprintf(stderr,"\nGADGET file: mmin=%g, IDmin=%ld, IDmax=%ld\n", gadget.mmin, gadget.IDmin, gadget.IDmax);
      }
    else
      {
       /* for multiple GADGET files skim_gadget() already determined mmin, IDmin, IDmax! */
-       fprintf(stderr,"\nUsing mmin=%g, IDmin=%ld, IDmax=%ld (as already determined by skim_gadget())\n", gadget.mmin, gadget.IDmin, gadget.IDmax);
+       fprintf(stderr,"\nGADGET file: mmin=%g, IDmin=%ld, IDmax=%ld (as already determined by skim_gadget())\n", gadget.mmin, gadget.IDmin, gadget.IDmax);
      }
    
       
@@ -2177,6 +2177,18 @@ void read_gadget(FILE *icfile)
           
          /* GADGET ID */
          cur_part->id        =           P_gadget[ppart].ID;
+         
+#ifdef GAS_PARTICLES
+         if(i == 0) {
+           cur_part->u       = P_gadget[ppart].u * u_fac;
+         }
+         else if (i==4) {
+           cur_part->u       = PSTAR;
+         }
+         else {
+           cur_part->u       = PDM;
+         }
+#endif
          
          /* move to next particle in P_gadget[] array */
          ppart++;         

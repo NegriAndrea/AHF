@@ -3,6 +3,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-void set_patch_pos(patch_t **, uint64_t *);
+void set_patch_pos(patch_t **, int64_t *);
 
 #endif

@@ -13,16 +13,17 @@
 #define STILL 		0
 #define FORWARD		1
 
-#define NO_PATCH -1
+#define NO_PATCH         -1L
+#define PATCH_REJECTED   -2L
 
 
 
 typedef struct subcube_s{
   cubekey_t cubekey;
-  UT_array *particles; //particles contained in the subcube. NULL if the subcube have been refined
+  UT_array *particles;    //particles contained in the subcube. NULL if the subcube have been refined
   uint64_t nparticles;
   UT_hash_handle hh;
-  uint64_t patch_id;
+  int64_t patch_id;      // allow for largest possible number (reserving highest bit for flagging things)
   //int level;
 } subcube_t;
 
@@ -46,6 +47,7 @@ void table_add_subcube(subcube_t**,subcube_t*);
 void table_find_subcube(subcube_t*, cubekey_t*, subcube_t**);
 void table_del_subcube(subcube_t*, subcube_t*);
 uint64_t table_get_num_subcubes(subcube_t*);
+uint64_t table_get_overhead(subcube_t*);
 //void table_iterate_subcube(subcube_t* sc_table, subcube_t** sc_aux, subcube_t** sc_tmp){
 //HASH_ITER macro implements a for statement waiting for the sentences block. 
 //We MUST implement table_iterate_subcube as a macro in subcube.h

@@ -159,7 +159,7 @@ char **argv;
   // start-up
   halos[0] = read_halos(AHF_halos[0], &(num_halos[0]));
   qsort((void *)halos[0], num_halos[0], sizeof(halo_t), qcompareHaloIDs);
-  fprintf(stderr,"read and sorted %d haloes from file %s\n",num_halos[0],AHF_halos[i]);
+  fprintf(stderr,"read and sorted %d haloes from file %s\n",num_halos[0],AHF_halos[0]);
 
   // loop over all file pairs
   for(i=1; i<num_files-1; i++) {
@@ -190,13 +190,6 @@ char **argv;
     assert(fpout);
     
     // the header line
-//    fprintf(fpout,"# haloid(1) Mvir(2) Rvir(3)"
-//                   " haloprogid(4) Mvir(5) Rvir(6) Xc(7) Yc(8) Zc(9)"
-//                   " subhaloid(10) Mvir(11) Rvir(12)"
-//                   " subhaloprogid(13) Mvir(14) Rvir(15)"
-//                   " Xsubhaloprog-Xhaloprog(16) Ysubhaloprog-Yhaloprog(17) Zsubhaloprog-Zhaloprog(18)"
-//                   " VXsubhaloprog-VXhaloprog(19) VYsubhaloprog-VYhaloprog(20) VZsubhaloprog-VZhaloprog(21)\n");
-    
     fprintf(fpout,
             "# haloid(1) Mvir(2) Rvir(3) Lx(4) Ly(5) Lz(6)"
             " haloprogid(7) Mvir(8) Rvir(9) Xc(10) Yc(11) Zc(12) Lx(13) Ly(14) Lz(15)"
@@ -291,33 +284,6 @@ char **argv;
                   // sub_prog->     gives access to  sub halo from file AHF_halos[1]
                   //
                   //-----------------------------------------------------------------------------------------
-//                  fprintf(fpout,
-//                          "%"PRIu64" %g %f %"PRIu64" %g %f %f %f %f %"PRIu64" %g %f %"PRIu64" %g %f %f %f %f %f %f %f\n",
-//                          host_halo->haloid,
-//                          host_halo->Mvir,
-//                          host_halo->Rvir,
-//                          //
-//                          host_prog->haloid,
-//                          host_prog->Mvir,
-//                          host_prog->Rvir,
-//                          host_prog->Xc,
-//                          host_prog->Yc,
-//                          host_prog->Zc,
-//                          //
-//                          sub_halo->haloid,
-//                          sub_halo->Mvir,
-//                          sub_halo->Rvir,
-//                          //
-//                          sub_prog->haloid,
-//                          sub_prog->Mvir,
-//                          sub_prog->Rvir,
-//                          sub_prog->Xc  - host_prog->Xc,
-//                          sub_prog->Yc  - host_prog->Yc,
-//                          sub_prog->Zc  - host_prog->Zc,
-//                          sub_prog->VXc - host_prog->VXc,
-//                          sub_prog->VYc - host_prog->VYc,
-//                          sub_prog->VZc - host_prog->VZc
-//                          );
                   fprintf(fpout,
                           "%"PRIu64" %g %f %g %g %g %"PRIu64" %g %f %f %f %f %g %g %g %"PRIu64" %g %f %g %g %g %"PRIu64" %g %f %f %f %f %f %f %f %g %g %g\n",
                           host_halo->haloid,

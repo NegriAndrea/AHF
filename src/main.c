@@ -568,9 +568,16 @@ int main(int argc, char **argv)
   io_logging_msg(global_io.log, INT32_C(0), "### Executing with NEWAMR ###\n");
   
   /* 1. organize the particles into a tree */
+  fprintf(stderr,"[main] Calling generate_tree...\n");
+#ifndef AHF2_read_spatialRef
   patches=generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom, simu.AHF_MINPART);
+#else
+  patches = (ahf2_patches_t *) calloc(1, sizeof(ahf2_patches_t));
+#endif
+  fprintf(stderr,"[main] Exit from generate_tree\n");
 
-  patch_connection_review(patches);
+	//Generate patchtree.out
+  //patch_connection_review(patches);
   
   /* 2. moving things around */
 	global.fst_part     = global_info.fst_part;
@@ -583,9 +590,9 @@ int main(int argc, char **argv)
   fprintf(stderr,"\nmain: calling ahf_halos():\n");
   ahf.time -= time(NULL);
   timing.ahf_halos -= time(NULL);
-  ahf_halos(*patches);
+  ahf_halos(patches);
   timing.ahf_halos += time(NULL);
-  ahf.time += time(NULL);
+  ahf.time += time(NULL);  
 }
 #else /* NEWAMR */
   

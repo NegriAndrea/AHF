@@ -5,11 +5,11 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   83
+#define BUILD   84
 
 #ifdef AHF2
-#define VERSION 2.0
-#define BUILD   0
+  #define VERSION 2.0
+  #define BUILD   0
 #endif
 
 /*=============================================================================
@@ -52,10 +52,30 @@
 #define MERGER_NPART_FRAC  0.75   // overlap in number of particles for patches to be considered a merger
 #define MERGER_VOL_FRAC    0.75   // overlap in volume for patches to be considered a merger
 
+//#define AHF2_overwrite_logfiles  // define.h is *not* included in io_logging.c and hence this define has to happen in there!
+
+#define CUBEKEY_128              // Use 128bits per cubekey allowing up to 42 refinement levels. Only supported for GCC right now
+
+// technical parameters
 #define AHF2_libtree_18neighbours
 #define AHF2_hostradius_is_patchdiagonal
-//#define AHF2_overwrite_logfiles // define.h is *not* included in io_logging.c and hence this define has to happen in there!
 
+// mimic AHF1 behaviour
+//#define AHF2_read_spatialRef
+#define AHF2_set_gatherRad_like_AHF1
+//#define AHF2_read_preliminary_halos
+
+// write debug data
+//#define AHF2_write_preliminary_halos
+//#define GENERATE_TREE_LOG        // dump generate_tree log messages to file generate_tree.log
+//#define PATCH_THREADS_LOG        // accounting to patch_threads.log for threading in patch.c
+#endif
+
+//PATCH_THREADS_LOG without WITH_OPENMP makes no sense
+#ifdef PATCH_THREADS_LOG
+  #ifndef WITH_OPENMP
+    #error "No sense to ask for patch_threads.log with -DPATCH_THREADS_LOG without -DWITH_OPENMP. Review Makefile, Makefile.config and define.h files"
+  #endif
 #endif
 
 /*--------------------------------------------------

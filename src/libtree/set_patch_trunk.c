@@ -39,10 +39,10 @@ int     check_merger            (patch_t *, patch_t *);
 // set_patch_trunk():
 //    assign a trunk to each patch from the list of daughters
 //*********************************************************************************************************
-void set_patch_trunk(patch_t **patch_tree, uint64_t *n_patches)
+void set_patch_trunk(patch_t **patch_tree, int64_t *n_patches)
 {
-  uint32_t initial_level, final_level, ilevel;
-  uint64_t ipatch;
+  int32_t initial_level, final_level, ilevel;
+  int64_t ipatch;
  
   // determine initial and final level
   get_patch_level_range(patch_tree, n_patches, &initial_level, &final_level);

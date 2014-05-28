@@ -1,5 +1,6 @@
 .PHONY: clean veryclean
 
+simu2tipsy:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahf2binary:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 AHFbinary2ascii:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 AHFhalos2geom:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
@@ -18,6 +19,9 @@ LIBS = 	../src/libio_serial/libio_serial.a \
 
 
 # HOW TO MAKE THE ACTUAL PROGRAMMES
+simu2tipsy:		simu2tipsy.c ${LIBS}
+	$(CC) $(CFLAGS) $(LFLAGS) -o simu2tipsy simu2tipsy.c ${LIBS} ${LIBS} -lm
+
 AHFhalos2geom:		halos2geom.c ${LIBS}
 	$(CC) $(CFLAGS) $(LFLAGS) -o halos2geom halos2geom.c ${LIBS} ${LIBS} -lm
 

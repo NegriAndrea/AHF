@@ -55,17 +55,17 @@ void get_patch_centre(patch_t patch, double *x, double *y, double *z)
 // get_patch_level_range():
 //    return some patch property that might be used to classify patches
 //*********************************************************************************************************
-void get_patch_level_range(patch_t **patch_tree, uint64_t *n_patches, int *initial_level, int *final_level)
+void get_patch_level_range(patch_t **patch_tree, int64_t *n_patches, int *initial_level, int *final_level)
 {
   // determine initial level
   *initial_level = 0;
-  while(patch_tree[*initial_level] == NULL && *initial_level < MAX_DEPTH) {
+  while(patch_tree[*initial_level] == NULL && *initial_level < NLEVELS) {
     (*initial_level)++;
   }
   
   // determine final level
   *final_level = *initial_level;
-  while(patch_tree[*final_level] != NULL && *final_level < MAX_DEPTH) {
+  while(patch_tree[*final_level] != NULL && *final_level < NLEVELS) {
     (*final_level)++;
   }
 }

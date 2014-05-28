@@ -1,7 +1,7 @@
 .PHONY: clean veryclean
 
 ahfCalcHaloID:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
-ahfCheckSubhalos:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
+ahfCheckHaloIDs:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfCalcMinStar:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfExtractHalosPdens:	DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfExtractMhalo:	DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
@@ -67,8 +67,8 @@ ahfCalcMinStar:		ahfCalcMinStar.c
 ahfSortHalos:		ahfSortHalos.c ${LIBS}
 	$(CC) $(CFLAGS) $(LFLAGS) -o ahfSortHalos ahfSortHalos.c ${LIBS} ${LIBS} -lm
 
-ahfCheckSubhalos:		ahfCheckSubhalos.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCheckSubhalos ahfCheckSubhalos.c ${LIBS} ${LIBS} -lm
+ahfCheckHaloIDs:		ahfCheckHaloIDs.c ${LIBS}
+	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCheckHaloIDs ahfCheckHaloIDs.c ${LIBS} ${LIBS} -lm
 
 ahfCalcHaloID:		ahfCalcHaloID.c ${LIBS}
 	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCalcHaloID ahfCalcHaloID.c ${LIBS} ${LIBS} -lm

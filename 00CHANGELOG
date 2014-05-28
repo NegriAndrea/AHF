@@ -1,0 +1,1883 @@
+=============================================================================
+****                              CHANGELOG                              ****
+=============================================================================
+07/04/2005      - added cosmology.c to tools/
+
+29/04/2005      - fixed minor bugs in ascii2amiga.c
+                - added ARTascii2amiga.c for easier use of Anatoly Klypin's IC generator
+                - added capability to read P-GADGET data (i.e. multiple GADGET files)
+                - added amigaXi to analysis/
+
+02/05/2005      - added usage of ID's with P-GADGET data allowing to construct merger trees
+                  based upon particle content
+                - changed amiga2ascii.c, ascii2amiga.c, lcone2ascii.c and galaxy2amiga.c:
+                  ASCII files now contain particles masses in Msun/h (makes more sense...)
+                - added amiga2asciiSample.c to convert/
+                - fixed trouble with no_vpart in ascii2amiga.c
+
+12/05/2005      - moved GADGET_LUNIT and GADGET_MUNIT from input.c to param.h
+
+18/05/2005      - added memory monitoring to logfile
+
+23/05/2005      - forgot to add memory of FFT grid to RAM monitoring: fixed now...
+                - fixed a minor bug in amigaPk.c
+                - fixed some *very* minor memory leaks (of order 500 bytes....)
+
+24/05/2005      - fixed the final *very, very* minor memory leak
+
+25/05/2005      - fix that bug at the very end of main.c that lead to bus error right before end
+                - found a bug in analysis/IDL/plot_massfunc.pro
+
+26/05/2005      - fixed a bug in amigaPdens.c that might cause the programm to hang
+
+07/06/2005      - added LCDM.064 to Sample/ (not as good as the 128^3 test run, but also not as bad as the 16^3 one...)
+
+08/06/2005      - separated Sample/ from the rest of the package to save download times
+
+09/06/2005      - some fiddling with conversion/analysis routines (nothing serious!)
+                - added -DART: AMIGA can now read ART simulation output
+
+14/06/2005      - name for dumpfile and logfile are not longer input by the user but rather constructed from outfile_prefix
+                  -> adjust AMIGA.input files accordingly!!!
+
+21/06/2005      - added eigenvectors to _halos output files (for -DBDM and -DAHF)
+                  -> changes in all analysis/ routines that deal with _halos files
+                - fixed a minor bug in ahf_halos.c giving too large R_vir for some satellites
+                - added -DAHFfilament (ahf_filament.c)
+                - added -DAHFzoomhalo (ahf_zoomhalo.c) -> not functioning yet though!
+
+24/06/2005      - fiddled with -DMMFOCUS as there are still some unresolved subtleties :-(
+
+27/06/2005      - completely removed the old -DMMFOCUS: it was just causing grief and headaches
+                - implemented a new -DAHFmmfocus that just keeps the high-resolution particles right from the start (i.e. startrun.c)
+
+12/07/2005      - added amiga2mlapm.c for sake of completeness
+                - fixed minor bug in bdm_centres.c related to fabs(global.z) vs. global.z in filenames...
+
+13/07/2005      - polishing changes made yesterday...
+
+14/07/2005      - added halos2geom.c to convert/
+                - properly added -DAHFgeom
+
+27/07/2005      - there were colliding definitions of SKIP in input.c
+
+28/07/2005      - do not normalize angular momentum vector in halo profile any longer
+                - added profile of intertia tensor eigenvectors
+
+29/07/2005      - fixed recently introduced bug in bdm_centres.c: line 282 -> change analyseRef(i) to analyseRef(0)
+                - fixed bug related to profile of eigenvectors in bdm_halos.c 
+
+02/08/2005      - tweaked memory handling for AHFstep and BDMstep
+                - forgot to declare int_dummy in all sorts of files (important for -DLONG4)
+
+03/08/2005      - adjusted routines in analysis/IDL/ to properly account for conversion to physical rather than comoving coordinates
+                - added -DHUBBLE_VELDIS which accounts for Hubble flow in sigV calculation
+
+05/08/2005      - there is still from time to time that annoying bug "count != numHalos" in connectRef()...made a quick and dirty fix
+                - fiddled with HaloHistory.f and MergerTree.f
+                - fine tuned halos2geom.c
+
+09/08/2005      - added calculation of linear growth factor to cosmology.c
+
+10/08/2005      - fiddled with HaloTracker.c, i.e. added read-routine for MLAPM etc.
+                - removed that annoying warning related to ReadLong and its "long unsigned" argument
+
+11/08/2005      - added _profiles to HaloTracker.c
+
+12/08/2005      - added read_ART() to HaloTracker.c
+
+15/08/2005      - fixed memory leak in read_ARTbinaries() (mostly affected HaloTracker.c)
+
+19/08/2005      - added -DGADGET2 -> possibility to read in SnapFormat=2 GADGET files
+                - if gas/stars are present in the GADGET file they will be read in, too
+                  -> they are simply treated as DM particles with their appropriate mass, 
+                     i.e. they will be gravitationally considered during remove_unbound() etc. and make it into the AHF output files
+                - halo particles have now internally the weight 1 and hence
+                  -> "npart=nvpart" in .AHF_halos means that this object contains only halo particles...
+                     (remember: npart  = Ndm+Nstar+Ngas+...
+                                nvpart = Mdm+Mstar+Mgas+... with Mx in internal units, i.e. Ndm=Mdm as halo particles have the weight 1!)
+                - introduced new mapping of GADGET ID's to AMIGA ID's
+                  -> halo particles will *always* run from 0 -> nall[1]-1 in AMIGA 
+                  -> gas/stars ID's are meaningless across different time steps
+                - NOTE: if you are using AHF on a GADGET output file with gas/stars, please make sure that you...
+                        a) turn off AHFmmfocus
+                        b) set AHF_MASSMIX to 0.0
+                        (AHFmmfocus only uses the lowest mass particles, and
+                         AHF_MASSMIX rejects halos with a certain mixture of different particle species)
+                - NOTE: there is currently no way to tell how many gas/star particles are in a halo,
+                        halos are just "mass clumps" made up of dm, gas, stars, etc. so far...
+                        but as explained above: one can sort of estimate the fraction of mass in stars/gas
+
+22/08/2005      - fixed a couple of bugs in the 19/08/2005 version
+                - added -DGADGET_IGNORE_IDS: the gadget ID's are NOT used at all and simply ignored
+                  -> if halo particles ID's are not consecutive there is no way of constructing merger trees
+                     and hence my mapping onto AMIGA ID's will fail....switch this on to give up ID's at all...
+                - added -DGADGET_GAS_ONLY and -DGADGET_STARS_ONLY
+                  -> the name says it all...
+
+24/08/2005      - added -DGADGET_IDS
+                  -> just drag GADGET ID's through to *_particles file without further thinking about them
+
+25/08/2005      - fixed bug related to Hubble flow
+                  -> used H0*r instead of H(z)*r when removing unbound particles
+
+20/09/2005      - added -DAHF2 to AMIGA
+                  -> satellite particles are given back to the host once they have been used, i.e.
+                     particles can belong to more than just one halo again!
+
+21/09/2005      - cleaned up a few bits and pieces and debugged -DAHF2, respectively
+
+27/09/2005      - fixed some bugs related to GADGET in HaloTracker.c
+
+28/09/2005      - replaced MAXSTRING for AMIGA's io_header in param.h with HEADERSTRING (and all other relevant files!)
+
+21/10/2005      - added -DMANUAL_DVIR which abuses io.out_dumps in calc_virial()....for locating unbound superclusters or whatever ;-)
+
+02/11/2005      - added -DASCII
+                  -> AMIGA can now read ASCII files as input
+                    (AMIGA expects Mpc/h, km/sec and Msun/h, but check read_ascii() in input.c for more details about the exact format)
+                - fixed minor bug in input.c related to ART_SKIP
+
+08/11/2005      - fixed minor bug in HaloTracker.c in read_mlapm()
+
+07/12/2005      - started to code -DAHT
+                - some modifications to amigaExtractHalos.c allowing to read in -DPARTLEVEL data
+
+08/12/2005      - added -DPOWERSPECTRUM
+                  -> whenever an output file is written, AMIGA also dumps a *_Pk file
+                     containing P(k) derived using the domain grid
+                  -> AMIGA also monitors the growth rate of the fundamental mode (PKMODE=1 in param.h)
+                     comparing it to the linear growth rate
+                     -> whenever P/D >> 1 your fundamental mode turned non-linear (and AMIGA terminates)!
+                - added -DOUTDUMPS
+                  -> write output files with the same frequency as dumpfiles
+                - added -DHAFmaxhalo
+                  -> the simulation stops once the most massive halo is heavier than AHF_MAXHALO in param.h
+
+                  => all these features were added to ease the simulation of scale-free P(k) models
+
+09/12/2005     - also consider gas particle temperature when removing unbound particles (only applicable when reading GADGET data!)
+
+13/12/2005     - fixed some things in HaloTracker.c (e.g. usage of Hubble instead of H0, etc.)
+
+20/12/2005     - amigaExtractHalos.c can now read MLAPM, GADGET, ART, ...
+
+19/01/2006     *********BUGFIX*********
+(BUILD 33)       -> ahf_gridinfo.c: wrong calculation of AHF_MINREF and global.ahf_nogrids when using startAHFgrid!
+               - some more tinee winee changes here and there
+
+26/01/2006     - fixed bug in ahf_gridinfo.c
+(BULIT 34)       -> refine_dens was calculated wrongly
+
+30/01/2006     - added -DPDENS ("make AMIGApdens")
+(BUILD 35)       -> calculate density at particle positions using full AMR hierarchy... 
+                    (amigaPdens.c only uses a fixed cubical grid!)
+
+31/01/2006     - fixed some bugs related to -DLGADGET and finally understood the GADGET(2) file format ;-)
+(BUILD 36)
+
+01/02/2006     - -DPDENS can now also write GADGET's IDs if required (compile with -DGADGET_IDS)
+(BUILD 36)
+
+03/02/2006     - fixed recently introduced bug related to -DPMASS_FROM_FILE
+(BUILD 37)
+
+06/02/2006     - Stu added -DAHFisodensity: no cutting of halos at virial radius,
+(BUILD 38)       but rather keeping all particles on isodensity contours
+                 (-DAHFnoremunbound won't even remove the unbound particles...)
+
+09/02/2006     - bug fix in lltools.c: "edge_shift" was calculated wrongly
+(BUILD 39)       -> only affected particles moving farther than 2 grid cells (and "leavers")
+               - fiddling with fprintf(io.logout) when using AGFstep
+               - started re-coding of cells centres (nothing to worry about yet...)
+
+12/02/2006     - added read_amiga_header() to utility.c allowing for a more convenient handling of AMIGA's header
+(BUILD 40)
+
+27/02/2006     - more flexible reading of input files (sizeof(long) is written to file, etc.)
+(BUILD 41)       -> severe impact upon older AMIGA binaries; they are no longer compatible!
+
+28/02/2006     - completely re-wrote trunc_err() for OCTPLIT plus all the necessary changes in fine_to_coarse.c and coarse_to_fine.c
+(BULIT 42)
+
+01/03/2006     - renamed all "force.fc_dens", "force.residual", etc. stuff back to "force.temp[0]", "force.temp[1]", etc.
+(BUILD 43)       -> this gives an easier overview of which routines modifies what force.temp[] storage...
+               - fixed a bug that caused most of the trouble with OCTSPLIT: fc_sep[] in all c2f and f2c routines was calculated wrongly!
+               - fixed a bug related to read_ARTbinaries()
+
+08/03/2006     - fixed memory leak in relink.c related to OCTSPLIT
+(BUILD 44)       (careful: relink.c only works if there are less than 1000 particles at a node!)
+               - added -DOLD_AMIGA_FORMAT to be more compatible
+
+09/03/2006     - rehashed relink.c for OCTSPLIT: removed that "1000 particles" restriction....
+(BUILD 45)     - renamed -DOLD_AMIGA_FORMAT to AMIGA_ONE_FORMAT
+
+09/03/2006     - bug fix in read_gadget(): global.gadget_mmin was determined wrongly, if reading individual particles masses from file
+(BUILD 46)     - added -DGADGET_SHIFT
+                 -> (try to) shift (0,0,0) into centre of box
+
+10/03/2006     - added proper calculation of simu.min_weight into input.c that does not rely on -DNO_SPECIES
+(BUILD 47)     - bug fix in ahf_halos.c related to global.domgrid_no when free'ing the grids
+               - tweaked ATS in main.c
+
+16/03/2006     - OCTSPLIT does not require an x-sorted linked-list as there are no calls to inc_to_a_x() etc.
+(BUILD 48)       -> -DLL_NOXSORT switches off the sorting of the "cur_node->ll" linked lists!
+               - added c2f_dens() to coarse_to_fine.c that ensures "c2f*f2c=1"
+                 -> routine never used, but handy to have...
+
+23/03/2006     - Steffen fixed some minor issues in ahf_gridinfo.c related to those annoying "qsort compilation messages"
+(BUILD 49)
+
+24/03/2006     - added -DGADGET_PARTICLES_INFO, i.e. the .AHF_particles file is written in a new format that contains information about the species type...
+(BUILD 50)
+
+28/03/2006     - fixed some bugs in -DGADGET_PARTICLES_INFO
+
+03/04/2006     - fixed memory leak in AHF
+(BUILD 51)       -> however, there are still some leaks to be tracked down!
+
+07/04/2006     - added -DBDMudc = BDMstep with User-Defined-Centres (udc)
+(BUILD 52)       -> bdm_halos() looks for a *.BDMudc_centres files rather than using the one generated by bdm_centres()
+
+20/04/2006     - added "density and potential at particle position" to -DFORCETEST
+(BUILD 53)     - tweaked utility.c related to machine_sizeof_long!=file_sizeof_long
+
+30/05/2006     - major change in ahf_halos.c:
+(BUILD 54)       -> the halo centres (i.e. centreDens.x/y/z) was calculated WRONGLY!!!!!
+                 -> it was *not* the density weighted centre of an isolated refinement but rather the coordinate of the node with the highest density
+                 => this has been put into the switch -DAHFmaxdenscentre while no switch now chooses the new density weighted centre scheme!!!
+
+02/06/2006     - added -DAHFpotcentre
+(BUILD 55)       -> use potential rather than density to derive the halo centre
+
+21/06/2006     - fixed some issues with -DHAPPI
+(BUILD 56)
+
+26/06/206      - fixed an issue with -DGADGET
+(BUILD 57)       -> in case the particle mass is very small (e.g. below ZERO!), the usage of massarr[] did not function properly
+
+05/07/2006     - major changes for -DOCTSPLIT
+(BUILD 58)       -> refine_gridOCTSPLIT.c contains all grid refinement routines related to OCTSPLIT feature
+                 -> refine_grid.c does *not* contain any OCTSPLIT stuff anymore
+                 -> step.c has a better handling of filenames for FORCETEST
+                 -> coarse_to_fine.c contains a NEW_C2F_POT feature allowing for more flexibility when prolonging the potential
+
+10/07/2006     - more -DOCTSPLIT changes!
+(BUILD 59)       -> completely rehashed coarse_to_fine.c and fine_to_coarse.c for OCTSPLIT
+                    get_c2fslope() determines the slope used for interpolating from coarse_to_fine!
+                    (cf. C2F_MIDCENTRE_NODELIMITER, C2F_MIDCENTRE, C2F_REDUCED, ...)
+               - minor other changes
+                 -> write_potential.c: added some debugging info for OCTSPLIT
+                 -> re-formatted gs.c
+                 -> mg_control.c: debugging info for OCTSPLIT 
+
+12/07/2006     - fine tuning of OCTSPLIT
+(BUILD 60)       -> moved get_c2fslope() to utility.c
+                 -> get_c2fslope() is now also used with fc_overlap()
+
+13/07/2006     - removed "#ifdef OCTSPLIT" around "mg = assin_dens()" in gen_refgrid()
+(BUILD 61)     - the OCTSPLIT version did not correct for a drift in pot_mean so far!
+                 -> layzer_irvine.c and fine_to_coarse.c have been modified accordingly...
+               - added C2F_DSTAR_SLOPE which simply relies on get_DSTARnodes() to obtain the c2f_slope...
+
+14/07/2006     - fixed an OCTSPLIT bug in force_interp.c
+(BUILD 62)        -> still not update dand moved to the new Taylor expansion scheme...
+               - added C2F_DSTAR_SLOPE which should be faster when obtaining the Taylor expansion terms
+
+17/07/2006     - adjusted a couple of more unresolved issues with OCTSPLIT
+(BUILD 63)       -> the whole truncation error calculation was faulty...
+                 -> added -DF2C_POT which restrict fin_node potential to coa_node during trunc_err()
+                    (this is more time consuming when calculating the truncation error but may speed up the next iteration on the coa_grid!?)
+                    -> CAREFUL: this feature does not function at the moment and is considered lowest priority to fix!
+
+17/07/2006     - started the HYDRO part...
+(BUILD 64)       -> revived that -DGAS feature
+                 -> renamed solve_poisson.c to solve_gravity.c
+                 -> renamed solve_domgrid() to  solve_dom_gravity()
+                 -> renamed solve_refgrid() to  solve_ref_gravity()
+
+24/07/2006     - -DSUPERCOMOVING: introduced supercomoving variables
+(BUILD 65)       -> the input/output files are not affected though!
+               - removed -DISOLATED2
+
+27/07/2006     - renamed densB, momB, energyB to gas_dens, gas_mom, gas_Energy
+(BUILD 66)     - added MULTIMASS consistency check to read_amiga_heaer()
+               - the time unit for -DSUPERCOMOVING is now again "1/H0" rather than "1/H0 (2/sqrt(Omega0))"
+
+03/08/2006     - name changes etc. (e.g. get_HAPPInodes() -> get_DISTnodesRAW()) as a preparation for the hydro solver
+(BUILD 67)       -> coded two new get_DISTnodes() routines:
+                    1. get_DISTnodes() is a complete re-write of the old get_HAPPInodes() that properly treats close-to-boundary nodes
+                       -> NOTE: there is only a PERIODIC version yet!
+                    2. get_DISTnodesTSC() utilizes get_TSCnodes() to obtain the DISTnodes, but is waaaaaaay too slow!
+                    3. get_DISTnodesRAW() is just the old get_HAPPInodes()
+               - added r_pquad() to alloc_struct.c (maybe it will be needed?!)
+               - fiddled a bit with solve_hydro.c
+               - added -DTWILIGHT_ZONE
+                 -> create_twilight_zone(cur_grid) creates that twilight zone of ghost cells
+                 -> TWLTBUF in param.h sets the number of ghost nodes surrounding a given grid
+                 -> there are changes in all sorts of routines dealing with grid-loops, e.g. twlt_buf should take care of the twilight zone extend...
+                 -> it should not harm to adapt >>all<< grid routines to take note of TWLTBUF, but that has not been done yet!
+                 -> twilight zone is >>NOT<< created for the non-OCTSPLIT version!
+                 IMPORTANT: -DTWILIGHT_ZONE is NOT functional yet! there is a serious problem with it...
+                 NOTE: -DTWILIGHT_ZONE won't be needed for "KNP hydro solver" planned for implementation into AMIGA
+               - added write_nodes.c for debugging purposes
+
+08/08/2006     - name changes:
+(BUILD 68)       -> -DGAS does not exist anymore
+                 -> -DMLAPM_HYDRO refers to that part of -DGAS dealing with hydro-variables on MLAPM's grid structure
+                 -> -DSTORE_REFS refers to that part of -DGAS dealing with the storage of old refinement grids
+                    -> renamed gas.c to store_refs.c
+                 -> -DHYDRO will become the hydro-solver
+               - started coding Ziegler's KNP scheme for hydrodynamics
+
+09/08/2006     - completely removed -DMLAPM_HYDRO: it's never ever gonna happen!
+(BUILD 69)     - hydrodynamic variables are stored in a vector node->u[NHYDRO] rather than in node->gas_dens, etc.!
+                 -> easier handling of equations plus greater flexibility when adding MHD variables!
+               - bug fix in flux_x/y/z(): they should not only be evaluated at cur_node!
+
+10/08/2006     - fixed some -DLIGHTCONE issues and made it work again!
+(BUILD 70)     - completely re-wrote hydro.c!!!!
+               - added hydro_tests.c
+               - a lot of hydro-stuff fiddling and bug fixing!!!
+
+11/08/2006     - fixed flux-limitation problem
+(BUILD 71)     - advect Entropy rather than internal energy
+               - -DHYDRO_TEST=0,1,2
+
+12/08/2006     - the hydro test are now initiated as follows:
+(BUILD 72)       -DHYDRO_TEST=0      shock tube along x-axis
+                 -DHYDRO_TEST=1      shock tube along y-axis
+                 -DHYDRO_TEST=2      shock tube along z-axis
+                 -DHYDRO_TEST=3      spherical blast wave
+
+16/08/2006     - some cosmetic changes...
+(BUILD 73)
+
+23/08/2006     - implementation of libio/
+(BUILD 74)     - added some fflush(io.logfile) to ahf_halos.c
+               - added -DHYDRO_DUNSPLIT to solve_hydro.c
+               - added -DHYDRO_RUNGE_KUTTA
+
+30/08/1006     - fiddled with ZERO in hydro.c and managed to improve the agreement with the NIRVANA code blast wave!
+(BUILD 75)     - added Ekin and Epot to .AHF_halos and .AHF_profiles (not to BDM though!)
+               - removed some obsolete code from HaloProfiles() in ahf_halos.c related to a double calculation of cur_dist
+
+31/08/2006     - added mbp_offset and centre-of-mass to .AHF_halos
+(BUILD 76)
+
+31/08/2006     - updated AMIGA from CVS server including all of the latest libio changes...
+(BUILD 77)     - added r2 to .AHF_halos
+               - fixed a minot bug in CoM calculation
+               - improved calculation of Vmax, Rmax, and r2 by smoothing arrays
+                 -> introduced new smooth3() and smooth5() function in utility.c
+
+05/09/2006     - added Ekin, Epot, etc. to HaloTracker.c and HaloHistory.f
+(BUILD 78)     - separated calculation of sig_v (incl. gas pressure) and Ekin
+
+11/09/2006     - BUG FIX: the calculation of the density weighted halo centre in ahf_halos.c did not account for periodic boundaries!
+(BUILD 79)     - .AHF_profiles contains the proper (physical) angular momentum now
+               - added lambdaE to .AHF_halos
+               - increased the default AHF_MINNODES value
+               - change in connectRef():
+                 "only update halo centre if we trust the finer centre..."
+                 => this does NOT solve the problem though which still is apparent in AHF :-(
+
+15/09/2006     - change in connectRef(): the "if(i==0)" statement was inside a "for(j)" loop! obtained substantial speed-up by taking it out of that loop... 
+(BUILD 80)     - added -DPARDAU_DISTANCE, -DPARDAU_NODES, and -DPARDAU_PARTS:
+                 PARDAU_DISTANCE is the old version which follows a host based upon closeRefDist
+                 PARDAU_NODES follows a host by assuming the sub-grid with the most nodes is the host on the next finer level
+                 PARDAU_PARTS follows a host by assuming the sub-grid with the most particles is the host on the next finer level
+
+18/09/2006     - merged HaloProperties() with HaloProfiles() to speed up AHF
+(BUILD 81)     - wrote get_r2() and get_RmaxVmax()
+               - fixed memory leak: XYZ *pointer in ConstructHalos() was not free'd properly
+               - renamed ReturnParticles() to SafeReturnParticles() and coded a new ReturnParticles() that does not store the id's for *.AHF_particles
+                 -> there are odd situations where it is better to remove a halo completely from the list and rather give it back to its host...
+
+21/09/2006     - there is still that odd bug with "numHalos != count" that has not been fixed yet!
+(BUILD 82)       => I simply add +100 when allocating halos[] to circumvent segmentation faults...
+
+22/09/2006     - modified calculation of lambdaE in HaloTracker.c using lots of tmp's
+(BUILD 83)     - added init_hydro() to hydro.c
+               - added add_gasdens() to density.c
+               - removed simu.part_mass
+               - fiddled with timestep criterion in main.c
+               - revised global.cfl_speed in hydro.c/min_max_speeds()
+               - added update_logfile() manage_outputs() to main.c to get rid of all that annoying code in the time-stepping loop...
+               - cleaned up some code on main.c
+
+26/09/2006     - first attempt to integrate hydro-solver in cosmological step()
+(BUILD 84)
+
+29/09/2006     - adjusting step() for hydro and coding better handling of HYDRO_TEST in main.c
+(BUILD 85)     - added HYDRO_TEST=4
+                 -> Arman's GasSphere (not functional yet!)
+
+06/10/2006     - added HYDRO_TEST=5
+(BUILD 86)       -> Zeldovich Pancake (works, but still needs fine tuning for comparison against analytical solution)
+               - fixed some bugs in input.c (related to -DART and handling of nspecies) and main.c (missing declarations...)
+               - define.h wrongly dealt with HYDRO_TEST<4
+               - Cosmology.DAT is no called io.outfile_prefix+'.cosmology'
+               - added some notes to move_part.c re:PERIODIC
+
+11/10/2006     - fixed a typo in main.c
+(BUILD 87)     - incorporated most recent "MPI changes"
+
+16/10/2006     - bug fix in ahf_halos.c: -DQUICKPROPERTIES mixed up Ly and Lz in .AHF_halos
+(BUILD 88)     - bug fix in ahf_halos.c: lambdaE calculation in HaloProfiles() was missing a m_fac factor in Epot!
+                 -> HaloTracker.c has also been corrected!
+
+03/11/2006     - implemented convergence test ala Power et al. (2003):
+(BUILD 89)       -> negative radii in .AHF_profiles indicate t_relax < t_Universe
+               - decreased AHF_MINNODES again as too many low mass halos got lost
+
+09/11/2006     - finally managed to get the hydro-Zeldovich test up and running
+(BUILD 90)       -> this required some major tweaks regarding the supercomoving coordinates!
+
+10/11/2006     - renamed some routines in hydro.c
+(BUILD 91)     - added DUAL_ENERGY_FORMALISM
+               - fiddled a lot with the Zeldovich wave test (HYDRO_TEST==5)
+
+15/11/2006     - some fine tuning of Zeldowich wave test fprintf's
+(BUILD 92)     - added read-routines for MareNostrum extracted boxes
+               - introduced -DGAS_PARTICLES which formerly was integral part of -DGADGET
+
+21/11/2006     - fixed a bug in hydro.c: entropy advection in flux_idim() was wrong
+(BUILD 93)
+
+22/11/2006     - added ngas, M_gas, lambda_gas, and axis_gas to .AHF_halos for -DGAS_PARTICLES
+(BUILD 94)     - fixed a couple of bugs related to -DMARE_NOSTRUM
+
+23/11/2006     - fixed a minor bug in define.h that switched off PERIODIC in case HYDRO_TEST was not defined
+(BUILD 95)
+
+24/11/2006     - added -DPOISSON2 which solves "L Phi = 4piG/a  delta" instead of "L Phi = delta"
+(BUILD 96)       -> changes in step.c, solve_gravity.c, gs.c, trunc_err.c, residual.c, layzer_irvine.c
+                 => SIDE NOTE: the codes appears to be faster!!!
+                    -> further tests to confirm are under way...
+
+27/11/2006     - fixed some memory leaks/abuses in ahf_halos.c and ahf_gridinfo.c
+(BUILD 97)
+
+28/11/2006     - added -DREAD_COSMOLOGY
+(BUILD 98)       -> read timeline from file rather than calling create_timeline()!
+               - bug fix in hydro_tests.c (missing #include "hydro.h")
+
+29/11/2006     - removed -DREAD_COSMOLOGY again
+(BUILD 99)       -> .cosmology is read when present, otherwise timeline will be generated from scratch
+
+29/11/2006     - removed all that reading of the .cosmology file again...
+(BUILD 100)    - a few tweaks here and there regarding the hydro-solver
+
+02/01/2007     - working copy of MPI AHF?!
+(BUILD 101)    - minor bug fix in MergerTree.f
+
+08/01/2007     - running version of MPI AHFstep
+(BUILD 102)    - some tweaks related to -DHYDRO
+
+09/01/2007     - tweak in DUAL_ENERGY formalism:
+(BUILD 103)      "if(edens/u[UEdens] < ETA_DUAL_ENERGY || edens < ETA_DUAL_ENERGY)"
+                 -> there are situations where edens~Edens but both are below the actual resolution limit...
+                 -> NOTE: I AM NOT HAPPU WITH THIS FIX!!!! THERE MUST BE SOME BETTER WAY?!
+
+09/01/2007     - added -DBOUNDARY_CHECK
+(BUILD 104)      -> simple check dumping the boundary of a given grid into a file
+
+09/01/2007     - a lot (!!!) of changes to get MPI AHFstep up and running on MacOSX
+(BUILD 105)      -> problem: sizeof(long)=4 and not 8!!!!!
+
+10/01/2007     - fixed a few more -fno-common bugs across the source code (not all though; there are some fixations missing in AHF related files...)
+(BUILD 106)
+
+10/01/2007     - moved -DNEWSTARTRUN to define.h
+(BUILD 107)
+
+15/01/2007     - updated most recent changes by Steffen
+(BUILD 108)    - fixed a bug in halos2geom.c
+               - fixed some missing -DWITH_MPI in common.c
+
+17/01/2007     - added -DGS_TSC
+(BUILD 109)      -> uses get_TSCnodes() rather than get_DSTARnodes() as a criterion for boundary nodes in gs.c, resid.c, trunc_err.c
+               - added -DPOTTEST
+                 -> dump potential values on all grids
+               - added global_mpi.rank check when writing AHF output files
+
+17/01/2007     - fixed a bug in solve_dom_gravity() related to -DPOISSON2
+(BUILD 110)      -> the multi-grids did not know the correct timcounter
+               - lowered slow_convergence criterion for -DPOISSON2
+
+18/01/2007     - adjusted a few quibbles here and there
+(BUILD 111)
+
+18/01/2007     - added NEW_F2C_SOURCE
+(BUILD 112)      -> constructs coa_dens values by simply restricting fin_dens (may be useful, may be not...)
+               - bug fix in ahf_halos.c
+                 -> call to realloc() with NULL pointer in connectRef() about line #3290
+
+18/01/2007     - some modifications to realloc() calls in ahf_halos.c
+(BUILD 113)      -> trying to capture NULL pointers and zero sizes
+
+19/01/2007     - added input_grid.c, output_grid.c and amigagrid2ascii.c
+(BUILD 114)    - made OUTDIGITS parameter redundant by adjusting sprintf() statements
+
+22/01/2007     - moved some of the hydro input parameters to io.header
+(BUILD 115)      -> all read/write routines had to be adjusted!
+
+22/01/2007     - added -DHYDRO_TEST=6
+(BUILD 116)      -> double pancake test ala Greg Bryan
+               - fixed some typos in main.c
+
+23/01/2007     - fine tuned (and actually corrected!) -DHYDRO_TEST=6
+(BUILD 117)    - added -DGADGET_LUNIT_KPC for convenience
+               - imported all those libio changes by Steffen
+
+24/01/2007     - added thermal gas_particles energy to Ekin
+(BUILD 118)    - fixed recently introduced bug in read_amiga()
+
+25/01/2007     - preparations for...
+(BUILD 119)      -> gas particles for WITH_MPI
+                 -> proper treatment of ID's for WITH_MPI
+
+30/01/2007     - bug fix in solve_cg() related to -DPOISSON2
+(BUILD 120)
+
+01/02/2007     - added -DTRUNC_ERR_LPHI
+(BUILD 121)
+
+01/02/2007     - major bug fixes for POISSON2
+(BUILD 122)      -> f2c_source() stores the "source" term in coa_dens
+                    -> but we require the density in coa_dens!!!!!
+                 -> several minor bug fixes in trunc_err.c and residual.c etc.
+
+02/02/2007     - added Arman's amiga2gadget.c to convert/
+(BUILD 123)    - removed MULTIMASS cross-check from read_amiga_header()
+
+13/02/2007     - merged with latest changes by Steffen in libio
+(BUILD 124)    - bug fix in trunc_err.c related to -DPOISSON2
+               - buf fix in bdm_centres.c (fprefix was not defined)
+
+14/02/2007     - changed calculation of spin parameter from 1/sqrt(pow3(M)) to 1/M/sqrt(M)
+(BUILD 125)
+
+14/02/2007     - Rmax and Vmax have been calculated wrongly!
+(BUILD 126)      -> updated get_RmaxVmax() in ahf_halos.c
+               - revision of io_gadget.c fixing "Gustavo's problem"
+
+27/02/2007     - some minor tweaks in ahf_halos.c related to simu.no_part and global_info.no_part
+(BUILD 127)
+
+27/02/2007     - added f2c_resid()
+(BUILD 128)    - added amigaHaloVellipsoid.c to analysis/
+
+28/02/2007     - modification in libio/ properly accounting for all sorts of GADGET files
+(BUILD 129)
+
+01/03/2007     - some more changes to libio/
+(BUILD 130)
+
+02/03/2007     - fixed some segmentation faults in ahf_halos.c
+(BUILD 131)      -> capturing "STRANGE CENTRES" in a sophisticated way
+                    -> however, still a mystery why they exist in the first place!!
+
+07/03/2007     - added -DHYDRO_TEST=7
+(BUILD 132)      -> reads >>all<< information from input file
+                 -> treats particles in input file as gas particles
+                 -> uses standard step() for integrating hydro-equations incl. self-gravity!
+                    => CAREFUL: this test uses only the hydro-CFL criterion for the new_timestep!
+
+08/03/2007     - fiddled with hydro.c, hydro_test.c and the likes...
+(BUILD 133)
+
+14/03/2007     - added Ekin_gas to ahf_halos.c
+(BUILD 134)    - changed lambda_gas to Eq.(4) of Gottloeber & Yepes (2007)
+
+19/03/2007     - hydro_test.c
+(BUILD 135)      -> the analytical Zeldovich wave density was wrong...
+                 -> completely re-hashed Zeldovich pancake tests
+               - hydro.c
+                 -> changed calculation of "a_mid" in calc_Source()
+                 -> revised usage of H_term in calc_Source()
+
+23/03/2007     - a lot of changes related to gas_sphere_test() (i.e. HYDRO_TEST=4)
+(BUILD 136)    - introduced simu.FourPiG in calc_Source()
+               - double pancake test (HYDRO_TEST=6) did actually advect in y- and z-direction! -> corrected that...
+               - fixed a bug in write_pdens.c
+               - corrected some missing adjustments in create_timeline() when being called from, for instance, virial.c etc.
+
+29/03/2007     - split hydro.c into hydro_KNP.c and hydro_util.c
+(BUILD 137)      -> the general hydro-routines are in hydro_util.c while hydro_KNP.c contains only those routines that belong to the actual KNP scheme
+               - properly implemented some missing #inlcude "xyz.h"
+
+30/03/2007     - properly implemented 2nd order Runge-Kutta scheme for the time integration
+(BUILD 138)    - removed the "directional split" option
+
+02/04/2007     - fixed a bug in amiga2gadget.c
+(BUILD 139)    - added Epot_gas (and Phi0) to ahf_halos.c (for -DGAS_PARTICLES)
+               - added -DHYDRO_TEST==8
+                 -> collapse of an isothermal cloud
+               - removed HaloProperties() from ahf_halos.c
+                 -> integral part of HaloProfiles()!
+
+13/04/2007     - removed SUPERCOMOVING2
+(BUILD 140)    - first steps to allow for POISSON2 and simultaneously SUPERCOMOVING
+               - merged all of Claudio's MOND2 stuff 
+
+16/04/2007     - SUPERCOMOVING and POISSON2 work together now
+(BUILD 141)
+
+27/04/2007     - grabbed latest changes by Claudio from CVS server regarding -DDONT_KICK_ME
+(BUILD 142)
+
+03/05/2007     - fixed some bugs in amigagrid2ascii.c (missing -DDOUBLE feature!)
+(BUILD 143)    - timestep is now properly written to (and read from) AMIGA binary files
+               - speed-up in fft.c
+                 -> introduction of sin2sfkz and sin2sfky...
+               - fixed a bug in step.c related to -DPOISSON2
+
+10/05/2007     - added -DINTERNAL_ENERGY
+(BUILD 144)
+
+15/05/2007     - fiddling with DUAL_ENERGY formalism
+(BUILD 145)      -> sync p, e, and E 
+               - fixed a bug in hydro_test.c
+                 -> cur_grid->timecounter was not set for all tests incl. gravity
+                    (NOTE: solve_gravity() relies on cur_grid->timecounter when using POISSON2!!!)
+31/05/2007     - increased MAXTIME to 100000
+(BUILD 146)    - fixed a bug in HaloProfiles() in ahf_halos.c that led to wrong kinetic energies for individual particles
+
+15/06/2007     - fixed a bug in HaloProfiles() in ahf_halos.c
+(BUILD 147)      -> Ekin_gas and Ekin_pot were missing the 0.5 factor
+
+25/06/2007     - a few fiddly changes related to -DHAPPITEST
+(BUILD 148)
+
+29/06/2007     - minor modifications to HaloTracker.c
+(BUILD 149)      -> actually, HaloTracker was not compiling anymore due to multiply defitions of routines...
+               - added -DEpot_GMr which will base the Epot calculation in ahf_halos.c on GM(<r)/r rather than the infinite phi(r) potential
+
+16/07/2007     - minor bug fix in libio/ by Steffen
+(BUILD 150)    - introduced -DEpot_GMr also for rem_unbound() in ahf_halos.c
+
+17/07/2007     - changed -DEpot_GMr in rem_unbound() to -DPhi_GMr as this appears more appropriate
+(BUILD 151)    - introduced -DPhi_Rvir which truncates the potential at Rvir in rem_unbound()
+               - introduced -DAHFreducedinertiatensor into ahf_halos.c and HaloTracker.c
+               - discovered and fixed a bug with convergence criterion in ahf_halos.c
+                  -> used halos[j] instead of halos[i] :-(
+
+19/07/2007     - renamed -DPhi_GMr and -DEpot_GMr to -DAHFphi_GMr and -DAHFepot_GMr
+(BUILD 152)    - introduced -DAHFphi_infty
+                 -> uses full blown AMIGA potential for unbinding!
+               - fine-tuned -DAHFpotcentre
+
+20/07/2007     - fixed some minor quibble related to GADGET_SKIP and BYTESWAP
+(BUILD 153)    - removed obsolete code from residual.c
+
+16/08/2007     - merged all those MOND2 files into AMIGA
+(BUILD 154)
+
+22/08/2007     - go_down() was missing in layzer_irvine.c's potential() routine
+(BUILD 155)
+
+22/08/2007     - fixed some ">=" vs. ">" issues in lltools.c
+(BUILD 156)      -> nothing to worry about as the actual grid structure omits the situation where it becomes relevant...but better to fix it anyways :-)
+
+03/09/2007     - fixed a bug in ahf_halos.c and HaloTracker.c related to -DAHFepot_GMr
+(BUILD 157)      -> the factor 0.5 in front of Epot was wrong in that case...
+               - added ViewSats.f to tools/
+
+10/09/2007     - fine tuned convergence criterion in ahf_halos.c 
+(BUILD 158)
+
+09/10/2007     - fixed a minor bug in ahf_halos.c that led to a strange segmentation fault in line #3070?!
+(BUILD 159)
+
+16/10/2007     - added -DAHFphi_NFW
+(BUILD 160)      -> calculate escape velocity via "fitting" of profile to an NFW
+
+01/11/2007     - added all parallel IO to P-AHF
+(BUILD 161)
+
+05/11/2007     - adapted HaloTracker.c to reflect the latest ahf_halos.c version
+(BUILD 162)      -> added AHFmmfocus feature, GAS_PARTICLES, etc. (not fully tested yet!)
+               - moved some of the routines in ahf_halos.c to utility.c to be accessibe via HaloTracker.c
+
+06/11/2007     - minor changes in alloc_struct.c to avoid segmentation faults when printing warning of "no memory left" into io.logfile
+(BUILD 163)    - added relaxation criterion to HaloTracker.c
+               - fixed a bug related to -DAHFreducedinertiatensor in ahf_halos.c
+               - rehashed -DAHFreducedinertiatensor completely
+                 -> both inertia tensors are now calculated (but only one is written!)
+
+13/11/2007     - removed all those calculations of two inertia tensors again
+(BUILD 164)      -> either the reduced OR the standard one is being calculated!
+
+16/11/2007     - new implementation of DUAL_ENERGY formalism
+(BUILD 165)      -> calls to sync_ES() after every change to u[] or u_tmp[]!!!
+               - renamed and moved subroutines around:
+                 -> the hydro-equations are now located in hydro_equations.c
+                 -> everything not directly related to the KNP scheme has been moved to hydro_util.c (e.g. calc_u_infc() etc.)
+
+21/11/2007     - renamed sound_speed() to calc_cs()
+(BUILD 166)    - moved min_max_speeds() to hydro_KNP.c as it is merely required by the KNP scheme
+               + cleaned up a bit (NOTE: Ghydro8.c produces the same results...)
+
+26/11/2007     - added -DGADGET_PHYSICAL_CCORDINATES
+(BUILD 167)      -> allows AHF to analyse GADGET simulation run in physical (rather than comoving/cosmological) coordinates...
+
+28/11/2007     - bug fixes in libio/ relevant for parallel-IO
+(BUILD 168)    
+
+30/11/2007     - major HYDRO change: global.cfl_speed is no longer calculated in min_max_speed() but within sync_ESp() and sync_u(), respectively
+(BUILD 169)
+
+30/11/2007     - updated most recent changes in libio/
+(BUILD 170)
+
+30/11/2007     - added -DREVERSE_INTEGRATION
+(BUILD 171)
+
+30/11/2007     - fixed a bug in -DGADGET_PHYSICAL_COORDINATES
+(BUILD 172)    - downloaded all recent changes by Steffen
+
+04/12/2007     - downloaded more changes by Steffen in libio/
+(BUILD 173)
+
+13/12/2007     - downloaded even more changes by Steffen
+(BUILD 174)
+
+18/12/2007    - downloaded even more changes by Steffen
+(BUILD 175)
+
+25/01/2008    - implemented all of -DMOND2
+(BUILD 176)
+
+29/01/2008    - removed -DINTERNAL_ENERGY from HYDRO solver
+(BUILD 177)   - removed all that cal_grad_p() stuff
+              - new DUAL_ENERGY treatment:
+                edens is >>not<< advected but calculated (and stored in u[Uedens]) via DUAL_ENERGY (E- or S-System) and then used to obtain the pressure
+                -> no need for calc_edens() anymore
+                -> calc_p() simply relies on u[Uedens] now
+              - completely new treatment for "gas particles"
+                -> complete rehash of density.c as everything is now "hidden" in simu.f_b (=baryon fraction)
+              - some minor coding improvements in drift_pos.c and layzer_irvine.c
+              - added -DHYDRO_1D_TEST to input.c
+              - modular treatment of various slope limiters now!
+              - added FindHaloPairs.c to analysis/
+
+20/02/2008    - all parameters and DEFINFLAGS are being written to a new prefix.parameter file
+(BUILD 178)
+
+21/02/1008    - rehashed information dumped into logfile at startup!
+(BUILD 179)
+
+
+07/03/2008    - rehashed documentaion/
+(BUILD 180)
+
+31/03/2008    - first steps towards proper DUAL_ENERGY formalism
+(BUILD 181)
+
+01/04/2008    - added -DREMOVE_PARTICLES and -DNOSCALING for read_ascii()
+(BUILD 182)   - properly implemented simu.no_part vs. global.no_part
+                -> no adjustment of no_vpart for AHFmmfocus anymore!
+              - fiddled with PMASS_FROM_FILE in startrun.c
+
+04/04/2008    - seriously rehashed all things hydro!!!!
+(BUILD 183)     -> renamed lots of routines
+                -> completely(!!) revised DUAL_ENERGY formalism (added Ryu et al. 1993 criterion, ...)
+
+07/04/2008    - fixed a bug in hydro-solver
+(BUILD 184)     -> advect_hydro() and advect_gravity_hydro() also updated u[Uedens] which was >>wrong<<
+
+08/04/2008    - proper implementation of 3D-Ryu criterion
+(BUILD 185)   - introduced NADVECT vs. NHYDRO for clarity
+
+09/04/2008    - moved various routines to utility.c (e.g. adjust_timestep(), etc.)
+(BUILD 186)   - moved various routines from utility.c to hydro_util.c (e.g. vanLeer(), etc.)
+
+09/04/2008    - changed TERMINATE logic in drift_pos.c
+(BUILD 187)     -> only terminate in case of speeders when >>not<< running with -DATS
+
+10/04/2008    - introduced -DSWAP_XY and -DSWAP_XZ for read_amiga()
+(BUILD 188)   - fine-tuned -DHYDRO and fixing some bugs related to simu.f_b
+
+11/04/2008    - we can now also switch off DUAL_ENERGY properly ;-)
+(BUILD 189)
+
+14/04/2008    - fine-tuned ShockTube test
+(BUILD 190)   - fine-tuned BlastWave test
+              - fine-tuned CloudCollapse test
+
+18/04/2008    - the movement of various routines accessing common variables to utility.c required some rehashing of header files!
+(BUILD 191)     -> there are changes in nearly >>every<< file now!!!
+
+22/04/2008    - downloaded most recent changes from CVS server
+(BUILD 192)
+
+22/04/2008    - added timing information for -DHYDRO
+(BUILD 193)
+
+29/04/2008    - output_grid() now also writes the io.header information to file
+(BUILD 194)   - fiddled a lot with how output(), manage_output(), etc. handle global variables...
+
+09/05/2008    - major changes in the hydro-part (changes made by Timur Doumler) 
+(BUILD 195)     -> completely removed hydro_nodes[3][5]
+                -> now using MHDnodes[5][5][5]
+
+20/05/2008    - added get_MHDnodes() to get_nnodes.c
+(BUILD 196)   - moved test_tsc() from utility.c to get_nnodes.c
+              - renamed some auxiliary routines in get_nnodes.c for better separation between get_MHDnodes() and get_TSCnodes()
+
+20/05/2008    - substantial(!!) change in get_nnodes.c
+(BUILD 197)     -> modified get_TSCnodes(), get_DSTARnodes(), and get_DISTnodes() to account for that "-1" bug in the quad-linked-list loop!
+                -> or in other words: there was something wrong when comparing coordinates against the range of the quad, i.e. AMIGA was using ">" where it was supposed to check against ">="!
+
+03/06/2008   - downloaded first changes by Timur regarding -DMHD
+(BUILD 198)
+
+03/06/2008   - removed get_TSCnodes() and get_DISTnodes() from calc_Flux()
+(BUILD 199)    -> only using get_MHDnodes() from now on!
+
+06/06/2008   - downloaded all the MOND2 changes by Claudio from CVS
+(BUILD 200)
+
+13/06/2008   - downloaded all the MHD changes by Timur from CVS
+(BUILD 201)
+
+13/06/2008   - implemented Justin Read's changes regarding -DTIPSY
+(BUILD 202)  - changed ZERO to MACHINE_ZERO in lltools.c
+
+17/06/2008   - merged hydro_util.c, hydro_equations.c, and hydro_KNP.c to hydro.c
+(BUILD 203)  - renamed hydro_fluxCON_idim() to hydro_flux()
+             - renamed hydro_sourceCON() to hydro_source()
+             - -DRECONSTRUCT_VELOCITIES is the standard now as it is more stable  
+             - removed check_DISTnodes() and check_NEXTnodes() 
+
+19/06/2008   - a few crucial MHD bugfixes done. Stage of MHD development: code compiles and runs with MHD and produces the same result as the pure hydro code, if B[IDIM] is initialized to zero at the beginning.
+(BUILD 204)  - OCTSPLIT changes:
+               -> new f2c_source()
+               -> new c2f_pot()
+
+25/06/2008   - a few (minor) bug fixes both for -DMHD and -DOCTSPLIT
+(BUILD 205)
+
+27/06/2008   - bug fixes in -DMHD part (the B-field was missing some a(T) factors...)
+(BUILD 206)
+
+02/07/2008   - introduced -DAHFsplinefit to obtain Vmax, Rmax, and r2 via spline interpolation
+(BUILD 207)  - properly coded get_haloedge()
+             - added more stable criterion for assign_progenitor() to MergerTree.c
+             - added -DAHFprofilerise that checks in rem_outsideRvir() for a rising profile
+             - coded binning_parameter() in utility.c for convenience
+
+05/08/2008   - bug fix related to binning_parameter()
+(BUILD 208)    -> the routine needs to know what a HALO structure is...therefore removed the #ifdef AHF around all those AHF-related typedef's in tdef.h
+             - downloaded all changes made by Steffen and Timur
+
+07/08/2008   - added HYDRO_TEST==9
+(BUILD 209)    -> shock tube in x-direction >>with<< magnetic field
+
+10/08/2008   - Steffen changed MANUAL_DVIR
+(BUILD 210)    -> it now needs to be set as, for instance, -DMANUAL_DVIR=339.56
+
+21/08/2008   - introduced PERIODIC_X, PERIODIC_Y, and PERIODIC_Z instead of PERIODIC
+(BUILD 211)    -> however, PERIODIC switches on periodicity in all three dimensions!
+
+27/08/2008   - major MHD changes by Timur!
+(BUILD 212)    -> passes all those non-gravity tests now!
+
+03/09/2008   - a whole lot more MHD tests added by Timur
+(BUILD 213)  - bug fix in ahf_halos.c related to -DTIME
+
+25/09/2008   - Timur coded a whole new scheme for the constrained transport!
+(BUILD 214)
+
+=============================================================================
+
+25/09/2008   - complete restructuring of source-code layout
+(BUILD 214)
+
+30/09/2008   - restructuring of input() to be completely modular now
+(BUILD 215)  - moved over to Kahan summations in read_XYZ()
+
+30/09/2008   - a few fixes in ahf_halos.c, i.e. in connectRef()
+(BUILD 216)
+
+02/10/2008   - major changes in ahf_halos.c
+(BUILD 217)    -> everything after gather_hostParts() is now ready for OpenMP!
+               -> everything after gather_hostParts() is NOT using halos[i].ll anymore but instead halos[i].ipart[]!
+             - bug fixes in connectRef(): BUILD 216 was WRONG!!!
+
+03/10/2008   - introduced -DWITH_OPENMP for ConstructHalos()
+(BUILD 218)
+
+08/10/2008   - fixed problems with Makefile's
+(BUILD 219)  - changes in init_DMhydro() to account for magnetic fields
+             - added B[NDIM] to output_grid.c, input_grid.c, and amigagrid2ascii.c
+
+09/10/2008   - removed PMASS_FROM_FILE
+(BUILD 220)  - completely re-hashed the unit handling in AMIGA!
+               -> every read_XXX() routine other than read_amiga() is expected to fill pos[] with Mpc/h, mom[] with km/sec, and weight with Msun/h
+               -> there is then a call to ic_unit_conversion() that takes care of AMIGA internal units!
+
+21/10/2008   - cleaning up some remnants
+(BUILD 221)  - rehash of amigaPk.c
+               -> uses libio_serial/ now
+               -> reads in grid files
+
+23/10/2008   - rehashed amigaExtractHalos.c to use libio_serial/ now
+(BUILD 222)  - rehashed amigaSigmaR.c to use libio_serial/ now as well as read in gas density
+             - rehashed amigaXi.c to use libio_serial/ now
+             - bug fix in amigaPk.c related to f_b calculation
+             - removed ReturnParticles() from ahf_halos.c (no longer needed!)
+             - renamed SafeReturnParticles() to ReturnParticles()
+             - removed rem_minNodes() from ahf_halos.c and replaced it with a simple call to ReturnParticles()
+             - -DGADGET_IDS differently introduced (not default for -DGADGET anymore!)
+             - renamed connectRef() to spatialRef2halos()
+             - rehashed MPI version...
+
+30/10/2008   - outputs.c now dumps information into a.out and z.out
+(BUILD 223)  - implemented the latest changes by Timur regarding MHD
+
+06/11/2008   - added possibility to restart a hydro-simulation
+(BUILD 224)    -> works currently >>only<< for a regular domain grid
+               -> added -DINIT_DMHYDRO as DEFINEFLAG for starting a hydro-simulation based upon DM particles only
+             - fixed several bugs in libio_serial/
+               -> sanity_check() had to be called at a different time for read_amiga()
+               -> sanity_check() now also updates header_masses if needed...
+
+
+07/11/2008   - analyseRef(): closeRefDist=(Dist/2)^2 rather than closeRefDist=alpha*Dist^2/2
+(BUILD 225)  - changed AHF_MAX_GATHER_RAD to 2.0 Mpc/h instead of 1.5 Mpc/h
+             - completely removed AHF_MINNODES
+             - merged loops gather_hostPart() and ReturnParticles()
+
+10/11/2008   - completely rehashed collectRef() and the way the spatialRef[][] centres are calculated
+(BUILD 226)  - -DAHFcomcentre: added centre-of-mass centre of particles on spatialRef[][]
+               -> all possible centres are being calculated simultaneously and then it is decided which one to use
+             - gatherRad is now MAX(closeRefDist, gatherRad)
+             - fixed bug in fc_overlap()
+               -> we cannot interpolate coa_dens to fin_node as some coa_nodes do not carry any density all all yet...
+
+12/11/2008   - rehashed gather_hostParts() and ReturnParticles()
+(BUILD 227)  - bug fix in fine_to_coarse.c related to OPENMP (removed variables were still in the private list)
+
+13/11/2008   - AHFcomcentre is switched on permamently in define.h now
+(BUILD 228)  - no particle gathering in spatialRef2halos() anymore
+
+14/11/2008   - bug fix in ahf_halos.c
+(BUILD 229)    -> there was a SegFault problem with the halos[].ipart[] array
+
+17/11/2008   - minor change in RefCentre()
+(BUILD 230)    -> if all centreDens, centrePot, centreCMpart fail we fall back to centreGEOM (rather than centreDens!)
+             - SUBSTANTIAL (conceptual!) change in rem_unbound()
+               -> removed MEANV_ALL
+               -> an unbound particle does not contribute to the bulk/mean velocity of the halo anymore in the unbinding procedure!
+
+24/11/2008   - bug fix in input()
+(BUILD 231)    -> read_gadget() part of input() was still accessing io.icfile_name which is undefined when compiling, for instance, amigaExtratHalos
+
+26/11/2008   - bug fix in read_art()
+(BUILD 232)    -> fclose() should not have been called in read_ARTbinaries
+             - bug fixes in hydro.c
+               -> "omp parallal" instead of "omp parallel"
+             - replaced ReadString() with ReadChars()
+               -> the terminating '\0' in ReadString is written to s[n], but s[] is only of length n!
+
+27/11/2008   - added all hydro-parameters to get_user_data() for the case of -DART && -DHYDRO to be able to start hydro simulations using PMstartM.f
+(BUILD 233)
+
+01/12/2008   - further changes in the rem_unbound() related to the calculation of the bulk velocity
+(BUILD 234)    -> if the innermost particle is unbound the whole halo will get disrupted as that first particle determines the bulk velocity!
+             - proper calculation of spatialRef[][].volume
+
+09/12/2008   - complete rehash of ReturnParticles() and gather_hostParts()
+(BUILD 235)    -> we first move(!) all particles back to their respective host
+               -> we then gather/copy them back
+                  -> there were issues that gather_hostParts() did not gather all required particles...
+               -> renamed a couple of routines along the way
+               -> introduced prepare_particles() that encapsulates all these operations
+
+11/12/2008   - some changes to the source code layout with respects to return_particls() and gather_hostParts()
+(BUILD 236)
+
+14/12/2008   - bug fix in read_gadget() in relation to multiple GADGET files
+(BUILD 237)    -> the line "ipart += k*gadget.np[i][k];" was wrong and has been corrected to "ipart += gadget.np[i][k];"
+
+14/01/2009   - tweaking the AHF performance
+(BUILD 238)    -> the new AHF concept for gather_hostParts() led to a drop in performance by a factor of 5! NOT ACCEPTABLE!
+             - so far, the only change is the usage of halos[].nll instead of halos[].npart in prepare_particles()
+
+20/01/2009   - bug fix in ahf_halos.c
+(BUILD 239)    -> ovdens in .AHF_profiles was wrong as it got modified by get_haloedge()!
+
+22/01/2009   - minor changes in amigaPk.c and related in input_grid.c
+(BUILD 240)    -> more modular handling of how to read a grid...
+             - improvements in handling mass species with a spectrum exceeding several(!) orders of magnitude
+             - fixed a conceptual bug in the determination of refine_ovdens
+               -> we introduced a dependence on simu.pmass by simply using refine_mass = simu.pmass
+               -> we now use simu.pmass*simu.max_weight to be on the safe side...
+             - in case of GADGET simulation we will now always use GADGET_MUNIT as the mass unit...
+
+03/03/2009   - added -DFORCETEST
+(BUILD 241)
+
+05/03/2009   - added read_deva()
+(BUILD 242)    -> thermal energy not functional yet
+
+05/03/2009   - merged with Kristin's latest changes
+(BUILD 243)    -> completely rehashed HaloTracker.c that now utilizes all the routines in ahf_halos.c
+             - fixed a minor bug related to -DFORCETEST in step.c
+
+06/03/2009   - write more information into .AHF_particles for -DDEVA
+(BUILD 244)    -> added itype and the actual DEVA ID
+             - bug fix for cur_gas
+               -> the check for a particle being a gas particle was not 100% correct!
+
+08/03/2009   - introduced -DGAGDET_PMASS
+(BUILD 245)    -> will use GADGET's particles mass unit in AMIGA, too
+             - adjusted refine_mass in ahf_gridinfo.c:
+               - introduced io.header.med_weight as well as simu.med_weight
+               - refine_mass uses simu.med_weight*simu.pmass to determine the first grid to be used with AHF
+               - med_weight can either be the weighted mean (not median as the name suggests!) of all particle masses in the simulation or the most_common_weight found in the data (the latter is the default!)
+             - coded a couple more routines that may or may not turn out to the useful:
+               - prune_host_halos() removes all particles outside MAX_GATHER_RAD from host halos
+               - gather_parts_from_host() has been duplicated: a new version tries to avoid excessive realloc() calls (switched on via -DOPT_REALLOC)
+
+12/03/2009     - added more compatibility for DEVA files, e.g. double precision, etc.
+(BUILD 246)      -> the new -DDEVA2 flag allows to read the raw data (and automatically only keeps the hi-res region!)
+
+16/03/2009     - added star particles to -DGAS_PARTICLES: the same properties as for gas particles are now also calculated for star particles!
+(BUILD 247)      -> actually -DGAS_PARTICLES should better be renamed, but to not cause any confusion I simply keep the name for this feature
+
+17/03/2009     - minor adjustement to read_mlapm() to be able to properly read that STH2 data
+(BUILD 248)
+
+17/03/2009     - bug fix in OPENMP version
+(BUILD 249)      -> ConstructHalos() was missing a private declaration for halo structure
+
+17/03/2009     - minor adjustement to read_deva() taking care of qhull file
+(BUILD 250)      -> now defined in define.h (quick-and-dirty hack!)
+
+18/03/2009     - amigaExtractHalos.c
+(BUILD 251)      -> more flexibility for different *.AHF_particles formats by using fgets()
+               - amigaPdens.c
+                 -> possibility to shift particle positions into centre in case of periodic wrapping
+               - PdensExtractHalos.c
+                 -> automated shift of particles into centre as this code only produces visualisation output
+               - substantial changes to read_deva() foer -DDEVA2
+                 -> dropped the usage of the .qhull file and rather remove all tidal dark matter particles using a mass criterion
+                 
+06/04/2009     - name changes for various AHF features/DEFINEFLAGS (sorry not not keeping track of the actual changes)
+(BUILD 252)      -> now complies with the definitions/descriptions in the AHF's users guide.
+
+21/04/2009     - -DGAS_PARTICLES now also writes profile information to the number of gas and star particles into *.AHF_profiles
+(BUILD 253)
+
+22/04/2009     - changed gas and star information in *.AHF_profiles to nvpart_gas and nvpart_star instead of number of particles!
+(BUILD 254)
+
+05/05/2009     - minor bug fix in init_header_masses()
+(BUILD 255)      -> drop mlimit usage and rather employ a "fractional difference criterion" to figure out new mass species
+               - minor bug fix on sanity_check()
+                 -> no longer dividing my pmass after call to init_header_masses() (only relevant for messed up AMIGA binary anyways!)
+                 
+07/05/2009     - unclear...changes by others
+(BUILD 256)
+
+08/05/2009     - changed DEVA_SKIP to use ReadUInt() instead of ReadInt()
+(BUILD 257)    - updated changes done by Kristin and Steffen
+
+08/05/2009     - first steps towards MPI version + stars
+(BUILD 258)
+
+08/05/2008     - serious bug fix for the stellar information when using GADGET files
+(BUILD 259)      -> global.offset_stars was completely wrong!
+
+11/05/2009     - A bunch of changes concerning NEWSTARTRUN (MPI):  A new
+(BUILD 260)      gather_hostParts is added to improve speed in that part
+                 of AHF.  That required adding a couple of helper
+                 functions in libsfc and libutility.
+               - FCSID has been removed.
+
+12/05/2009     - The NEWSTARTRUN version now uses a different halo
+(BUILD 261)      construction, utilizing the new gather_hostParts that
+                 uses the SFC information to quickly gather particles.
+
+12/05/2009     - Fixing a few minor issues with the MPI version
+(BUILD 262)       concerning halo ignoring (that didn't work) and the
+                 writing of the output file.
+                 
+03/06/2009     - improvements in reading of DEVA files
+(BUILD 263)
+
+10/06/2009     - added DEVA support to libio/
+(BUILD 264)    - substantial change in calculation of halos[].gatherRad
+                 -> we do not trust the halos[].hostHaloGrids anymore to be -1 for host halos only...
+               - corrected unit error in usage of cur_gas->u and cur_part->u, respectively
+                 -> the value is now scaled to AMIGA internal units when being used in ahf_halos.c
+                 -> when reading from file it should be set to (km/sec)^2
+               - renamed -DGADGET_PARTICLES_INFO to -DPARTICLES_INFO as this is a universal feature now!
+               
+12/06/2009     - some fine tuning of io_amiga.c in libio/ to properly assign f->minweight and f->maxweight
+(BUILD 265)
+
+12/06/2009     - Steffen made io_mgadget.c compatible with machines where sizeof(long)=4 (e.g. Apple's architecture)
+(BUILD 266)
+
+17/06/2009     - improved implementation of BYTESWAP status for io_deva.c
+(BUILD 267)
+
+19/06/2009     - initiated io_tipsy.c in libio/
+(BUILD 268)      -> this would not have been possible without the great help of Justin Read!!! THANKS Justin!
+
+20/06/2009     - fiddled with conversion factors for TIPSY
+(BUILD 269)      -> v_fac in io_tipsy_scale_particles() was missing one additional "expansion"
+                 -> e_fac in io_tipsy_read_particles_raw() was not set at all
+                 
+22/06/2009     - final polishing of TIPSY support
+(BUILD 270)      -> the units are now supplied by the user via a file "tipsy.info"
+
+24/06/2009     - serious bug fix in io_tipsy_header_def.h
+(BUILD 271)      -> the memory allocated for the TIPSY header structure was only of size TIPSY_HEADER_SIZE
+                    -> we forgot to allocate space for the extra information stored in the header structure that is >>not<< stored in the file :-(
+                    
+28/06/2009     - downloaded ASCII support for the MPI version coded by Steffen
+(BUILD 272)
+
+29/06/2009     - fixed a couple of problems with the naming of TIPSY_VUNIT and TIPSY_MUNIT across MPI and serial version
+(BUILD 273)    - downloaded further updates for ASCII support in the MPI version
+
+01/07/2009     - started adding support for the CUBEP3M code
+(BUILD 274)
+
+02/07/2009     - cleaning up of various #define's that did not work together anymore for the serial version
+(BUILD 275)    - changed names for e.g. TIPSY_VUNIT, CUBEP3M_VUNIT, etc. in the respective header structures to small caps
+               - CUBEP3M actually stores a^2 \dot{x} which has now been corrected for in io_cubep3m_scale_particles()
+               - fixed a problem with f->minweight and f->maxweight for CUBEP3M support
+
+03/07/2009     - calculation of most bound particle was missing the possible contribution from the thermal energy
+(BUILD 276)
+
+03/07/2009     - added v_esc2 calculation to both the *.AHF_halos and *.AHF_profiles files
+(BUILD 277)      -> PLEASE NOTE THAT THIS COMPLETELY CHANGED THE ARRANGEMENT OF THE COLUMNS IN THESE TWO FILES!
+               - change for the serial version in spatialref2halos() in ahf_halos.c
+                 -> revived that if-statement "if ( halos[i].hostHaloGrids != -1 )" when determining the gatherRad!
+               - moved back to using med_weight for the actual med_weight (instead of most_common_weight) in init_header_masses()
+                 -> this version has been tested on all available test cases for both the serial and MPI version and appears to be working correctly!
+               
+13/07/2009     - preparing new output format for *.AHF_halos
+(BUILD 278)      -> added coherent structures for DM, gas, and star properties only to HALO
+
+14/07/2009     - added routine that deciphers the level of a (sub-)halo
+(BUILD 279)      -> get_sublevel(haloID)
+
+15/07/2009     - coherent structuring for *AHF_halos blocks
+(BUILD 280)    - removed -DAHFabsangmom
+               - removed -DAHFabsaxes
+               - fixed a problem with periodic boundaries for Xcom_DM, Xcom_gas, Xcom_star, etc.
+
+30/07/2009     - bug fix in io_tipsy.c
+(BUILD 281)      -> the ID's for the gas particles were off by 1!! Stars and DM are unaffected though...
+
+01/09/2009     - downloaded the latest changes made by Steffen regarding ahf_io.c from the server
+(BUILD 282)
+
+02/09/2009     - minor bug fix in ahf_io.c
+(BUILD 283)      -> "AHFcenterfile" instead of "AHFcentrefile"
+
+09/09/2009     - added -DTIPSY_ZOOMDATA
+(BUILD 284)      -> shift[] in io_tipsy_scale_particles() will be ignored!
+                 -> instead all particles are simply shifted by (+0.5, +0.5, +0.5)
+                 
+07/10/2009     - downloaded a bug-fix by Steffen
+(BUILD 285)
+
+13/10/2009     - -DAHFnoremunbound was missing in latest version that utilized the new ahf_io.c
+(BUILD 286)    - -DNEWSTARTRUN now reads info from AHFstep.inout file as supposed!
+               - ahf_io.c now prints again >>one<< (and not multiple!) header lines again
+               
+13/10/2009     - added -DAHFgridtreefile which dumps information about the centres of the grid tree
+(BUILD 287)
+
+14/10/2009     - added -DMARE_NOSTRUM_DM_ONLY and -DMARE_NOSTRUM_GAS_ONLY
+(BUILD 288)      -> does NOT work when finding haloes, only works together with -DAHFgridtreefile!
+
+11/11/2009     - fixed a bug that prevented all expect tasks the main one in an MPI run to write _halos files
+(BUILD 289)
+
+24/11/2009     - downloaded all the changes made by Steffen
+(BUILD 290)      -> there is no -DWITH_AMIGA_input any longer!
+
+25/11/2009     - minor change in io_tipsy.c and ahf_halos.c to improve user friendliness...
+(BUILD 291)
+
+07/12/2009     - bug fix in main.c
+(BUILD 292)      -> global.no_part was not set when using -DNEWSTARTRUN
+
+16/12/2009     - simply cleaning up a bit and making code and user's guide agree with each other :-)
+(BUILD 293)
+
+21/12/2009     - added -DAHFptfocus
+(BUILD 294)      -> AHF now focuses the analysis only on a certain type of particles
+                    (only works together with both MULTIMASS and GAS_PARTICLES!)
+                    
+08/01/2010     - initiated support for ART format
+(BUILD 295)      -> reading of PMcrd.DAT (= ART header) functional
+
+11/02/2010     - continued ART support
+(BUILD 296)    - bug fix in allocation of memory for various file headers
+                 -> now using sizeof(header_struct) instead of HEADER_SIZE
+                 
+22/02/2010     - minor modification to addition of Hubble drag during unbinding procedure
+(BUILD 297)      -> can now be switched off by -DAHFnoHubbleDrag
+
+25/02/2010     - Francisco Martinez added support for native DEVA format
+(BUILD 298)      -> IO_FILE_DEVANATIVE 81
+
+11/03/2010     - bug fix in ahf_halos_sfc_gatherParts()
+(BUILD 299)      -> it could have happened that a halo obtained particles multiple times
+
+12/03/2010     - only some cosmetic changes
+(BUILD 300)
+
+24/03/2010     - introduced safety switch in src/define.h preventing mixing of libio.a and libio_serial.a
+(BUILD 301)
+
+19/04/2010     - removed redundant code for -DAHFnoremunbound
+(BUILD 302)      -> the call to rem_nothing() (instead of rem_unbound()) was not necessary!
+
+03/05/2010     - added -DDVIR_200RHOCRIT
+(BUILD 303)      -> uses 200*rho_crit as the criterion for the halo edge
+
+27/05/2010     - fixed the usage of an uninitialzed variable in
+(BUILD 304)      loadbalance.c (happened in a piece of code that is not
+                 used in the vanilla version).
+
+28/06/2010     - added full support for CubeP3M files
+(BUILD 305)    - provided a defineflags to suppress creation of
+                 _particles files
+                 
+29/06/2010     - resurrected some of the analysis/ tools (e.g. amigaSigmaR)
+(BUILD 306)
+
+14/09/2010      - bug fix in _io_art.c
+(BUILD 307)
+
+29/10/2010     - When using -DGAS_PARTICLES, the _profiles file will
+(BUILD 308)      contain an extra column for the internal gas energy
+                 within the radial shell (calculated as sum_i m_i * u_i,
+                 where the sums extents over all gas particles in the
+                 shell).
+                 
+22/12/2010     - minor bug fix in ahf_halos.c, there was an #ifdef GAS_PARTICLES missing
+(BUILD 309)
+
+12/01/2011     - bug fix in ahf_halos.c: If numHalos == 0 don't try to
+(BUILD 310)      sort the halos according to mass (indexx doesn't seem
+                 to handle an empty array?).
+                 
+14/01/2011     - bug fix in analyseRef()
+(BUILD 311)      -> lost refinements were not correctly added to the most likely host leading to a segmentation fault
+
+16/02/2011     - TIPSY support is a bit more verbose upon startup to figure out BYTESWAP issues etc.
+(BUILD 312)    - preparations for SQL support
+
+01/03/2011     - wrapped #ifdef AHF_SQL around ahf_io_sql.c
+(BUILD 313)
+
+02/03/2011     - bug fix: Phi0 was written out in the wrong unit
+(BUILD 314)
+
+07/03/2011     - resurrecting AMIGA'a MHD solver (unrelated to AHF!)
+(BUILD 315)
+
+17/03/2011     - replaced "nvpart" in *.AHF_halos files by "fNhires"
+(BUIL 316)       measuring the fraction of high-resolution DM particles
+                 with respects to all DM particles in a halo
+                 -> only functional for GADGET files at the moment...
+               - nvpart in *.AHF_profiles is now M_in_r in Msun/h
+               - M_gas, and M_star in *.AHF_profiles will be written in Msun/h
+               
+17/03/2011     - bug fix in rem_unbound() related to WITH_MPI, NEWSTARTRUN, and cur_part->u vs. cur_gas->u
+(BUILD 317)
+
+18/03/2011     - added dumping of *.AHF_partcilesSTARDUST files to -DMETALHACK feature
+(BUILD 318)      (BE VERY VERY CAREFUL WITH THE IDs: they are currently casted to (int) because of the Fortran reading routines in STARDUST!)
+
+19/03/2011     - went back to fMhires=(M_gas+M_star+M_hiresDM)/(M_total) as a measure for contamination
+(BUILD 319)      (Note again, this value is only meaningful for GADGET files at the moment)
+               - also decided to dump particle ID's in their native format (i.e. long) into *.AHF_particlesSTARDUST
+
+21/03/2011     - added -DDVIR_200RHOCRIT_VDE that only concerns our VDE simulations
+(BUILD 320)
+
+23/03/2011     - restructured the writing of *.AHF_particlesSTARDUST
+(BUILD 321)    - bug fix in *.AHF_particlesSTARTDUST -> the age was not in Gyr/h
+
+25/03/2011     - bug fix in reading routines for metals and ages:
+(BUILD 322)      the offset calculation for reading metals and ages was
+                 wrong when not the complete file was read but only a
+                 small part of it.
+            
+06/04/2011     - added new feature TIPSY_PARTICLE_ORDERING
+(BUILD 323)      -> the particle id's are now set according to the position in the TIPSY file keeping the order stars, dark matter, gas
+               - added AHF_MINPART_GAS and AHF_MINPART_STARS in src/param.h
+                 -> lower limit for calculation of spin and shape based upon gas and star particles only
+                 
+12/04/2011     - downloaded the latest changes by Steffen from the SVN server
+(BUILD 324)
+
+13/04/2011     - added more information about the cosmology to the logfile
+(BUILD 325)
+
+14/04/2011     - some minor bug fixes in ahf_gridinfo.c present when compiling with -DAHFDEBUG
+(BUILD 326)    - missing #ifdef WITH_MPI in main.c
+
+25/04/2011     - disabled the writing of the redundant *.AHF_substructure files
+(BUILD 327)      -> they were causing more trouble than help
+               - tuned MergerTree.c to work straight with the standard *.AHF_particles files
+               - removed AHF_MASSMIX completely
+               
+28/04/2011     - added feature WRITE_PARAMETERFILE that writes all the DEFINEFLAGS etc. into a file
+(BUILD 328)    - minor bug fixes and cleaning up related to rho_b, rho_crit and rho_vir calculation
+                 -> the density profiles will be calculated and written in units of global.rho_vir now,
+                    where global.rho_vir is either the background density rho_b or the critical density
+                    rho_crit depending on the user's choice (cf. DVIR_200RHOCRIT)
+                    
+03/05/2011     - added feature AHFdmonly_Rmax_r2 that bases the determination of Rmax and r2 upon DM only
+(BUILD 329)      (note that the gas/stars are messing with the rotation curve in the centre...)
+
+05/05/2011     - changed mass unit for TIPSY files to "AHF standard unit"
+(BUILD 330)      -> the mass unit is determined by the lightest dark matter particle
+                 -> now fMhires will be a reasonable number also for TIPSY!
+                 
+10/05/2011     - minor bug fixes related to fMhires
+(BUILD 331)      -> used abs() instead of fabs(), happens when mixing too many programming languages, sorry :-(
+               - made AHFdmonly_Rmax_r2 standard by simply uncommenting it in define.h (not part of STANDARD though!)
+               
+16/05/2011     - fixed a bug when writing the *.AHF_particles
+(BUILD 332)      -> dark matter only simulations did not contain the particle type when compiled with -DPARTICLES_INFO
+
+01/06/2011     - bug fix in ahf_halos_sfc.c that led in very special circumstances
+(BUILD 333)      to a return of the last particle (in Hilbert key ordering) multiple
+                 times as the first particle in a search box
+                 
+20/06/2011     - introduction of -DAHFlean, a new specific switch aimed at reducing the memory footprint of AHF.
+(BUILD 334)      -> please do get in touch if you want to use it as it collides with several other features!
+                    (e.g. we cut the storage for IDs, AHFpotcentre is not working anymore, etc.)
+                    
+11/07/2011     - Changes related to AHFrestart.  Firstly, the output file name does not
+(BUILD 335)      include the rank of the original MPI task anymore, as this never worked
+                 at all (and was only printing 0).  And secondly, when using AHFrestart,
+                 we don't want to clutter the logfiles and thus don't want VERBOSE to be
+                 defined, which currently happens always, when AHFstep is defined.  Now
+                 AHFrestart behaves as WITH_MPI (which undefines VERBOSE).
+
+27/07/2011     - bug fix in io_read_gadget.c
+(BUILD 336)      -> the blocksize should be 'unsigned int' and not only 'int'
+               - added -DDEBUG_STARTRUN in main.c leading to exit() right after startrun()
+
+19/08/2011     - added AHF_NBIN_MULTIPLIER to param.h which can be used
+(BUILD 337)      to increase the number of bins used for the profiles
+
+31/08/2011     - fixed an issue with -DAHFptfocus where the particle ID was not kept
+(BUILD 338)    - added -DAHFignore_ugas which ignores the gas thermal energy when unbinding
+
+03/09/2011     - bug fix in smooth3()
+(BUILD 339)      -> the last bin was not accounted for properly
+               - "feature" fix in find_max()
+                -> the peak value was determined from the smoothed array and not the original one
+
+06/09/2011     - further bug fix in smooth3()
+(BUILD 340)      -> for nbins<3 there was false memory access
+               - added proper simu.multimass initialisation to startrun()
+
+13/10/2011     - tuned logfile output a bit (resurrecting memory useage, etc.)
+(BUILD 341)    - bug fix in io_deva.c (thanks to Jose Onorbe!)
+
+14/10/2011     - introduced new parameter AHF_HIRES_DM_WEIGHT in param.h facilitating the use of fMhires
+(BUILD 342)
+
+17/10/2011     - some more tweaking of logfile
+(BUILD 343)    - added command line option "--parameterfile" which will simply dump a file
+                 "AHFstep.parameter" containing all (compile/DEFINEFLAG) parameters (usage: "./AHFstep --parameterfile")
+                 
+04/11/2011     - made -DAHFlean part of STANDARD in define.h
+(BUILD 344)    - made -DTEST_NODE part of STANDARD in define.h
+               - added -DTEST_CURNODE_ONLY to refine_grid() which only tests the present node for refinement and none of the surrounding ones
+                 -> still leads to segmentation faults in ahf_gridinfo.c and hence should not be used yet
+                 
+08/11/2011     - clearing up a few compile warnings
+(BUILD 345)    - fixed issue in output_grid.c and input_grid.c (of no relevance for AHF!)
+               - added a few comments about the (im-)possible parallelisation of ahf_gridinfo.c
+
+09/11/2011     - a few bug fixes in libio/io_art.c
+(BUILD 346)    - cleaning up sloppy (unsigned in) vs. (int) reading/declarations in libio/io_gadget.c
+
+07/12/2011     - now supporting chunked CubePM format
+(BUILD 347)    - includes a bit of clean-up in the CubePM reader
+               - removed all references to HAVE_STDINT_H, HAVE_STDBOOL_H and NONC99.
+                 AHF now assumes that the user is running a C99 compatible compiler and
+                 runtime.  Only very obscure and old systems wouldn't be C99, but you
+                 might need to tell the compiler to actually use C99.  This is already
+                 done in the Makefile.config_SAMPLE for gcc (-std=c99), though depending
+                 on the compiler, it might require a different flag.
+
+                 Note, the Non-C99 compatibility didn't work in AHF for quite a long time,
+                 and since no one complained, we can as well clean in up.
+                
+09/02/2012     - METALHACK improvement: added local_skip_gadget1_blocks() to io_gadget.c
+(BUILD 348)      allowing to read AGE and Z blocks in GADGET1 files
+                 -> WARNING: this assumes a certain ordering of the blocks, check carefully!
+                 
+13/02/2012     - added a bit more profiling of AHF into the logfile
+(BUILD 349)    - improved header reading in the new routine local_skip_gadget1_blocks()
+               - moved '#define AHFlean' from STANDARD to the AHF part in define.h
+               - introduced -DAHFdensrecovery switched on by default in define.h
+                 -> not using this flag will substantially speed up AHF
+                    yet lead to inaccuracies in the density on the edges of refinements
+                    (decide for yourself, but my own tests show that the mass function and
+                     Vmax function of the Haloes going MAD full box data is not affected!)
+
+14/02/2012     - minor bug fix in local_get_block_id() in io_gadget.c (it returned 'i' instead of 'pread')
+(BUILD 350)    - some modifications to define.h properly taking care of AHFdensrecovery
+               - forgot to deal with the second unassign_part() call in relink()
+               - tweaking and tuning of spatialRef2halos():
+                 - some OpenMP parallelisation to spatialRef2halos() switched on via -DWITH_OPENMP3
+                 - enclosed some loops setting hostHaloGrids etc. in WITH_AHF_HALOS_SFC ifdef's
+               - added -DAHFfast which switches on WITH_OPENMP2 and WITH_OPENMP3 possibly leading to inaccuracies!?
+               - added -DAHFpreliminaryhalosfile to write a file with some preliminary halo information at the end of spatialRef2halos()
+               - changed from assign_dens() to assign_npart() in gen_refgrid()
+               
+15/02/2012     - for WITH_AHF_HALOS_SFC spatialRef2halos() does not relink particles to the halos[] anymore
+(BUILD 351)      -> this gives a substantial speed-up!
+               - tried to implement -DAHFwritehalotype but failed again
+                 - what the heck is wrong with the spatialRef[][] tree???
+                 - or is the problem in the transferal to the halos[] tree???
+                 
+15/02/2012     - minor bug fix in first for-loop of spatialRef2halos() introduced in 351
+(BUILD 352)
+
+20/02/2012     - minor modifications, e.g. forgot AHFnoHubbleDrag in logfile, placeholder for new gen_amr_hierarchy(), etc.
+(BUILD 353)
+
+22/02/2012     - THE SPRING CLEAN HAS STARTED:
+(BUILD 354)      * all code related to AMIGA will be removed
+                 * only those AHF features considered meaningful will be kept
+                    -> this is the first pass as the whole cleaning will be done in small chunks
+                       always assuring that AHF will continue to work as advertised...
+
+=============================================================================
+****                   finally upgraded AMIGA to AHF                     ****
+=============================================================================
+
+24/02/2012     - here we go again...
+(BUILD 001)
+
+07/03/2012     - added cNFW to AHF_halos file based upon Eq.(8) of Prada et al. (2012)
+(BUILD 002)    - introduced -DAHFaddDMonlyproperties
+                  -> all the DM_only.X properties will now only be calculated when this flag is switched on (they are not used at the moment at all!)
+
+07/03/2012     - Xc, Yc, Zc are now output in kpc/h
+(BUILD 003)    - no more writing of "a" eigenvalue
+               - removed all -DTRACKER instances
+               - introduced u_fac=(v_fac)^2 in ahf_halos.c
+                 -> when dealing with thermal energies this factor is relevant, but
+                    when converting thermal energies to velocities you still require v_fac!
+
+13/03/2012     - fiddled a bit with MergerTree.c
+(BUILD 004)    - removed Redge calculation and writing (this value always was a bit dubious)
+               - introduced ihost to AHF_halos
+               - removed R_edge from AHF_halos (cf. AHFfindRedge)
+               - resurrected AHF_substructure
+               - removed qsort() from spatialRef2halos() messing up halo-tree (replaced by indexx())
+               - changed loops in spatialRef2halos() when determining gatherRad
+                 -> now interior loop starts at jj=ii
+                 -> added OpenMP pragma 
+                 
+13/03/2012     - minor improvement in idx_inv()
+(BUILD 005)    - removed uneccessary calculation of Rvir2 in spatialRef2halos()
+               - removed get_hostHaloID() and get_sublevel()
+               - removed hostHaloGrids
+               - introduced hostHaloLevel giving the level on which the subhalo spawned from the host
+                 -> added both hostHalo and hostHaloLevel to AHF_halos
+               - AHF_HOSTHALOLEVEL in param.h controls the first level to be considered as
+                 credible to spawn subhaloes and is being used when writing AHF_halos and AHF_substructure
+                 
+14/03/2012     - final tweaks of AHFsubstructure:
+(BUILD 006)      -> added a new for-loop right after the call to ahf_halos_sfc_constructHalo() in ahf_halos.c
+                    that checks for "inside virial radius" (as well as MINPART!!!) for those nebulous subhaloes spawned from AHF_HOSTHALOLEVEL
+                    (fulle re-hash of halos[].subStruct[] array and halos[].numSubStruct
+               - removed hostHaloLevel again from AHF_halos and writing instead numSubStruct
+               - introduced AHF_HOSTSUBOVERLAP in param.h measuring the allowed overlap between host and subhalo
+               - added halo ID to AHF_halos
+               - added surface pressure term to AHF_halos
+              
+15/03/2012     - TIPSY files now require the input from the user about the thermal energy unit
+(BUILD 007)    - the outputfiles are now ordered by M_vir instead of npart
+               - removed init_timestep(), init_global_structure(), init_logfile(), init_io_structure(), init_simu_structure()
+               - LOADBALANCE_DOMAIN_LEVEL and MAX_GATHER_RAD are now read from AHF.input
+               
+16/03/2012     - added UseRhoBack and UserDvir to AHF.input
+(BUILD 008)
+
+19/03/2012     - Steffen transferred parse_ini.c from GINNUNGAGAP to AHF
+(BUILD 009)      -> the AHF.input file now allows the use of sections, comment lines, etc.
+
+20/03/2012     - added some more quantaties to AHF.input (VescTune, LgridMax, NminPerHalo)
+(BUILD 010)    - changed all parameter names in AHF.input to something user-friendly
+               - added blocks for [ART], [CUBEP3M], and [TIPSY] to AHF.input
+                 -> the required code.info file will be written based upon the parameters given in these blocks
+               - bug fix in libio/io_xyz.c: f->minpos[] and f->maxpos[] were uninitialized!
+               - bug fix in HaloProfiles() and rem_unbound(): I_now was un-initialized for cur_dist-prev_dist==0
+               - renamed AQUARIUSfocus to AHFrfocus introducing AHFrfocusX,Y,Z,R in src/param.h
+               
+30/03/2012     - bug fixes in MPI version
+(BUILD 011)      - global_mpi.rank was not known to io_parameter.c
+               - AHF_substructure will not be written for the MPI version as the haloID's are not unique!
+                 -> further, subhaloes living in the boundary zone will be written on a different CPU
+                    and not properly affiliate to the right host as the call to rem_boundary_haloes() comes
+                    before the re-hashing of the subhalo information 
+                    
+02/04/2012     - renamed ahfSats.f to ahfSubCheck.f and adapted it to new AHF_halos format
+(BUILD 012)    - moved rem_boundary_haloes() in ahf_halos.c to after re-hashing of substructure information
+                 -> this way the MPI version gives the same numSubStruct value as the serial version
+                 -> but this requires each MPI task to perform additional work as now also the haloes
+                    in the boundary zone will be constructed (though not needed in the end...)
+                    
+02/04/2012     - changed ordering of the writing of the output files
+(BUILD 013)    - minor changed in src/define.h encapsulating AHFpotcentre
+               - '--parameterfile' now triggers writing of 'AHF.parameter'
+               
+05/04/2012     - forgot to adapt all ahfXYZ codes in analysis/, convert/, and tools/ to new format
+(BUILD 014)
+
+11/04/2012     - NEW DEFINEFLAG: AHFbinary to ahf_io.c
+(BUILD 015)      -> writes AHF_halos, AHF_profiles, and AHF_particles in binary format
+                 -> does *not* yet write AHF_substructure or AHF_particlesSTARDUST in binary (files will *not* be written at all!)
+                 -> also added read-routines to IDL/util.pro for binary output
+                 
+19/04/2012     - bug fix in io_tipsy.c (and also in io_gadget.c where it though did not affect anything!)
+(BUILD 016)      -> one should only scale the thermal energy for gas particles
+                    (for all other particles 'u' stores the type as integer that should obviously not be scaled!)
+                    
+24/04/2012     - added -DDEBUG_MGADGET providing a bit more info on what's happening when reading multiple gadget files
+(BUILD 017)    - NEW DEFINEFLAG: AHFvmbp
+                 -> writes velocity of most bound particle into AHF_halos
+               - conceptual bug fix: RhoVir and Dvir are now working hand-in-hand, not only for RhoVir=RhoBack!
+               - fiddled with calc_virial() to return "virial" in units of either RhoBack or RhoCrit depending on simu.UseRhoBack value
+            
+04/05/2012     - some minor hacks to facilitate the analysis of non-cosmological simulations
+(BUILD 018)
+
+05/05/2012     - NEW DEFINEFLAG: AHFundoPositionShiftAndScale
+(BUILD 019)      -> write halo positions in original units as found in input file
+                    (only implemented for GADGET, DEVA & TIPSY (not TIPSY_ZOOMDATA!) at the moment!)
+                 -> NOTE: this change required to #include "../common.h" to the respective io_CODE.c files!
+                 
+12/06/2012    - NEW DEFINEFLAG: REFINE_BARYONIC_MASS
+(BUILD 020)     -> use mass as refinement criterion for baryons (still number density for dark matter!)
+                  -> this might avoid triggering refinements for baryon-only objects which are due to noise!?
+              - lots of modifications in MergerTree.c
+                -> improved flexibility with input _particles files
+                -> removal of obsolete opening of _mtree file for reading
+              - halos2geom.c has been adapted to the new _halos file format
+              
+22/06/2012    - bug fix in rem_unbound(): thermal energy was not in the correct units
+(BUILD 021)   - removed simuVweb.c as there is a separate Vweb code now (not part of AHF though)
+
+27/06/2012    - NEW DEFINEFLAG: AHFshellshape
+(BUILD 022)     -> base calculation of moment of inertia tensor on particles inside radial shells rather than all particles in sphere
+                -> new parameter AHF_MINPART_SHELL in param.h controls min. number of particles for this shell calculation
+                   (as it makes no sense to do so for a shell that only contains one or two particles...)
+
+08/07/2012    - valgrind memory leak fixes
+(BUILD 023)   - removed some annoying output from the logfile that only bloated the file
+              - renamed AHFstep_split_only to AHFsplit_only (NOT tested yet!)
+              
+16/07/2012    - added TIPSY_, CUBEP3M_, and ART_ info to parameter file
+(BUILD 024)
+
+17/07/2012    - resurrected AHFrestart and AHFsplit_only
+(BUILD 025)     -> still unsupported features, get in touch for how to use them!
+              - bug fix in rem_boundary_halos() affecting MPI and AHFrestart version (bug was introduced in BUILD 023)
+                -> we were not supposed to free halos[].ipart and halos[].subStruct for haloes kept!
+                
+20/07/2012    - added safety feature for AHFrestart that only works together with ic_filetype=5
+(BUILD 026)
+
+25/07/2012    - fiddled with Power et al. (2003) convergence criterion for profiles
+(BUILD 027)     -> now implemented Eq.(20) instead of Eq.(4)
+
+03/09/2012    - minor fixes in MergerTree.c as compilation failed
+(BUILD 028)
+
+05/10/2012    - mainly cosmetic changes here and there:
+(BUILD 029)     - added [ART] to AHF.input-example
+                - lots of user-interface improvements for simuPk.c
+                - bug fix and improvements for AHFpreliminaryhalosfile
+                - AHFcentrefile now writes either in STEREO2 or ASCII format
+                - added ASCII_ONLYPOSITIONS to read_ascii() in libio_serial/input.c
+                
+08/10/2012    - some changes in binning_parameter():
+(BUILD 030)     - fixed lower limit for nbins to be 2
+                - fiddling with loop to determine dist_min (Note, this has minor effects on the very low-mass objects with AHF_MINPART)
+              - NEW DEFINEFLAGS:
+                -DAHFnewCloseRefDist: + please do *NOT* use this yet, we are tuning closeRefDist in analyseRef() of ahf_halos.c to find subhaloes close to their host's centre
+                                      + note, the standard behaviour has been marginally tuned, too!:
+                                        -> we are now explicitly checking that only objects more massive will be considered in the closeRefDist calculation (additional condition in if()-clause)
+                                        -> we are not calculating a closeRefDist for the direct daughter (i.e. trunk of the halo-tree): gatherRad is the important radius for collecting particles
+                -DAHFcentrefileBASIC: + writes a simple _centres files whereas without this flag a fully fletched _halos file for the centres will be written
+                
+02/11/2012    - NEW DEFINEFLAGS:
+(BUILD 031)     -DAHDexciseSubhaloStars (not functional yet, just created infrastructure)
+                -DAHFmaxGatherRadTest: debugging and testing, will not form part of any official release
+              - bug fix in ahfExtractProfiles.c still reading the old AHF formats
+
+05/11/2012    - bug fix in the calculation of r2 for the combination (AHFdmonly_Rmax_r2 && GAS_PARTICLES)
+(BUILD 032)
+
+05/11/2012   - NEW DEFINEFLAG: -DAHFparticle_Rmax_r2
+(BUILD 033)    -> based Rmax and r2 calculation on distance sorted particles and *not* a binned profile
+               -> NOTE: this flag leads to a substantially slower code (ca. factor 2 for zoom simulations)
+               -> NOTE: this flag is switched on by default in src/define.h
+               -> NOTE: there is a related parameter in src/param.h controlling how many of the innermost particles to ignore
+
+14/11/2012   - further working on AHFexciseSubhaloStars (not finished yet!)
+(BUILD 034)  - bug fix in calc_virial(): wrong re-normalisation of "virial" in case of using the critical density as the reference
+             - calc_rho_crit() now always simply returns 3*H(a)^2/(8piG) which will eventually allow easier implementation of dark energy models
+             
+15/11/2012   - final touches to AHFexciseSubhalosStars (runs through now, but requires some final testing)
+(BUILD 035)  - added darkenergy.c/h to libutility.a (by Edoardo Carlesi)
+
+15/11/2012   - NEW DEFINEFLAG: -DDARK_ENERGY  (supplied by Edoardo Carlesi)
+(BUILD 036)    -> allows for proper halo edge definitions in all sorts of dark energy models
+             - added OpenMP thread info to logfile
+             - fixed performance drop accidently introduced into ahf_halos.c in version v1.0-030:
+               -> the additional conditions "&& spatialRef[i+1][isoRefIndex].numParts > spatialRef[i+1][isoRefIndexOLD].numParts"
+                  in analyseRef() was not affecting the results whatsoever but decreasing the performance by a factor of two!
+             - bug fix in binary _halos output file
+
+19/11/2012   - NEW DEFINFEFLAG: -DAHFnewHaloIDs
+(BUILD 037)    -> encodes npart and pos[] into a unique ID across MPI tasks
+               -> Note that for -DAHFnewHaloIDs the value haloID=0 (and not -1) now corresponds to "field halo" as haloID is an "unsigned long"!
+               -> this flag is now *automatically* switched on when using the MPI version (cf. define.h)
+               -> you will now also get the AHF_substructure files for the MPI version
+
+04/12/2012   - minor change in check_subhalo() now also only allowing hosts with npart>NminPerHalo
+(BUILD 038)
+
+06/12/2012   - some more changes related to the spatialRef[][] and halos[] tree
+(BUILD 039)    -> in particular, added an if() in spatialRef2halos() capturing halos with position (0/0/0)
+
+10/12/1012   - adjustment of IORD in interpolate() in libutility/general.c
+(BUILD 040)  - now also counting the number of spatialRef[][] with numParts=0
+             - added   "if(halo->npart == 0) return;"  to ahf_halos_sfc_constructHalo()
+             
+08/01/2013   - bug fix for -DAHFexciseSubhaloStars
+(BUILD 041)    -> nsubstar=0 was not handled correctly
+             - Makefile.config did not contain -DWITH_OPENMP for Standard MPI+OpenMP target
+             
+08/01/2013   - totnumIsoRef, numHalos, and final halo count in spatialRef2halos() did not match
+(BUILD 042)    -> added -DREVISED_INITIAL_NUMHALOS to spatialRef2halos() rectifying this (switched on by default!)
+
+09/01/2013   - NEW DEFINEFLAG: -DAHFdisks
+(BUILD 043)    -> writes a new output file *.AHF_disks that will contain profile information for the gas and stars
+                  to be used to determine the central baryonic objects (e.g. disk)
+             - WITH_MPI still did not write _substructure even though AHFnewHaloIDs had been switched on
+               -> fixed now!
+               -> ACTUALLY, this requires *A LOT* of fixes! Haloes in the boundary zone were no longer accessible for
+                  writing to .AHF_substructure and hence the whole treatment of those boundary haloes has changed
+                  -> they are now *NOT* removed anymore but only flagged using flag_boundary_halos(); all write routines now check for this flag...
+                     this brings another memory advantage as rem_boundary_halos() temporarily required twice the memory for haloes
+               -> ALSO CHANGED OUTPUT FORMAT FOR *.AHF_SUBSTRUCTRE FILES: DROPPED THE LEADING NHALOS INTEGER!
+             - bug fix: getHaloID() in specific.c had a bug as it was using Xpos twice instead of Xpos and Ypos
+             - removed -DREVISED_INITIAL_NUMHALOS as a feature and made it the one-and-only code
+             
+10/01/2013   - some fixes for debugging information (of no relevance to the end-user)
+(BUILD 044)    -> AHFgridinfofile now uses the proper outfile_prefix, etc.
+             - added debugging error message to io_mgadget.c
+             
+14/01/2013   - added infrastructure for libtree.a
+(BUILD 045)  - added more debugging messages for -DDEBUG_SUPERMUC
+
+15/01/2013   - NEW DEFINEFLAG: -DMGADGET_CHECK_RLIMIT_NOFILE
+(BUILD 046)    -> file descriptor checks to io_mgadget_open() in io_mgadget.c
+
+16/01/2013   - NEW DEFINEFLAG -DMGADGET_OPENCLOSE: 
+(BUILD 047)    -> allowing for "open-single/read-single/close-single" structure when dealing with multiple GAGDET files (as opposed to "open-all/read-all/close-all")
+
+17/01/2013   - renamed
+(BUILD 048)    * -DMGADGET_CHECK_RLIMIT_NOFILE to -DCHECK_RLIMIT_NOFILE and
+               * -DMGADGET_OPENCLOSE           to -DFOPENCLOSE
+               -> this is more general and will also be used then for all other file formats
+             - -DFOPENCLOSE is by default switched on now in src/define.h (therefore had to add "../define.h" to some of the libio/ sources)
+             - removed fname[] from io_mgadget_t structure again -> redundant information as the name is already stored in io_gadget_t structure
+             
+18/01/2013   - implementing the final touches suggested by Steffen
+(BUILD 049)
+
+28/01/2013   - moved safety feature for TIPSY files from io_tipsy_readpart_raw() to io_tipsy_open()
+(BUILD 050)
+
+28/01/2013   - NEW DEFINFLAG: NCPUREADING_EQ_NFILES
+(BUILD 051)    -> speads up I/O of multiple (GADGET) files in MPI mode,
+                  but only works if NcpuReading is equal to the number of files
+             - removed various DEBUG_NREAD and DEBUG_SUPERMUC defines
+             
+29/01/2013   - bug fix for AHFdisks: b_star and c_star was not set correctly
+(BUILD 052)  - bug fix in io_gadget.c introduced while (not properly) cleaing all those DEBUG_SUPERMUC defines
+             - added simuCroCo.c to analysis/
+             
+05/02/2013   - removed -DGADGET2 from libio_serial/ (still keeping it in define.h for legacy reasons)
+(BUILD 053)  - more fiddling with -DAHFdisks introducing now also k(<R_bin) = 0.5 * \sum_{i<R_bin} (L_{z,i}/r_i)^2/m_i
+             - NEW DEFINEFLAG -DBCASTHEADER
+               -> only one MPI taks will read the header and broadcast all relevant information across MPI_COMM_WORLD
+               
+11/02/2013   - some more tweaking of -DBCASTHEADER
+(BUIL 054)     -> io_util_findfiles() is now only called by one MPI task and information Bcast afterwards
+
+12/02/2013   - NEW DEFINEFLAG: -DCUBEP3M_WITH_PIDS
+(BUILD 055)    -> quick-and-dirty way of allowing CubeP3M files to also contain particle ids
+             - adding binary2ascii.c to convert/
+               -> this required some minor modifications in ahf_io.c, too (e.g. ahf_binwrite_particles() did not write uint64_t for the ids!)
+               -> further, the binary format now contains the integer "1" at the beginning of the file to quickly figure out the need for a byteswap
+               
+14/02/2013   - made AHFbinary2ascii.c more modular allowing users to easier filter halo and profile properties
+(BUILD 056)  - NEW DEFINEFLAG: -DSUSSING2013 activating output formats for "Sussing Merger Trees 2013"
+
+19/02/2013   - bug fix for -DBCASTHEADER
+(BUILD 057)    -> in io_mgadget_init() f->multimass and f->no_part were not broadcast
+
+22/02/2013   - change of output format for _particles:
+(BUILD 058)    -> next to the number of particles in a halo also the haloID features
+               -> adjusted MergerTree.c accordingly
+             - NEW DEFINEFLAGS: -DAHFmixHaloIDandSnapID
+               -> construct a haloid that combines the actual haloid and the snapshotid
+                  (requires one additional AHF.input parameter "SnapID")
+             - removed unneccesary initialisations in alloc_struct()
+
+28/02/2013   - fiddling with -DAHFdisks feature
+(BUILD 059)  - coded write_halos_line() to be used when writing _halos and _disks
+             - major revision of MergerTree.c
+             - bug fixed in simuPk.c and simuCroCo.c
+             - bug fix in eigenvalue determination for stars: minimum number of required particles was checked against ngas and not nstar
+             
+05/03/2013   - GAS_PARTICLES fprintf() to parameterfile was missing in specific.c
+(BUILD 060)
+
+19/03/2013   - added "if (cur_dist > ZERO)" to all places that have 1/cur_dist in ahf_halos.c
+(BUILD 061)  - added MergerTrace.c to analysis/
+
+03/04/2013   - some more fixes related to k_gas and k_star for -DAHFdisks trying to eliminate nan's in the _disks file
+(BUILD 062)  - major modifications to MergerTree.c
+               -> adding MTREE_BOTH_WAYS which will not allow multiple descendants, i.e. progenitors are now unique!
+             - major change to binning_parameters() in specific.c:
+               -> for dist_min we are now searching for the innermost particle with dist != 0
+               
+09/04/2013   - bug fix for star particles:
+(BUILD 063)    -> sometimes we identified them via if(cur_part->u==PSTAR) and sometimes via if(fabs(cur_part->u-PSTAR)<ZERO)
+                  (removed the former now!)
+
+09/04/2013   - some fiddling with all those ZERO's in src/param.h
+(BUILD 064)     -> setting MACHINE_ZERO uniquely to 5e-16
+                -> changing comparisons to an actual '0' within the code to *not* compare against ZERO anymore but MACHINE_ZERO
+                   (ZERO is to be understood as a float-comparison accuracy level)
+             - fixed a free() issue in MergerTree.c
+             
+15/05/2013   - fine-tuning of -DAHFpreliminaryhalosfile
+(BUILD 065)  - revision of MergerTree.c (resurrection of EXCLUSIVE_PARTICLES and OpenMP parallelisation)
+             - addition of sigmaH.c to analysis/
+
+22/05/2013   - bug fix for -DAHFexciseSubhaloStars
+(BUILD 066)    -> when a halo did not contain subhaloes, the stars were not copied over to the array ipart_uniquestars[] and hence not written to _particlesSTARDUSTexcised
+
+06/06/2013   - renamed AHFpreliminaryhalosfile feature to DPhalos
+(BUILD 067)  - adapted DPhalos to also work WITH_MPI
+             - added several features to sigmaH.c
+             
+26/06/2013   - adding haloID (next to npart_stars) to STARDUSTparticles files
+(BUILD 068)  - bug fix in io_artnew.c
+
+07/07/2013   - io_artnew.c introduced problem leading to non-compilation issue for practically all codes
+(BUILD 069)    -> fixed now!
+
+12/09/2013   - bug fixes in io_tipsy.c (only affecting the MPI version)
+(BUILD 070)  - "bug" fix when using fseek()
+               -> fseek() can only deal with <2GB files, use fseeko() (-DFSEEKO) when files are larger
+               -> presently fix only implemented for TIPSY file format though!
+               
+19/09/2013   - bug fix in io_parameter.c related to IO_FILE_MCUBEP3M files
+(BUILD 071)    -> [CUBEP3M] block in AHF.input was not read for MCUBEP3M files
+             - bug fix in io_cubep3m.c
+               -> isChunked=false was missing
+               
+10/10/2013   - increased closeRefDist for -DAHFnewCloseRefDist:
+(BUILD 072)    -> instead of half-distance it is now 3/4 distance
+             - bug fix in MergerTree.c
+               -> PidMax[] had to be a two-valued array
+             - added NCPUREADING_EQ_FILES to io_mgadget_open() in io_mgadget.c:
+               -> now each MPI task will read its own file also incl. the header
+               -> NCPUREADING_EQ_NFILES is now mutually exclusive with BCASTHEADER! DO NOT USE THEM TOGETHER!!!!!!
+               -> copy a copy of the previous io_mgadget_open() routine to io_mgadget_open_withoutNCPUREADING_EQ_NFILES(), just in case!
+               
+14/11/2013   - added MergerTreeMPI.c to analysis/
+(BUILD 073)  - added MergerRates.c to analysis/ (not functional yet!)
+
+25/11/2013   - bug fix: for -DAHFcomcentre there was an issue with periodic boundary conditions leading to haloes being discarded
+(BUILD 074)  - bug fix in MergerTree.c: the actual haloids were not used for the *_idx files
+             - added -DAHFspatialReffile
+             - DPhalos file is now written in kpc/h
+             
+26/11/2013   - adjustment to calc_virial(), i.e. removing a^3 factor in eta
+(BUILD 075)    -> convergence to SCDM value of 178 at high redshift is NOW guaranteed
+
+12/02/2014   - some adjustements to the "toolbox" codes
+(BUILD 076)
+
+18/02/2014   - added angular momentum to ahfSubhaloAccretion.c
+(BUILD 077)  - playing with MergerRates.c
+             - adding I/O for multiple _particles files to MergerTree.c (compile-flag!)
+             - added -DAHOBBS_GADGET_FILE_FIX to io_gadget.c (do not even think about using this, unless you know exactly what this means!)
+             
+10/03/2014   - in light of the imminent AHF2 there had to be some additions to specific.c coded
+(BUILD 078)  - ASCII format (ic_filetype=10) now requires redshifts instead of expansion factors
+             - final touches to MergerRates.c
+             - fixed typo in ahfHaloHistory.c
+             - added small shell script to convert/ that generates ic_filetype=10 out of AHF_halos
+             
+04/04/2014   - added DEBUG_AHFptfocus
+(BUILD 079)  - added several features to MergerTree.c (incl. reading of haloids from external file)
+             - added agelist.c to tools/ allowing to calculate ages for a user provided list of redshifts
+             
+08/04/2014   - minor bug fix in ahfSubhaloAccretion.c: bcompare() function was the wrong way round (twice, and hence actually worked)
+(BUILD 080)  - added ahfCheckSubhalos.c to tools/
+
+09/04/2014   - working on bug fix for numSubStruct != numSubPointers
+(BUILD 081)    -> replaced for-loop in ahf_halos() that copies SubStruct[] over to halos[] by a simple memory re-assignment
+               -> moved flagging of MPI boundary haloes to before re-hashing of substructure information
+             - added ahfCalcHaloID.c to tools/
+             - full update for libtree/ incl. all the code written by Fernando Campos now!
+             
+25/04/2014   - new treatment for TIPSY position units
+(BUILD 082)    -> positions are now scaled using (pos_max-pos_min) instead of TIPSY_BOXSIZE
+
+28/04/2014   - bug fix in io_tipsy.c:
+(BUILD 083)    -> division by boxsize should only take place if particle positions demand it
+             - added libahf2/
+               -> no new version number yet as we are still far from release date...
+             - bug fix in spatialRef2halos():
+               -> if(count<numHalos) at the end was only checked for #ifdef VERBOSE
+               -> now encapsulated in #ifdef AHFadjust_numHalos_to_count
+               
+16/05/2014   - bug fix in io_gadget.c
+(BUILD 084)    -> an if() was checking for "weight" whereas it should have checked for "u"
+                  (no results were affected as the if() was also what it was supposed to be!)
+             - bug fix in libio_serial's input.c
+               -> particle types in read_gadget() were not correctly set
+             - added simu2tipsy.c to convert/ which uses libio_serial to write TIPSY binaries for all formats supported by libio_serial
+             - renamed ahfCheckSubhalos.c to ahfCheckHaloIDs.c
+             - changes to spatialRef2halos():
+               - adjusted first estimate of numHalos in spatialRef2halos() to not count main branches twice
+               - halo centres will now always be re-adjusted on every level (not only on the last one)
+               - removed #ifdef AHFadjust_numHalos_to_count => count is now checked against numHalos

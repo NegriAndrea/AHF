@@ -1,0 +1,79 @@
+                A        H      H   FFFFFFF
+              A A       H      H   F 
+            A   A      H      H   F
+          AAAAAAA     HHHHHHHH   FFFFF
+        A       A    H      H   F
+      A         A   H      H   F
+    A           A  H      H   F 
+
+
+             AMIGA's-Halo-Finder:
+Adaptive Mesh Investigations of Galaxy Assembly
+
+===============
+ developed by
+===============
+Andrew Green       (1993-2001)
+James Binney       (1993-2001)
+Stuart Gill        (2001-2005)
+Steffen Knollmann  (2006-2012)
+Alexander Knebe    (continiously)
+
+==========
+ content
+==========
+analysis/		tools that may serve the purpose of extracting scientific data from AHF catalogues
+convert/		conversion between various data formats
+src/			the AHF source directory
+tools/			some things that you may consider useful...
+
+===================
+ detailed content
+===================
+
+analysis/
+------------------------
+IDL/                    just some sample code how to possibly work with the AHF_halos files
+
+MergerTree.c            constructs merger trees using AHF_particles files
+ahfFindCrossPairs.c     cross correlates two different AHF_halos catalogues
+ahfFindHalo.c           seraches for a specific halo in AHF_halos
+ahfFindHaloPairs.c      cross correlates a AHF_halos catalogue with itself, i.e. searches for dublicates
+ahfHaloHistory.c        based upon the output of MergerTree.c tracks one specific halo through all AHF_halos catalogues
+ahfSubCheck.f           searches for all subhaloes of a given halo in one AHF_halos file
+ahfXi.f                 calculates the 2-point correlation function given a AHF_halos catalogue
+simuPdens.c             calculates the density at each particle position
+simuPk.c                calculates P(k) for a given simulation file
+simuSigmaR.c            calcluates sigma(r) for a simulation file
+simuVstat.c             some velocity statistics for simulation file
+simuXi.f                calculates the 2-point correlation function given a simulation file
+
+NOTE: all the simuXYZ codes are making use of libio_serial.a and hence have to compiled like that!
+
+convert/
+------------------------
+Hdf2GADGET/       converter from GADGET-HDF5 to GADGET-2 format (courtesy Ofer Metuki)
+tostd/          	converter from PKDGRAV-HDF5 to TIPSY format (courtesy Doug Potter)
+ramses2gadget.f 	converter from RAMSES to GADGET-2 format (incl. generation of gas particles!) courtesy Timur Doumler
+ahf2binary.c    	converts either AHF_halos or AHF_particles ASCII file into a binary format file
+halos2geom.c    	converts AHF_halos file into something to be used with stereo2 (http://paulbourke.net/miscellaneous/stereographics/stereo2/)
+
+src/
+------------------------
+the beautiful and marvelous AHF source code...
+
+tools/
+------------------------
+HaloPotential.c         based upon particle positions this tool calculates the potential for a given halo
+HaloShape.c             based upon particle positions this tool calculates the shape of a given halo
+RemoveUnbound.c         based upon particle positions and velocities unbound particles are removed from a given halo
+age.c                   given the cosmology and redshift the age of the Universe is calculated
+ahfCalcMinStar.c        given an AHF analysis and a GADGET simulation it calculates the stellar mass for a provided list of halos
+ahfExtractHalosPdens.c  extracts halo particles from a simuPdens.c output file
+ahfExtractMhalo.c       calculates M_dm, M_gas, and M_star for each halo using a given AHF_particles file
+ahfSortHalos.c          sorts a given AHF_halos catalogue by some user specified column (using command line 'sort' may be faster!)
+cosmology.c             for a given cosmology it dumps a file Cosmology.DAT containing all you ever wanted to know as a function of t, a, and z
+pmass.c                 tool to calculate the mass of a single particle in a certain simulation
+simuExtractHalos.c      extract the particles of a given halo from the simulation snapshot
+virial.c                calculates the virial overdensity threshold based upon spherical top-hat collapse model
+

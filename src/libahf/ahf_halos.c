@@ -387,12 +387,29 @@ ahf_halos(gridls *grid_list)
  {
   FILE *fp;
   char outfile[MAXSTRING];
+  long unsigned *idx, *idxtmp;
+  double        *fsort;
+  
+  // sort haloes by npart
+  idx    = (long unsigned *)calloc(numHalos, sizeof(long unsigned));
+  idxtmp = (long unsigned *)calloc(numHalos, sizeof(long unsigned));
+  fsort  = (double *)       calloc(numHalos, sizeof(double));
+  for (i = 0; i < numHalos; i++)
+    fsort[i] = (double)halos[i].npart;
+  indexx(numHalos, fsort-1, idxtmp-1);
+  
+  /* indexx sorts ascending and gives indizes starting at 1 */
+  for (i = 0; i < numHalos; i++)
+    idx[numHalos - i - 1] = idxtmp[i] - 1;
+  free(idxtmp);
+  free(fsort);
   
   sprintf(outfile,"%s.AHF_preliminaryhalos",fprefix);
   fp = fopen(outfile,"w");
   
   fprintf(fp,"%d\n",numHalos);
-  for(i=0; i<numHalos; i++) {
+  for(k=0; k<numHalos; k++) {
+    i = idx[k];
     fprintf(fp,"%lu %18.14lf %18.14lf %18.14lf %18.14lf %18.14lf %18.14lf %d %d %d %d %d\n",
             halos[i].npart,
             halos[i].pos.x,
@@ -407,12 +424,15 @@ ahf_halos(gridls *grid_list)
             halos[i].hostHaloLevel,
             halos[i].numSubStruct);
     
+#ifdef HaloTree
     if(halos[i].numSubStruct > 0) {
       for(k=0; k<halos[i].numSubStruct; k++) {
         fprintf(fp,"  %d\n",halos[i].subStruct[k]);
       }
     }
+#endif
   }
+  free(idx);
   
   fclose(fp);
   //exit(0);
@@ -2437,7 +2457,8 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 		for (j = 0; j < numIsoRef[i]; j++)
      {
       if(spatialRef[i][j].numSubStruct > 1)
-        count += spatialRef[i][j].numSubStruct;
+        //count += spatialRef[i][j].numSubStruct;
+        count += (spatialRef[i][j].numSubStruct-1);   // AK: otherwise we count the main-branch again and again and again
      }
    }
 	numHalos = count;
@@ -2800,7 +2821,8 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 						halos[haloIndex].numNodes = spatialRef[i][j].numNodes;
             
             /* BUILD 039: quick-and-dirty fix in case this halo did not ever get a position assigned */
-            if(halos[haloIndex].pos.x < MACHINE_ZERO && halos[haloIndex].pos.y < MACHINE_ZERO && halos[haloIndex].pos.z < MACHINE_ZERO)
+            // BUILD 084: we should actually always update the halo position to the best resolution
+            //if(halos[haloIndex].pos.x < MACHINE_ZERO && halos[haloIndex].pos.y < MACHINE_ZERO && halos[haloIndex].pos.z < MACHINE_ZERO)
              {
               halos[haloIndex].pos.x = spatialRef[i][j].centre.x;
               halos[haloIndex].pos.y = spatialRef[i][j].centre.y;
@@ -2823,15 +2845,6 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 						numNewHalos  = spatialRef[i][j].numSubStruct - 1;
 						kcount       = halos[primHaloIndex].numSubStruct; // this is the number of old substructure halos serving as a loop counter below
           
-#ifdef STUART_CODE
-						tmpSubStruct = NULL;
-						if ((tmpSubStruct = calloc(kcount + 1,sizeof(int))) == NULL) {
-							fprintf(stderr,"Error in allocating the memory for tmpSubStruct array\n");
-							exit(0);
-						}            
-						for (k = 0; k < kcount; k++)
-							tmpSubStruct[k] = halos[primHaloIndex].subStruct[k];
-#endif
 						halos[primHaloIndex].numSubStruct = kcount + numNewHalos;
 
 						if (halos[primHaloIndex].subStruct == NULL) {
@@ -2846,12 +2859,6 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 							}
 						}
             
-#ifdef STUART_CODE
-						for (k = 0; k < kcount; k++)
-							halos[primHaloIndex].subStruct[k] = tmpSubStruct[k];
-						free(tmpSubStruct);
-#endif
-
 						/* Collecting information for the 'new' substructure */
 						for (k = 0; k < spatialRef[i][j].numSubStruct; k++) {    // note that the substructure loop counter is kcount!
 							SSrefLevel    = spatialRef[i][j].subStruct[k].refLevel;
@@ -2936,7 +2943,6 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 	fflush(io.logfile);
 #endif /* VERBOSE */
 
-#ifdef AHFadjust_numHalos_to_count
 	/* did we find more halos than initially expected? */
 	if (count > numHalos) {
 		numHalos = count;
@@ -2946,7 +2952,6 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
 		fprintf(io.logfile, "      => adjusted number of halos: found=%d (totnumIsoRef=%d) expected=%d (tmpCount=%d)\n", count, totnumIsoRef, numHalos, tmpCount);
 		fflush(io.logfile);
 	}
-#endif // AHFadjust_numHalos_to_count
 
   /* make this first guess of haloes globally accessible */
   simu.no_halos = numHalos;
@@ -3150,7 +3155,7 @@ int WriteGridtreefile(const char *fprefix, int num_refgrids, SPATIALREF **spatia
 {
   char filename[MAXSTRING];
   FILE *fout;
-  long i,j;
+  long i,j,k;
   
   /* Generate the filename */
   strcpy(filename, fprefix);
@@ -3165,17 +3170,42 @@ int WriteGridtreefile(const char *fprefix, int num_refgrids, SPATIALREF **spatia
     exit(1);
   }
   
-  /* Write centres */
-  for(i=0; i<num_refgrids; i++)
+  fprintf(fout,"%d %d\n",ahf.min_ref, ahf.no_grids);
+  
+  for(i=0; i<num_refgrids; i++) {
+    
+    fprintf(fout,"%d %d\n",
+            i + ahf.min_ref,  // write the actual level (and not the internal count)
+            numIsoRef[i]);
+    
     for (j=0; j<numIsoRef[i]; j++) {
-    fprintf(fout, "%ld %e %e %e %ld %d %d\n",
-            i,
-            spatialRef[i][j].centre.x,
-            spatialRef[i][j].centre.y,
-            spatialRef[i][j].centre.z,
-            spatialRef[i][j].numParts,
-            spatialRef[i][j].numNodes,
-            spatialRef[i][j].numSubStruct);
+      fprintf(fout, "%18.14lf %18.14lf %18.14lf %18.14lf %d %ld %d %d %d\n",
+              spatialRef[i][j].centre.x,
+              spatialRef[i][j].centre.y,
+              spatialRef[i][j].centre.z,
+              spatialRef[i][j].closeRefDist,
+              spatialRef[i][j].numNodes,
+              spatialRef[i][j].numParts,
+              spatialRef[i][j].daughter.refLevel            + ahf.min_ref,  // write the actual level (and not the internal count)
+              spatialRef[i][j].daughter.isoRefIndex,
+              spatialRef[i][j].numSubStruct);
+      
+      if(spatialRef[i][j].daughter.refLevel != i+1 && spatialRef[i][j].daughter.isoRefIndex != -1) {
+        fprintf(stderr,"spatialRef[%d][%d].daughter.refLevel=%d != %d+1 (isoRefIndex=%d)\n",i,j,spatialRef[i][j].daughter.refLevel,i,spatialRef[i][j].daughter.isoRefIndex);
+        exit(0);
+      }
+
+      for(k=0; k<spatialRef[i][j].numSubStruct; k++) {
+        fprintf(fout,"   %d %d\n",
+                spatialRef[i][j].subStruct[k].refLevel      + ahf.min_ref,  // write the actual level (and not the internal count)
+                spatialRef[i][j].subStruct[k].isoRefIndex);
+        
+        if(spatialRef[i][j].subStruct[k].refLevel != i+1 && spatialRef[i][j].subStruct[k].isoRefIndex != -1) {
+          fprintf(stderr,"spatialRef[%d][%d].subStruct[%d].refLevel=%d != %d+1 (isoRefIndex=%d)\n",i,j,k,spatialRef[i][j].subStruct[k].refLevel,i,spatialRef[i][j].daughter.isoRefIndex);
+          exit(0);
+        }
+      }
+    }
   }
   
   /* Clean up */

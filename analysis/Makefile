@@ -7,8 +7,8 @@ simuSigmaR:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 MergerRates:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 MergerTree:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 MergerTreeMPI:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
-ahfHaloHistoryStats:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfSubhaloAccretion:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
+ahfSubhaloAccretionStats:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfFindHalo:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfFindHaloPairs:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
 ahfFindCrossPairs:		DEFINEFLAGS	=	-DVERBOSE -DHEADER ${MASTER_DEFINEFLAGS}
@@ -69,8 +69,8 @@ ahfHaloHistory:	ahfHaloHistory.c  ${LIBS}
 ahfSubhaloAccretion:	ahfSubhaloAccretion.c  ${LIBS}
 	$(CC) $(CFLAGS) $(LFLAGS) -o ahfSubhaloAccretion  ${LIBS} ahfSubhaloAccretion.c  ${LIBS} -lm
 
-ahfHaloHistoryStats:	ahfHaloHistoryStats.c  ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfHaloHistoryStats  ${LIBS} ahfHaloHistoryStats.c  ${LIBS} -lm
+ahfSubhaloAccretionStats:	ahfSubhaloAccretionStats.c  ${LIBS}
+	$(CC) $(CFLAGS) $(LFLAGS) -o ahfSubhaloAccretionStats  ${LIBS} ahfSubhaloAccretionStats.c  ${LIBS} -lm
 
 ahfFindHalo:	ahfFindHalo.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o ahfFindHalo ahfFindHalo.c -lm

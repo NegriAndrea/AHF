@@ -911,7 +911,7 @@ io_gadget_scale_particles(io_logging_t log,
 		*((type *)strg.momy.val) *= (type)(scale_mom); \
 		*((type *)strg.momz.val) *= (type)(scale_mom); \
 		if (strg.weight.val != NULL) *((type *)strg.weight.val) *= (type)(scale_weight); \
-    if (strg.u.val != NULL) {if(*((type *)strg.weight.val) >= 0.) *((type *)strg.u.val) *= (type)(scale_u);} \
+    if (strg.u.val != NULL) {if(*((type *)strg.u.val) >= 0.) *((type *)strg.u.val) *= (type)(scale_u);} \
 		strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride); \
 		strg.posy.val = (void *)(((char *)strg.posy.val) + strg.posy.stride); \
 		strg.posz.val = (void *)(((char *)strg.posz.val) + strg.posz.stride); \
@@ -1756,7 +1756,7 @@ local_get_block_u(io_logging_t log,
 				ptype++;
 				psum += f->header->np[ptype];
 			}
-			fu = (double)(-ptype);
+			fu = (double)(-ptype);   // check PGAS, PDM, PSTAR
 			/* STEP 1:  Store the energy in the array */
 			if (strg.bytes_float == sizeof(float)) {
 				*((float *)strg.u.val) = (float)fu;

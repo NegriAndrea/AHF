@@ -1924,7 +1924,7 @@ double cNFWroot(double c, double V2_ratio)
 
 double calc_cNFW(double V2_max, double V2_vir)
 {
-  double V2_ratio, a, b, c;  
+  double V2_ratio, a, b, c, r1;
   
   V2_ratio = V2_max/V2_vir;
   
@@ -1935,7 +1935,6 @@ double calc_cNFW(double V2_max, double V2_vir)
   /* the most simple bi-section root-finding method on intervall [2.2,100] */
   a=2.2;
   b=100;
-  
   /* we only care about the concentration up to the 3rd decimal */
   while (b-a > 1e-3)
    {
@@ -1946,9 +1945,25 @@ double calc_cNFW(double V2_max, double V2_vir)
     else
       b = c;  
    }
-  c = (a+b)/2.;
+  
+#ifdef NEW_cNFW
+  a=2.0;
+  b=100.0;
+  c = 5.0;  // starting at 5 is a better choice than 50 (thanks, Julian Onions, for that tip)
+  while (b-a > 1e-5) {
+    r1 = nfwroot(c) - ratio;
+    if (r1 < 0)
+      a = c;
+    else
+      b = c;
+    c = (a+b)/2.0;
+  }
+#endif
+
+  c = (a+b)/2.0;
   
   return(c);
+
 }
 
 /*==============================================================================
