@@ -26,6 +26,7 @@
  *                                     FEATURES
  *-------------------------------------------------------------------------------------*/
 #define PROVIDE_LINENUMBER_AS_HALOID
+#define OUTPREFIX "./"
 
 /*-------------------------------------------------------------------------------------
  *                                  THE STRUCTURES
@@ -118,7 +119,7 @@ char **argv;
     ihalo = haloid[i];
     
     // (re-)open outfile for this halo
-    sprintf(outfile,"halo_%07"PRIu64".dat",ihalo);
+    sprintf(outfile,"%s/halo_%07"PRIu64".dat",OUTPREFIX,ihalo);
     fpout = fopen(outfile,"w");
     if(fpout == NULL) {
       fprintf(stderr,"could not open %s\n",outfile);
@@ -167,7 +168,7 @@ char **argv;
       ihalo = haloid[i];
       
       // (re-)open outfile for this halo
-      sprintf(outfile,"halo_%07"PRIu64".dat",ihalo);
+      sprintf(outfile,"%shalo_%07"PRIu64".dat",OUTPREFIX,ihalo);
       fpout = fopen(outfile,"a");
       if(fpout == NULL) {
         fprintf(stderr,"could not open %s\n",outfile);

@@ -21,6 +21,11 @@
 #include "patch.h"
 #include "utilities.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
+
 #ifdef NEWAMR
 
 //*********************************************************************************************************
@@ -43,6 +48,10 @@ void set_patch_pos(patch_t **patch_tree, int64_t *n_patches)
 {
   int initial_level, final_level, ilevel, ipatch;
   
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   // determine initial and final level
   get_patch_level_range(patch_tree, n_patches, &initial_level, &final_level);
   
@@ -54,16 +63,35 @@ void set_patch_pos(patch_t **patch_tree, int64_t *n_patches)
 #endif
     for(ipatch=0; ipatch<n_patches[ilevel]; ipatch++) {
     
-#ifdef AHFcomcentre
+#ifdef AHF2_centre_part_com
       patch_tree[ilevel][ipatch].pos[0] = patch_tree[ilevel][ipatch].centre.part.com[0];
       patch_tree[ilevel][ipatch].pos[1] = patch_tree[ilevel][ipatch].centre.part.com[1];
       patch_tree[ilevel][ipatch].pos[2] = patch_tree[ilevel][ipatch].centre.part.com[2];
 #endif
       
-      // TODO: implement possible alternative centre definitions for patch
+#ifdef AHF2_centre_part_Nmax
+      patch_tree[ilevel][ipatch].pos[0] = patch_tree[ilevel][ipatch].centre.part.Nmax[0];
+      patch_tree[ilevel][ipatch].pos[1] = patch_tree[ilevel][ipatch].centre.part.Nmax[1];
+      patch_tree[ilevel][ipatch].pos[2] = patch_tree[ilevel][ipatch].centre.part.Nmax[2];
+#endif
+      
+#ifdef AHF2_centre_cube_wgeom
+      patch_tree[ilevel][ipatch].pos[0] = patch_tree[ilevel][ipatch].centre.cube.wgeom[0];
+      patch_tree[ilevel][ipatch].pos[1] = patch_tree[ilevel][ipatch].centre.cube.wgeom[1];
+      patch_tree[ilevel][ipatch].pos[2] = patch_tree[ilevel][ipatch].centre.cube.wgeom[2];
+#endif
+      
+#ifdef AHF2_centre_cube_geom
+      patch_tree[ilevel][ipatch].pos[0] = patch_tree[ilevel][ipatch].centre.cube.geom[0];
+      patch_tree[ilevel][ipatch].pos[1] = patch_tree[ilevel][ipatch].centre.cube.geom[1];
+      patch_tree[ilevel][ipatch].pos[2] = patch_tree[ilevel][ipatch].centre.cube.geom[2];
+#endif
     
     } // ipatch
   } // ilevel  
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 

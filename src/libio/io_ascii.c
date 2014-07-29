@@ -172,6 +172,7 @@ io_ascii_readpart(io_logging_t log,
 	double fposx, fposy, fposz;
 	double fmomx, fmomy, fmomz;
 	double fweight;
+  double fu;
 	double x_fac, v_fac, m_fac;
 	char buffer[LOCAL_ASCII_BUFFERSIZE];
 
@@ -233,10 +234,14 @@ io_ascii_readpart(io_logging_t log,
 		 * Step 1: Read the particle data from the buffer *
 		\**************************************************/
 		if (f->header->multi_mass == 1) {
-			sscanf(buffer, "%lf %lf %lf %lf %lf %lf %lf",
-			       &fposx, &fposy, &fposz,
-			       &fmomx, &fmomy, &fmomz,
-			       &fweight);
+			if(sscanf(buffer, "%lf %lf %lf %lf %lf %lf %lf %lf",
+                &fposx, &fposy, &fposz,
+                &fmomx, &fmomy, &fmomz,
+                &fweight, &fu) == 7) {
+        fu = -1;
+      }
+//      fprintf(stderr,"%"PRIu64" %lf %lf %lf  %lf %lf %lf  %lf %lf\n",
+//              i,fposx,fposy,fposz,fmomx,fmomy,fmomz,fweight,fu);
 			fweight *= m_fac;
 			if (isless(fweight, f->minweight))
 				f->minweight = fweight;
@@ -261,6 +266,8 @@ io_ascii_readpart(io_logging_t log,
 			*((float *)strg.momz.val) = (float)(fmomz*v_fac);
 			if (strg.weight.val != NULL)
 				*((float *)strg.weight.val) = (float)fweight;
+			if (strg.u.val != NULL)
+				*((float *)strg.u.val) = (float)fu;
 		} else {
 			*((double *)strg.posx.val) = fposx*x_fac;
 			*((double *)strg.posy.val) = fposy*x_fac;
@@ -270,6 +277,8 @@ io_ascii_readpart(io_logging_t log,
 			*((double *)strg.momz.val) = fmomz*v_fac;
 			if (strg.weight.val != NULL)
 				*((double *)strg.weight.val) = fweight;
+			if (strg.u.val != NULL)
+				*((double *)strg.u.val) = fu;
 		}
 
 		/********************************************************\
@@ -283,6 +292,8 @@ io_ascii_readpart(io_logging_t log,
 		INCR(strg.momz.val, strg.momz.stride);
 		if (strg.weight.val != NULL)
 			INCR(strg.weight.val, strg.weight.stride);
+		if (strg.u.val != NULL)
+			INCR(strg.u.val, strg.u.stride);
 
 		/********************************************************\
 		 * Step 4: Get the next line                            *
@@ -305,19 +316,21 @@ io_ascii_readpart(io_logging_t log,
 		}
 	}
 	/* Loop again if required to set the interal energy to 0.0 */
+#ifdef RESET_U
 	if (strg.u.val != NULL) {
-		if (strg.bytes_int == sizeof(float)) {
-			for (i=0; i<pread; i++) {
-				*((float *)strg.u.val) = 0.0;
-				INCR(strg.u.val, strg.u.stride);
-			}
-		} else {
-			for (i=0; i<pread; i++) {
-				*((double *)strg.u.val) = 0.0;
-				INCR(strg.u.val, strg.u.stride);
-			}
-		}
+    if (strg.bytes_int == sizeof(float)) {
+      for (i=0; i<pread; i++) {
+        *((float *)strg.u.val) = 0.0;
+        INCR(strg.u.val, strg.u.stride);
+      }
+    } else {
+      for (i=0; i<pread; i++) {
+        *((double *)strg.u.val) = 0.0;
+        INCR(strg.u.val, strg.u.stride);
+      }
+    }
 	}
+#endif
 
 	io_logging_msg(log, INT32_C(3),
 	               "Done with reading %" PRIu64 " particles from %s",

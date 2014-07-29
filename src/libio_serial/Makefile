@@ -17,15 +17,16 @@ AR?=ar
 .PHONY: all clean
 
 OBJS =	input.o \
-    output.o\
-	input_grid.o\
-	output_grid.o\
-	write_boundary.o \
-       write_density.o \
-       write_nodepart.o \
-       write_nodes.o \
-       write_positions.o \
-       write_residual.o
+        output.o\
+        input_grid.o\
+        output_grid.o\
+        write_boundary.o \
+        write_density.o \
+        write_gadget.o \
+        write_nodepart.o \
+        write_nodes.o \
+        write_positions.o \
+        write_residual.o
 
 # Catch empty make call
 all:
@@ -57,6 +58,9 @@ write_boundary.o:	write_boundary.c
 
 write_density.o: write_density.c
 	$(CC) $(CFLAGS) -c -o write_density.o write_density.c
+
+write_gadget.o: write_gadget.c
+	$(CC) $(CFLAGS) -c -o write_gadget.o write_gadget.c
 
 write_nodepart.o: write_nodepart.c
 	$(CC) $(CFLAGS) -c -o write_nodepart.o write_nodepart.c

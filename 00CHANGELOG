@@ -1474,7 +1474,7 @@
 24/02/2012     - here we go again...
 (BUILD 001)
 
-07/03/2012     - added cNFW to AHF_halos file based upon Eq.(8) of Prada et al. (2012)
+07/03/2012     - added cNFW to AHF_halos file based upon Eq.(9) of Prada et al. (2012)
 (BUILD 002)    - introduced -DAHFaddDMonlyproperties
                   -> all the DM_only.X properties will now only be calculated when this flag is switched on (they are not used at the moment at all!)
 
@@ -1881,3 +1881,8 @@
                - adjusted first estimate of numHalos in spatialRef2halos() to not count main branches twice
                - halo centres will now always be re-adjusted on every level (not only on the last one)
                - removed #ifdef AHFadjust_numHalos_to_count => count is now checked against numHalos
+               
+29/07/2014   - added additional columns for -DAHFexciseSubhaloStars:
+(BUILD 085)     - npart_uniquestars
+                - Mstar_excised
+                - mean_z_star_excised

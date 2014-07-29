@@ -22,17 +22,19 @@
  */
 #include <stdio.h>
 #include <string.h>
-#ifdef WITH_OPENMP
 #include <omp.h>
-#endif
 
 #include "patch.h"
 #include "subcube.h"
 #include "../libutility/utility.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 #ifdef PATCH_THREADS_LOG
 FILE* patch_threadsF=NULL;
-char patch_threads_name[256];
+char patch_threads_name[MAX_FILENAME_LENGTH];
 int try_patch_threadsF=1;
 #endif
 
@@ -40,13 +42,13 @@ int try_patch_threadsF=1;
 UT_icd patch_icd = {SIZEOF_PSUBCUBE, NULL, NULL, NULL };
 
 void patch_create(patch_t** patch, int64_t id, int32_t level){
-#ifdef WITH_OPENMP
-  io_logging_msg(global_io.log, INT32_C(2),
-      "[%s:%d] We should call patch_create(%2d-%ld) ONLY ONCE per thread building patches at every level. (thread %d/%d)", __FILE__, __LINE__, level, id, omp_get_thread_num(), omp_get_num_threads());
-#else
-  io_logging_msg(global_io.log, INT32_C(2),
-      "[%s:%d] We should call patch_create(%2d-%ld) ONLY ONCE per thread building patches at every level.", __FILE__, __LINE__, level, id);
-#endif
+//#ifdef WITH_OPENMP
+//  io_logging_msg(global_io.log, INT32_C(2),
+//      "[%s:%d] We should call patch_create(%2d-%ld) ONLY ONCE per thread building patches at every level. (thread %d/%d)", __FILE__, __LINE__, level, id, omp_get_thread_num(), omp_get_num_threads());
+//#else
+//  io_logging_msg(global_io.log, INT32_C(2),
+//      "[%s:%d] We should call patch_create(%2d-%ld) ONLY ONCE per thread building patches at every level.", __FILE__, __LINE__, level, id);
+//#endif
 
   if((*patch=(patch_t*)malloc(sizeof(patch_t)))==NULL){
     perror("malloc(patch_t): ");
@@ -146,11 +148,11 @@ void patch_free_psubcubes_array(patch_t* patch){
 }
 
 void ahf2_patches_free(ahf2_patches_t** patches){
-  clock_t t_start, t_end;       //Timing variables for POSIX Clock
+  double t_start, t_end;       //Timing variables for POSIX Clock
   double elapsed;
   int it_level, it_patch;
   if(*patches==NULL) return;
-  t_start=clock();
+  t_start=omp_get_wtime();
   for(it_level=0; it_level<NLEVELS; it_level++){
     if((*patches)->tree[it_level]==NULL) continue;
     for(it_patch=0; it_patch<(*patches)->n_patches[it_level]; it_patch++){
@@ -161,13 +163,13 @@ void ahf2_patches_free(ahf2_patches_t** patches){
   }
   free(*patches);
   *patches=NULL;
-  t_end=clock();
-  elapsed=((double) (t_end - t_start)) / CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed=t_end - t_start;
   io_logging_msg(global_io.log, INT32_C(2),
       "[%s:%d] We freed ahf2_patches_structure in %f seconds.", __FILE__, __LINE__, elapsed);
 }
 
-int patch_include_adjacent_subcubes(subcube_t* sc_table, subcube_t* sc, patch_t* patch){
+int patch_include_adjacent_subcubes(subcube_t* sc_table, subcube_t* sc, patch_t* patch, visitable_subcubes_t *v_s_current, visitable_subcubes_t *v_s_next){
   //static long unsigned int calls, call_depth;
   //Look for adjacent subcubes
   ck_adjacents_t ck_adj;
@@ -176,7 +178,7 @@ int patch_include_adjacent_subcubes(subcube_t* sc_table, subcube_t* sc, patch_t*
   int64_t i,j;
   int64_t new_subcubes=0;
   //subcube_t* valid_adjacents[NUM_ADJACENT]={NULL};
-  visitable_subcubes_t *v_s_current=NULL, *v_s_next=NULL, *v_s_SWAP=NULL;
+  visitable_subcubes_t *v_s_SWAP=NULL;
 
   //for(i=0;i<NUM_ADJACENT;i++) valid_adjacents[i]=NULL;
   //calls++;
@@ -197,9 +199,9 @@ int patch_include_adjacent_subcubes(subcube_t* sc_table, subcube_t* sc, patch_t*
   //Iterate on the adjacent cubekeys with pck_aux (ckBBB is the first element in ck_adj. &ckBBB is equal to &ck_adj)
   //pck_aux=&ck_adj;
 
-  //Create visitable_subcubes (current and next) structures
-  visitable_subcubes_create(&v_s_current);
-  visitable_subcubes_create(&v_s_next);
+  //Clear visitable_subcubes (current and next) structures from previous iteration usage
+  visitable_subcubes_clear(v_s_current);
+  visitable_subcubes_clear(v_s_next);
 
   //Insert ck_adj in v_s_current
   pck_aux=&(ck_adj.ckBBB);
@@ -285,9 +287,7 @@ int patch_include_adjacent_subcubes(subcube_t* sc_table, subcube_t* sc, patch_t*
       fprintf(stderr,"[%s:%d] ERROR: In patch_include_adjacent_subcubes(), we exit the while loop and v_s_next is not empty!",
                   __FILE__, __LINE__);
   }
-  //Free memory of both visitable_subcubes structures
-  visitable_subcubes_free(&v_s_current);
-  visitable_subcubes_free(&v_s_next);
+
 
   return new_subcubes;
 }
@@ -296,6 +296,9 @@ void patch_connect_tree(patch_t** patch_tree, subcube_t** sc_table, int64_t* n_p
   int initial_level=-1, final_level=-1;
   int patch_it, level_it;
   patch_t *p_patch_aux=NULL;
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
   
   for(level_it=0; level_it<NLEVELS; level_it++){
     if(patch_tree[level_it]!=NULL){
@@ -337,7 +340,9 @@ void patch_connect_tree(patch_t** patch_tree, subcube_t** sc_table, int64_t* n_p
       #endif
     }
   }
-  
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 int patch_connect_my_parent(patch_t **patch_tree, subcube_t** sc_table, patch_t* patch){
@@ -438,17 +443,22 @@ void patch_connection_review(ahf2_patches_t* patches){
   int it_level=0;
   uint64_t it_daughter=0, it_patch=0;
   patch_t *ppatch_aux=NULL, *ppatch_parent=NULL, *ppatch_daughter=NULL;
-  clock_t t_start, t_end;       //Timing variables for POSIX Clock
+  double t_start, t_end;       //Timing variables for POSIX Clock
   double elapsed;
 
-  t_start=clock();
+  t_start=omp_get_wtime();
   //Review the patches->tree connections
-  strncpy(patchtree_name,global_io.params->outfile_prefix,256);
-  strcat(patchtree_name, ".patchtree.log");
+#ifdef WITH_MPI
+  snprintf(patchtree_name, MAX_FILENAME_LENGTH, "%s.%04d.", global_io.params->outfile_prefix, global_mpi.rank);
+#else
+  snprintf(patchtree_name, MAX_FILENAME_LENGTH, "%s.", global_io.params->outfile_prefix);
+#endif
+
+  strcat(patchtree_name, ".patchtree");
 
 	if((patchtreeF=fopen(patchtree_name, "w"))==NULL){
-		perror("fopen(patchtree.out): ");
-		fprintf(stderr, "Error opening patchtree.out\n");
+		perror("fopen(patchtree): ");
+		fprintf(stderr, "Error opening %s\n",patchtree_name);
 		return;
 	}
 	fprintf(patchtreeF,"Let's review the patches->tree connections (Patch syntax is LEVEL-ID):\n");
@@ -514,8 +524,8 @@ void patch_connection_review(ahf2_patches_t* patches){
     fclose(patchtreeF);
     patchtreeF=NULL;
   }
-  t_end=clock();
-  elapsed=((double) (t_end - t_start)) / CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed=t_end - t_start;
   io_logging_msg(global_io.log, INT32_C(2),
         "[%s:%d] patch_connection_review(). patchtree.out file generation took %f seconds.", __FILE__, __LINE__, elapsed);
 
@@ -524,10 +534,20 @@ void patch_connection_review(ahf2_patches_t* patches){
 void patch_formation_review(ahf2_patches_t* patches){
   int it_level=0;
   FILE *patchF=NULL;
+  char patch_name[MAX_FILENAME_LENGTH];
 
-  if((patchF=fopen("patch.out", "w"))==NULL){
-    perror("fopen(patch.out): ");
-    fprintf(stderr, "Error opening patch.out\n");
+#ifdef WITH_MPI
+  snprintf(patch_name, MAX_FILENAME_LENGTH, "%s.%04d.", global_io.params->outfile_prefix, global_mpi.rank);
+#else
+  snprintf(patch_name, MAX_FILENAME_LENGTH, "%s.", global_io.params->outfile_prefix);
+#endif
+
+  strcat(patch_name, ".patches_review");
+
+
+  if((patchF=fopen(patch_name, "w"))==NULL){
+    perror("fopen(patches_review): ");
+    fprintf(stderr, "Error opening patches_review\n");
     return;
   }
 
@@ -560,15 +580,23 @@ void patch_formation_review(ahf2_patches_t* patches){
 void patches_generation(ahf2_patches_t** patches, subcube_t** sc_table, int32_t initial_depth, int32_t final_depth, uint64_t NminPerHalo){
   int i=0, level=0;
   uint64_t rc=0;
-#ifdef WITH_OPENMP
   double start,end;
+  double elapsed;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
 #endif
 
 #ifdef PATCH_THREADS_LOG
-  strncpy(patch_threads_name,global_io.params->outfile_prefix,256);
-  strcat(patch_threads_name, ".patchthreads.log");
+#ifdef WITH_MPI
+  snprintf(patch_threads_name, MAX_FILENAME_LENGTH, "%s.%04d.", global_io.params->outfile_prefix, global_mpi.rank);
+#else
+  snprintf(patch_threads_name, MAX_FILENAME_LENGTH, "%s.", global_io.params->outfile_prefix);
+#endif
+
+  strcat(patch_threads_name, "patchthreads");
   if((patch_threadsF=fopen(patch_threads_name, "w"))==NULL) {
-    perror("fopen(patch_thread.log): ");
+    perror("fopen(patchthreads): ");
     fprintf(stderr, "Error opening %s\n", patch_threads_name);
     exit(EXIT_FAILURE);
   }
@@ -595,10 +623,11 @@ void patches_generation(ahf2_patches_t** patches, subcube_t** sc_table, int32_t 
   fprintf(patch_threadsF, "[%s:%d] Launching OpenMP threads in for-loop calling patches_generation_per_level().\n", __FILE__, __LINE__); fflush(patch_threadsF);
 #endif
 
+  start=omp_get_wtime();
+
 #ifdef WITH_OPENMP
   io_logging_msg(global_io.log, INT32_C(2),
       "[%s:%d] Launching OpenMP threads in for-loop calling patches_generation_per_level().", __FILE__, __LINE__);
-  start=omp_get_wtime();
 
   #ifdef PATCH_THREADS_LOG
     #pragma omp parallel for default(none) private(level,rc) \
@@ -611,9 +640,7 @@ void patches_generation(ahf2_patches_t** patches, subcube_t** sc_table, int32_t 
 #endif//WITH_OPENMP
   for(level=initial_depth; level<=final_depth; level++){
 
-    #ifdef WITH_OPENMP
     fprintf(stderr, "(thread %d/%d) patches_generation_per_level(level=%2d)\n", omp_get_thread_num(), omp_get_num_threads(), level);
-    #endif
 
     #ifdef PATCH_THREADS_LOG
     fprintf(patch_threadsF, "\t(thread %d/%d) Calling patches_generation_per_level(level=%2d)\n", omp_get_thread_num(), omp_get_num_threads(), level); fflush(patch_threadsF);
@@ -628,13 +655,22 @@ void patches_generation(ahf2_patches_t** patches, subcube_t** sc_table, int32_t 
   }//for
 
 
-#ifdef PATCH_THREADS_LOG
   end=omp_get_wtime();
-  fprintf(patch_threadsF, "(thread %d/%d) All (and ONLY) the calls to patches_generation_per_level() took %lf seconds\n", omp_get_thread_num(), omp_get_num_threads(), end-start);
+  elapsed=end-start;
+#ifdef PATCH_THREADS_LOG
+  fprintf(patch_threadsF, "(thread %d/%d) All (and ONLY) the calls to patches_generation_per_level() took %lf seconds\n", omp_get_thread_num(), omp_get_num_threads(), elapsed);
   fclose(patch_threadsF);
   patch_threadsF=NULL;
 #endif
 
+  fprintf(stderr, "All (and ONLY) the calls to patches_generation_per_level() took %lf seconds\n", elapsed);
+
+
+  io_logging_msg(global_io.log, INT32_C(2), "All (and ONLY) the calls to patches_generation_per_level() took %lf seconds\n", elapsed);
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 
@@ -644,15 +680,25 @@ int64_t patches_generation_per_level(ahf2_patches_t* patches, subcube_t* sc_tabl
   int64_t current_patch_id=0;
   patch_t *ppatch_aux = NULL;
   int n_subcubes = 0;
-
-#ifdef WITH_OPENMP
+  visitable_subcubes_t *v_s_current=NULL, *v_s_next=NULL;
   double start,end;
-  io_logging_msg(global_io.log, INT32_C(2), "(thread %d/%d) Building the patches at level %d", omp_get_thread_num(), omp_get_num_threads(), level);
+  double elapsed;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
   start=omp_get_wtime();
+#ifdef WITH_OPENMP
+  io_logging_msg(global_io.log, INT32_C(2), "(thread %d/%d) Building the patches at level %d", omp_get_thread_num(), omp_get_num_threads(), level);
 #else
   io_logging_msg(global_io.log, INT32_C(2), "Building the patches at level %d", level);
 #endif
+
+  //Create visitable_subcubes (current and next) structures
+  visitable_subcubes_create(&v_s_current);
+  visitable_subcubes_create(&v_s_next);
+
   if (sc_table_level != NULL) {
     table_iterate_subcube(sc_table_level, sc_aux, sc_tmp){
       //If subcube is not assigned to any patch, we include it in the new patch
@@ -674,7 +720,7 @@ int64_t patches_generation_per_level(ahf2_patches_t* patches, subcube_t* sc_tabl
         //sc_aux->patch_id=ppatch_aux->id; //->subcube.patch_id assigned inside patch_add_psubcube()
         patch_add_psubcube(ppatch_aux, &sc_aux);
         n_subcubes = 1;
-        n_subcubes += patch_include_adjacent_subcubes(sc_table_level, sc_aux, ppatch_aux);
+        n_subcubes += patch_include_adjacent_subcubes(sc_table_level, sc_aux, ppatch_aux, v_s_current, v_s_next);
         //Sanity check
         if (n_subcubes != patch_get_num_psubcubes(ppatch_aux)) {
           fprintf(stderr, "[%s:%d] ERROR: patch(%2d-%2ld) n_subcubes %d != patch_get_num_psubcubes %lu\n", __FILE__, __LINE__, ppatch_aux->level, ppatch_aux->id, n_subcubes, patch_get_num_psubcubes(ppatch_aux));
@@ -730,26 +776,34 @@ int64_t patches_generation_per_level(ahf2_patches_t* patches, subcube_t* sc_tabl
     }//table_iterate loop
   }//if(sc_table_level != NULL)
 
+  //Free memory of both visitable_subcubes structures
+  visitable_subcubes_free(&v_s_current);
+  visitable_subcubes_free(&v_s_next);
+
   //Free aux patch used to build the patches in patches->tree[level]
   if(ppatch_aux){
     patch_free(&ppatch_aux);
   }
-  #ifdef WITH_OPENMP
   end=omp_get_wtime();
-  io_logging_msg(global_io.log, INT32_C(2), "We built %lu patches (%lu rejected) at level %d in %lf seconds",
-          patches->n_patches[level], patches->n_rejected_patches[level], level, end-start);
+  elapsed=end-start;
+  #ifdef WITH_OPENMP
+    io_logging_msg(global_io.log, INT32_C(2), "We built %lu patches (%lu rejected) at level %d in %lf seconds",
+          patches->n_patches[level], patches->n_rejected_patches[level], level, elapsed);
+  #else
+    io_logging_msg(global_io.log, INT32_C(2), "We built %lu patches (%lu rejected) at level %d in %lf seconds",
+        patches->n_patches[level], patches->n_rejected_patches[level], level, elapsed);
+  #endif
 
   #ifdef PATCH_THREADS_LOG
   fprintf(patch_threadsF, "\t(thread %d/%d) We built %lu patches (%lu rejected) at level %d in %lf seconds\n",
       omp_get_thread_num(), omp_get_num_threads(), patches->n_patches[level],
-      patches->n_rejected_patches[level], level, end-start);
+      patches->n_rejected_patches[level], level, elapsed);
   fflush(patch_threadsF);
   #endif
 
-  #else
-  io_logging_msg(global_io.log, INT32_C(2), "We built %lu patches (%lu rejected) at level %d",
-        patches->n_patches[level], patches->n_rejected_patches[level], level);
-  #endif
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 
   return patches->n_patches[level];
 }
@@ -796,13 +850,13 @@ void visitable_subcubes_add(visitable_subcubes_t* pv_s, cubekey_t* pck){
   }
 
   //We check if the cubekey we are about to add is already in the list
-  for(i=0;i<pv_s->next;i++){
+/*  for(i=0;i<pv_s->next;i++){
     //If the cubekey to be added is already stored in the list, we have nothing to do -> return
     if(memcmp(pck,&pv_s->list[i],SIZEOF_CUBEKEY)==0){
       return;
     }
   }
-
+*/
   //If the cubekey ck is not present in list, we add it
   //Check if the list is full (next==size). In that case, increase the list size reallocating memory
   if(pv_s->next==pv_s->size){
@@ -985,8 +1039,16 @@ void add_patch_physics(patch_t *patch, psubcube_t psc)
   ************************************************/
   
   // update patch physics
-  patch->Npart                 += psc->nparticles;
+  patch->Npart                 += psc->nparticles; // number of particles inside subcube
   patch->n_subcubes            += 1;
+  
+  patch->centre.cube.geom[0]  += pos[0];
+  patch->centre.cube.geom[1]  += pos[1]; // to be divided by n_subcubes
+  patch->centre.cube.geom[2]  += pos[2];
+
+  patch->centre.cube.wgeom[0] += (flouble)psc->nparticles*pos[0];
+  patch->centre.cube.wgeom[1] += (flouble)psc->nparticles*pos[1]; // to be divided by N_part
+  patch->centre.cube.wgeom[2] += (flouble)psc->nparticles*pos[2];
   
   if(pos[0] < patch->Xmin) patch->Xmin = pos[0];
   if(pos[1] < patch->Ymin) patch->Ymin = pos[1];

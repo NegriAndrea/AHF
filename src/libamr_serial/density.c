@@ -14,6 +14,10 @@
 #include "../libutility/utility.h"
 #include "amr_serial.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 /*===============================================================================
 *
 * This file contains all routines to assign/unassign particles to grids
@@ -255,6 +259,10 @@ boolean assign_npart(gridls *cur_grid)
    long    no_part, no_nodes;
    long    ipquad;
    
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
    /* reset counters for no_parts and no_nodes on cur_grid */
    no_part  = 0;
    no_nodes = 0;
@@ -399,6 +407,10 @@ boolean assign_npart(gridls *cur_grid)
    cur_grid->size.no_part  = no_part;
    cur_grid->size.no_nodes = no_nodes;
 
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
    /* do not allow refinements smaller than MIN_NNODES */
    if(cur_grid->size.no_nodes < MIN_NNODES)
       return(FALSE);
@@ -431,6 +443,10 @@ void zero_dens(gridls *cur_grid)
    nptr  cur_node;
    long  ipquad;
    
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
 #ifdef WITH_OPENMP
 #pragma omp parallel private(ipquad, cur_pquad, cur_cquad, icur_cquad, cur_nquad, icur_nquad, cur_node) shared(cur_grid)
 #pragma omp for schedule(static)
@@ -465,6 +481,9 @@ void zero_dens(gridls *cur_grid)
 #endif
                     }
     }
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 

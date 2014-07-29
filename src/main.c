@@ -17,6 +17,7 @@
 
 #ifdef AHF2
 #include "libahf2/ahf.h"
+#include <omp.h>
 #endif
 
 #include "libsfc/sfc.h"
@@ -24,6 +25,10 @@
 #include "libutility/utility.h"
 #include "libgravity/gravity.h"
 //#include "libio_serial/io_serial.h"
+
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
 
 #ifdef NEWAMR
 #include "libtree/tree.h"
@@ -64,10 +69,16 @@ int main(int argc, char **argv)
   uint64_t newparts;
 #endif
 
+
 #ifdef NEWAMR
   ahf2_patches_t *patches=NULL;
 #endif
   
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   /*============================================================ 
    * we always read the relevant parameters from an input file!
    *===========================================================*/
@@ -132,12 +143,24 @@ int main(int argc, char **argv)
 	startrun((argc > 1) ? argv[1] : NULL, &timecounter, &timestep, &no_first_timestep);
   timing.startrun += time(NULL);
   
+#ifdef WRITE_GADGET
+ {
+  FILE *fpout;
+  char outname[MAXSTRING];
+#ifdef WITH_MPI
+  sprintf(outname,"%s-%d.z%.3f.gdt",global_io.params->outfile_prefix,global_mpi.rank,fabs(global.z));
+#else
+  sprintf(outname,"%s.z%.3f.gdt",global_io.params->outfile_prefix,fabs(global.z));
+#endif
+
+  global.fst_part = global_info.fst_part;
+  global.no_part  = global_info.no_part;
+  write_gadget(outname);
+  exit(0);
+ }
+#endif
   
-#ifdef DEBUG_STARTRUN
-  /*===========================================================
-   * DEBUG_STARTRUN:
-   * we simply check if the particles have been read correctly
-   *===========================================================*/
+#ifdef WRITE_ASCII
  {
   FILE *fpout;
   char outname[MAXSTRING];
@@ -151,16 +174,21 @@ int main(int argc, char **argv)
   
   fpout = fopen(outname,"w");
   
-  for(cur_part=global_info.fst_part; cur_part<(global_info.fst_part+global_info.no_part); cur_part++)
-    fprintf(fpout,"%e %e %e\n",cur_part->pos[X]*simu.boxsize,cur_part->pos[Y]*simu.boxsize,cur_part->pos[Z]*simu.boxsize);
+   for(cur_part=global_info.fst_part; cur_part<(global_info.fst_part+global_info.no_part); cur_part++) {
+     if(cur_part->weight>1) {
+       fprintf(fpout,"%e %e %e %f %f %f\n",
+               cur_part->pos[X]*simu.boxsize,cur_part->pos[Y]*simu.boxsize,cur_part->pos[Z]*simu.boxsize,
+               cur_part->mom[X]*H0*simu.boxsize/global.a,cur_part->mom[Y]*H0*simu.boxsize/global.a,cur_part->mom[Z]*H0*simu.boxsize/global.a);
+     }
+   }
   
   fclose(fpout);
 #ifdef WITH_MPI
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-  //exit(0);
+   //exit(0);
  }
-#endif /* DEBUG_STARTRUN */
+#endif /* WRITE_ASCII */
   
   
   /*==========================================================================================
@@ -442,6 +470,17 @@ int main(int argc, char **argv)
   strg.u.val = NULL;
   strg.u.stride = (ptrdiff_t)0;
 #	endif /* GAS_PARTICLE */
+#ifdef STORE_MORE
+   strg.rho.val = (void *)&(global_info.fst_part->rho);
+   strg.rho.stride =   (char *)&((global_info.fst_part+1)->rho) - (char *)&(global_info.fst_part->rho);
+   strg.eps.val = (void *)&(global_info.fst_part->eps);
+   strg.eps.stride =   (char *)&((global_info.fst_part+1)->eps) - (char *)&(global_info.fst_part->eps);
+#else
+   strg.rho.val = NULL;
+   strg.rho.stride =(ptrdiff_t)0;
+   strg.eps.val = NULL;
+   strg.eps.stride =(ptrdiff_t)0;
+#endif
 #	if (defined AHFlean && defined AHF_NO_PARTICLES)
   strg.id.val = NULL;
   strg.id.stride = (ptrdiff_t)0;
@@ -522,13 +561,14 @@ int main(int argc, char **argv)
   dumpf = fopen(fname, "w");
   fprintf(dumpf, "# x y z  vx vy vz  ID\n");
   for (uint64_t i=0L; i<global_info.no_part; i++) {
-    fprintf(dumpf, "%15e %15e %15e   %15e %15e %15e   %lu\n",
-            global_info.fst_part[i].pos[0],
-            global_info.fst_part[i].pos[1],
-            global_info.fst_part[i].pos[2],
-            global_info.fst_part[i].mom[0],
-            global_info.fst_part[i].mom[1],
-            global_info.fst_part[i].mom[2],
+    fprintf(dumpf, "%15e %15e %15e   %15e %15e %15e   %15e   %lu\n",
+            global_info.fst_part[i].pos[0]*simu.boxsize,
+            global_info.fst_part[i].pos[1]*simu.boxsize,
+            global_info.fst_part[i].pos[2]*simu.boxsize,
+            global_info.fst_part[i].mom[0]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].mom[1]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].mom[2]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].weight*simu.pmass,
             (unsigned long)global_info.fst_part[i].id);
   }
   fclose(dumpf);
@@ -570,13 +610,15 @@ int main(int argc, char **argv)
   /* 1. organize the particles into a tree */
   fprintf(stderr,"[main] Calling generate_tree...\n");
 #ifndef AHF2_read_spatialRef
+  timing.generate_tree_v2 = omp_get_wtime();
   patches=generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom, simu.AHF_MINPART);
+  timing.generate_tree_v2 = omp_get_wtime() - timing.generate_tree_v2;
 #else
   patches = (ahf2_patches_t *) calloc(1, sizeof(ahf2_patches_t));
 #endif
   fprintf(stderr,"[main] Exit from generate_tree\n");
 
-	//Generate patchtree.out
+  //Generate patchtree.out
   //patch_connection_review(patches);
   
   /* 2. moving things around */
@@ -587,18 +629,24 @@ int main(int argc, char **argv)
   global.no_timestep  = no_first_timestep;
 
   /* 3. perform halo analysis */
-  fprintf(stderr,"\nmain: calling ahf_halos():\n");
+  fprintf(stderr,"\n[main]: calling ahf_halos():\n");
   ahf.time -= time(NULL);
   timing.ahf_halos -= time(NULL);
   ahf_halos(patches);
   timing.ahf_halos += time(NULL);
-  ahf.time += time(NULL);  
+  ahf.time += time(NULL);
+
+  /*=========================================================================================
+   * update logfile and say bye-bye
+   *=========================================================================================*/
+  write_logfile(timecounter, timestep, no_timestep);
 }
 #else /* NEWAMR */
   
   /*===================================================================== 
    * generate the domain grids: simu.NGRID_MIN^3, ...., simu.NGRID_DOM^3 
    *=====================================================================*/
+  timing.generate_tree -= time(NULL);
   timing.gendomgrids -= time(NULL);
   grid_list = gen_domgrids(&no_grids);   
   timing.gendomgrids += time(NULL);
@@ -687,7 +735,11 @@ int main(int argc, char **argv)
 	/* Gracefully terminate MPI */
 	MPI_Finalize();
 #	endif
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
   return EXIT_SUCCESS;
 }
 

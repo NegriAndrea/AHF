@@ -435,7 +435,8 @@ io_tipsy_readpart_raw(io_logging_t log,
 	double fmomx, fmomy, fmomz;
 	double fweight=0., oldfweight=0.;
 	double fu;
-   double ftemp;
+  double ftemp;
+  double frho, feps;
 	uint64_t fid;
 	float dummy;
 	uint32_t dummy_int;
@@ -604,9 +605,11 @@ io_tipsy_readpart_raw(io_logging_t log,
           fid = i + f->header->ndark + f->header->nstar;
 #endif
           io_util_readfloat(f->file, &dummy, f->swapped);  // rho
+          frho  = (double)dummy;
           io_util_readfloat(f->file, &dummy, f->swapped);  // temp
           ftemp = (double)dummy;
           io_util_readfloat(f->file, &dummy, f->swapped);  // hsmooth
+          feps  = (double)dummy;
           io_util_readfloat(f->file, &dummy, f->swapped);  // metals
           io_util_readfloat(f->file, &dummy, f->swapped);  // phi
         }
@@ -621,6 +624,7 @@ io_tipsy_readpart_raw(io_logging_t log,
           ftemp = PDM;
 
           io_util_readfloat(f->file, &dummy, f->swapped);  // eps
+          feps  = (double)dummy;
           io_util_readfloat(f->file, &dummy, f->swapped);  // phi
          
           /* keep track of lowest-mass dark matter particle */
@@ -640,6 +644,7 @@ io_tipsy_readpart_raw(io_logging_t log,
           io_util_readfloat(f->file, &dummy, f->swapped);  // metals
           io_util_readfloat(f->file, &dummy, f->swapped);  // tform
           io_util_readfloat(f->file, &dummy, f->swapped);  // eps
+          feps  = (double)dummy;
           io_util_readfloat(f->file, &dummy, f->swapped);  // phi
         }
       
@@ -654,6 +659,10 @@ io_tipsy_readpart_raw(io_logging_t log,
       *((float *)strg.momz.val)   = (float)fmomz;
       *((float *)strg.u.val)      = (float)ftemp;
       *((uint32_t *)strg.id.val)  = (uint32_t)fid;
+#ifdef STORE_MORE
+      *((float *)strg.rho.val)      = (float)frho;
+      *((float *)strg.eps.val)      = (float)feps;
+#endif
       
       /* Increment the pointers to the next particle */
       strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride);
@@ -665,6 +674,10 @@ io_tipsy_readpart_raw(io_logging_t log,
       strg.weight.val = (void *)(((char *)strg.weight.val) + strg.weight.stride);
       strg.u.val = (void *)(((char *)strg.u.val) + strg.u.stride);
       strg.id.val = (void *)(((char *)strg.id.val) + strg.id.stride);
+#ifdef STORE_MORE
+      strg.rho.val = (void *)(((char *)strg.rho.val) + strg.rho.stride);
+      strg.eps.val = (void *)(((char *)strg.eps.val) + strg.eps.stride);
+#endif
       
      /* Detect extreme positions */
       if (isless(fposx, f->minpos[0]))      f->minpos[0] = fposx;
@@ -905,7 +918,7 @@ io_tipsy_scale_particles(io_logging_t log,
                           io_file_strg_struct_t strg)
 {
 	double box[3], shift[3], B;
-	double scale_pos, scale_mom, scale_weight, scale_e;
+	double scale_pos, scale_mom, scale_weight, scale_e, scale_rho;
 	uint64_t i;
   
 	/* Now we can do the scaling */
@@ -962,10 +975,15 @@ io_tipsy_scale_particles(io_logging_t log,
     *                    TIPSY UNIT SCALING                           *
     *             we only need to scale VELOCTIES!                    *
    \*=================================================================*/
+#ifdef Hydra
+  scale_pos      = 1.0/boxsize;
+#else
   scale_pos      = 1.0/B;
+#endif
   scale_mom      = expansion*expansion * vunit/(H0*boxsize);
   scale_weight   = 1.0/mmass;
   scale_e        = eunit;
+  scale_rho      = scale_weight/(scale_pos*scale_pos*scale_pos);
   
 	io_logging_msg(log, INT32_C(3),
 	               "Scaling by:  positions:  %g", scale_pos);
@@ -1005,6 +1023,8 @@ io_tipsy_scale_particles(io_logging_t log,
     *((type *)strg.momz.val) *= (type)(scale_mom); \
     if (strg.u.val != NULL) {if(*((type *)strg.u.val) >= 0.) *((type *)strg.u.val) *= (type)(scale_e);} \
     if (strg.weight.val != NULL) *((type *)strg.weight.val) *= (type)(scale_weight); \
+    if (strg.rho.val != NULL) *((type *)strg.rho.val) *= (type)(scale_rho); \
+    if (strg.eps.val != NULL) *((type *)strg.eps.val) *= (type)(scale_pos); \
     strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride); \
     strg.posy.val = (void *)(((char *)strg.posy.val) + strg.posy.stride); \
     strg.posz.val = (void *)(((char *)strg.posz.val) + strg.posz.stride); \
@@ -1027,7 +1047,9 @@ io_tipsy_scale_particles(io_logging_t log,
 		*((type *)strg.momz.val) *= (type)(scale_mom); \
     if (strg.u.val != NULL) {if(*((type *)strg.u.val) >= 0.) *((type *)strg.u.val) *= (type)(scale_e);} \
 		if (strg.weight.val != NULL) *((type *)strg.weight.val) *= (type)(scale_weight); \
-		strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride); \
+    if (strg.rho.val != NULL) *((type *)strg.rho.val) *= (type)(scale_rho); \
+    if (strg.eps.val != NULL) *((type *)strg.eps.val) *= (type)(scale_pos); \
+    strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride); \
 		strg.posy.val = (void *)(((char *)strg.posy.val) + strg.posy.stride); \
 		strg.posz.val = (void *)(((char *)strg.posz.val) + strg.posz.stride); \
 		strg.momx.val = (void *)(((char *)strg.momx.val) + strg.momx.stride); \

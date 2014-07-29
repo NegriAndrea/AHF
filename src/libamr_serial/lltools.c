@@ -16,6 +16,10 @@
 #include "amr_serial.h"
 #include "../libutility/utility.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 /*============================================================================
 *
 * This file contains everything to work with AMIGA's linked-lists
@@ -35,7 +39,11 @@ void ll(long unsigned npart, partptr fst_part, gridls *cur_grid)
    cqptr         cur_cquad;    /* current cquad                 */
    nqptr         cur_nquad;    /* current nquad                 */
    nptr          cur_node;     /* current node                  */
-   
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
    /* loop over all particles starting with fst_part (first particle) */
    for(jpart = 0; jpart < npart; jpart++)
      {
@@ -78,7 +86,9 @@ void ll(long unsigned npart, partptr fst_part, gridls *cur_grid)
       cur_node->ll = ipart;
 
      }
-
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 

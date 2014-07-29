@@ -19,6 +19,10 @@
 #include <omp.h>
 #endif
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 static long dummy_variable;
 void dummy_ahf_gridinfo(void)
 {
@@ -89,6 +93,10 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
   double fl1dim, refine_len, refine_vol, refine_ovdens, refine_mass;
 
   double  cur_shift;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
    
 #ifdef VERBOSE
   /***************************************************************************/
@@ -872,6 +880,11 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
     free(current);
     current = previous;
    }
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 }
 
 

@@ -17,6 +17,9 @@
 #include "common.h"
 #include "libutility/alloc_struct.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
 
 /**********************************************************************\
  *    Local defines, structure definitions and typedefs               *
@@ -111,6 +114,9 @@ comm_dist_part(io_logging_t log,
 	uint64_t k;
 	sfc_key_t target, j;
 	MPI_Status status;
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
 	/* Get memory for recv count and senddispl array */
 	comm = (comm_struct_t *)malloc(sizeof(comm_struct_t)*lb->ncpu);
@@ -307,6 +313,10 @@ comm_dist_part(io_logging_t log,
 		lb->bf[j] -= lb->bf[j-1];
 	}
 
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 	return;
 }
 
@@ -322,6 +332,10 @@ comm_dist_part_ahf(io_logging_t log,
 	int i;
 	sfc_key_t redkey, j;
 	MPI_Status status;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
 	/* Get memory for recv count and senddispl array */
 	comm = (comm_struct_t *)malloc(sizeof(comm_struct_t)*lb->ncpu);
@@ -447,6 +461,10 @@ comm_dist_part_ahf(io_logging_t log,
 	free(newpart);
 	free(comm);
 	*no_part = new_no_part;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 
 	return totrecv;
 }

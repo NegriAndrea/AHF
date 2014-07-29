@@ -37,6 +37,9 @@
 #  include "ahf_io_sql.h"
 #endif
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
 
 /***************************************************************************
  *   Macros and assorted definitions                                       *
@@ -181,6 +184,10 @@ ahf_halos(gridls *grid_list)
 	long          nsat, *isat;
 	SPATIALREF    **spatialRef;
   int           numSubStruct, *SubStruct, ihost, isub;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
 	/* pointless trying to find halos when there are no useable grids */
 	if (ahf.no_grids <= 0)
@@ -356,6 +363,8 @@ ahf_halos(gridls *grid_list)
 	}
   timing.analyseRef += time(NULL);
   
+  timing.generate_tree += time(NULL);
+
 #ifdef AHFgridtreefile
   /**************************************************************************
    * Writing the spatialRef[][] tree to a file */
@@ -881,6 +890,11 @@ ahf_halos(gridls *grid_list)
 	        "################## ahf_halos finished ##################\n");
 	fflush(io.logfile);
 #endif
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 } /* ahf_halos */
 
 /*
@@ -6298,6 +6312,15 @@ void exciseSubhaloStars(HALO *halos, long ihost)
     }
 
   }
+  
+  // update Mstar_excised
+  halos[ihost].Mstar_excised = 0.0;
+  for(i=0; i<halos[ihost].npart_uniquestars; i++) {
+    cur_part = global.fst_part + halos[ihost].ipart_uniquestars[i];
+    halos[ihost].mean_z_star_excised   += cur_part->weight * (cur_part->z);
+    halos[ihost].Mstar_excised         += cur_part->weight;
+  }
+  halos[ihost].mean_z_star_excised /= halos[ihost].Mstar_excised;
   
 }
 #endif /* AHFexciseSubhaloStars */

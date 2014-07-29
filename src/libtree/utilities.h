@@ -10,5 +10,6 @@
 void   get_patch_level_range (patch_t **, int64_t *, int *, int *);
 double patch_property        (patch_t);
 void   write_patch_geom      (char *, patch_t );
+void   write_patchtreefile   (patch_t **, uint64_t *);
 void   get_patch_centre      (patch_t , double *, double *, double *);
 #endif

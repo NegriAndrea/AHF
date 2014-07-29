@@ -5,10 +5,12 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   84
+#define BUILD   85
 
 #ifdef AHF2
+  #undef  VERSION
   #define VERSION 2.0
+  #undef  BUILD
   #define BUILD   0
 #endif
 
@@ -41,6 +43,8 @@
 #define BCASTHEADER                  // only one MPI task will read all the relevant header information and then broadcast
 //#define NCPUREADING_EQ_NFILES        // this should speed up I/O of multiple snapshot files, but only works for this condition
 
+//#define EXTRAE_API_USAGE              // activate the Extrae API calls to trace user functions with Extrae_user_function()
+
 /*--------------------------------------------------
  *                     AHF2
  *--------------------------------------------------*/
@@ -49,34 +53,45 @@
 #undef AHF
 #define NEWAMR
 
-#define MERGER_NPART_FRAC  0.75   // overlap in number of particles for patches to be considered a merger
-#define MERGER_VOL_FRAC    0.75   // overlap in volume for patches to be considered a merger
+#define AHF2_MERGER_NPART_FRAC    0.75   // overlap in number of particles for patches to be considered a merger
+#define AHF2_MERGER_VOL_FRAC      0.75   // overlap in volume for patches to be considered a merger
+#define AHF2_MIN_NCUBES_PER_PATCH 125
 
 //#define AHF2_overwrite_logfiles  // define.h is *not* included in io_logging.c and hence this define has to happen in there!
 
 #define CUBEKEY_128              // Use 128bits per cubekey allowing up to 42 refinement levels. Only supported for GCC right now
 
-// technical parameters
-#define AHF2_libtree_18neighbours
-#define AHF2_hostradius_is_patchdiagonal
+// how to obtain the prospective halo centre (only one is allowed to be defined)
+#define AHF2_centre_part_com
+//#define AHF2_centre_part_Nmax
+//#define AHF2_centre_cube_wgeom
+//#define AHF2_centre_cube_geom
 
 // mimic AHF1 behaviour
-//#define AHF2_read_spatialRef
 #define AHF2_set_gatherRad_like_AHF1
+//#define AHF2_read_spatialRef
 //#define AHF2_read_preliminary_halos
+
+// highly technical parameters
+#define AHF2_libtree_18neighbours
+//#define AHF2_libtree_26neighbours    // ONLY one of 18 or 26 neighbours is allowed to be defined
+#define AHF2_hostradius_is_patchdiagonal
 
 // write debug data
 //#define AHF2_write_preliminary_halos
+//#define AHF2_write_patchtreefile
+//#define AHF2_write_patches_geom
+//#define AHF2_write_particles_geom
 //#define GENERATE_TREE_LOG        // dump generate_tree log messages to file generate_tree.log
 //#define PATCH_THREADS_LOG        // accounting to patch_threads.log for threading in patch.c
 #endif
 
 //PATCH_THREADS_LOG without WITH_OPENMP makes no sense
-#ifdef PATCH_THREADS_LOG
-  #ifndef WITH_OPENMP
-    #error "No sense to ask for patch_threads.log with -DPATCH_THREADS_LOG without -DWITH_OPENMP. Review Makefile, Makefile.config and define.h files"
-  #endif
-#endif
+//#ifdef PATCH_THREADS_LOG
+//  #ifndef WITH_OPENMP
+//    #error "No sense to ask for patch_threads.log with -DPATCH_THREADS_LOG without -DWITH_OPENMP. Review Makefile, Makefile.config and define.h files"
+//  #endif
+//#endif
 
 /*--------------------------------------------------
  *                     AHF

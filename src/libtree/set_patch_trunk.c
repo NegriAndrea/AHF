@@ -21,6 +21,11 @@
 #include "patch.h"
 #include "utilities.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
+
 #ifdef NEWAMR
 
 //*********************************************************************************************************
@@ -43,7 +48,10 @@ void set_patch_trunk(patch_t **patch_tree, int64_t *n_patches)
 {
   int32_t initial_level, final_level, ilevel;
   int64_t ipatch;
- 
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   // determine initial and final level
   get_patch_level_range(patch_tree, n_patches, &initial_level, &final_level);
   
@@ -59,6 +67,11 @@ void set_patch_trunk(patch_t **patch_tree, int64_t *n_patches)
       
     } // ipatch
   } // ilevel
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 }
 
 //*********************************************************************************************************
@@ -79,7 +92,14 @@ int32_t get_patch_trunk(patch_t patch)
   // mulitple daughters => find trunk
   //----------------------------------
   if(patch.n_daughters > 1) {
-    
+    if(patch.daughters==NULL){
+      fprintf(stderr,"[%s:%d] ERROR: patch.daughters is NULL and patch.n_daughters is %"PRIu32" (patch %"PRId32"-%"PRId64"). Returning trunk=END_OF_TRUNK...\n",
+          __FILE__, __LINE__, patch.n_daughters, patch.level, patch.id);
+      io_logging_msg(global_io.log, INT32_C(1), "[%s:%d] ERROR: patch.daughters is NULL and patch.n_daughters is %"PRIu32" (patch %"PRId32"-%"PRId64"). Returning trunk=END_OF_TRUNK.",
+          __FILE__, __LINE__, patch.n_daughters, patch.level, patch.id);
+      trunk=END_OF_TRUNK;
+      return trunk;
+    }
     // not considered merger yet
     merger = FALSE;
 
@@ -143,7 +163,7 @@ int32_t get_patch_trunk(patch_t patch)
 int qcomparePatchNpart(const void *patch1, const void *patch2)
 {
 	uint64_t n1, n2;
-  
+
 	n1 = ((patch_t *)patch1)->Npart;
 	n2 = ((patch_t *)patch2)->Npart;
   
@@ -156,8 +176,8 @@ int qcomparePatchNpart(const void *patch1, const void *patch2)
 //*********************************************************************************************************
 int check_merger(patch_t *p1, patch_t *p2)
 {
-  if(fabs(p1->Npart      - p2->Npart)     /(double)p1->Npart      > (1-MERGER_NPART_FRAC) &&
-     fabs(p1->n_subcubes - p2->n_subcubes)/(double)p1->n_subcubes > (1-MERGER_VOL_FRAC)      ) {
+  if(fabs(p1->Npart      - p2->Npart)     /(double)p1->Npart      > (1-AHF2_MERGER_NPART_FRAC) &&
+     fabs(p1->n_subcubes - p2->n_subcubes)/(double)p1->n_subcubes > (1-AHF2_MERGER_VOL_FRAC)      ) {
     return(TRUE);
   }
   else {

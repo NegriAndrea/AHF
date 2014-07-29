@@ -69,6 +69,11 @@ typedef struct particle
 #ifdef SUSSING2013
   flouble E;
 #endif
+  
+#ifdef STORE_MORE
+  flouble rho;
+  flouble eps;
+#endif
 }part;
 
 /*=========================================================================
@@ -692,6 +697,8 @@ typedef struct {
 #ifdef AHFexciseSubhaloStars
   long unsigned  npart_uniquestars;
   long unsigned *ipart_uniquestars; /* the stars only belonging to and only to the halo */
+  double         Mstar_excised;
+  double         mean_z_star_excised;
 #endif
     
   /*----------------------------
@@ -724,7 +731,7 @@ typedef struct {
   XYZ     E2;
   XYZ     E3;
   double  fMhires;       /* fraction of hi-res to all DM particles                       */ 
-  double  cNFW;          /* NFW concentration according to Eq.(8) in Prada et al. (2012) */
+  double  cNFW;          /* NFW concentration according to Eq.(9) in Prada et al. (2012) */
   double  R_edge;        /* ignore this quantity!                                        */
 
 #ifdef METALHACK
@@ -836,6 +843,10 @@ typedef struct info_timing
   time_t      ahf_halos;
   time_t      ahf_halos_sfc_constructHalo;
   time_t      ahf_io;
+  time_t      generate_tree;
+#ifdef AHF2
+  double     generate_tree_v2;
+#endif
   
 } info_timing;
 

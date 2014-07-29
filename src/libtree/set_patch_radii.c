@@ -21,6 +21,10 @@
 #include "patch.h"
 #include "utilities.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 #ifdef NEWAMR
 
 //*********************************************************************************************************
@@ -46,7 +50,11 @@ void set_patch_radii(patch_t **patch_tree, int64_t *n_patches)
 {
   int      initial_level, final_level, ilevel, iparent;
   patch_t *parent_patch;
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   // determine initial and final level
   get_patch_level_range(patch_tree, n_patches, &initial_level, &final_level);
 
@@ -73,6 +81,9 @@ void set_patch_radii(patch_t **patch_tree, int64_t *n_patches)
 
   } // iparent
   
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 
@@ -286,7 +297,7 @@ double parent_patch_radius(patch_t patch)
   }
 #endif
 
-#ifdef DEBUG_AHF2libtree_x
+#ifdef DEBUG_AHF2libtree
   if(sqrt(radius2) > 0.0075) {
     write_debuginfo(patch,x,y,z,radius2);
   }

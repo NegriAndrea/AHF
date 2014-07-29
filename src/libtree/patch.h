@@ -72,6 +72,7 @@ typedef struct ahf2_patches {
 
 #define SIZEOF_PATCH (sizeof(patch_t))
 #define SIZEOF_AHF2_PATCHES (sizeof(ahf2_patches_t))
+#define MAX_FILENAME_LENGTH 256
 
 
 /*
@@ -122,6 +123,6 @@ void init_patch_physics(patch_t *);
 void add_patch_physics(patch_t *, psubcube_t );
 void finish_patch_physics(patch_t *);
 
-int patch_include_adjacent_subcubes(subcube_t*, subcube_t*, patch_t*);
+int patch_include_adjacent_subcubes(subcube_t*, subcube_t*, patch_t*, visitable_subcubes_t*, visitable_subcubes_t*);
 #endif
 

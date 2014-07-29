@@ -23,7 +23,9 @@ void dummy_loadbalance()
 #include <math.h>
 
 #include "../common.h"
-
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
 
 /**********************************************************************\
  *    Prototypes of local functions                                   *
@@ -207,6 +209,9 @@ loadbalance_update(io_logging_t log,
                    partptr part,
                    uint64_t no_parts)
 {
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 	uint64_t i;
 	int j;
 	
@@ -214,6 +219,9 @@ loadbalance_update(io_logging_t log,
 	local_calcDistribution(log, loadbal);
 	local_recalc_localparts(log, loadbal);
 
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 	return;
 }
 
@@ -288,6 +296,10 @@ loadbalance_log(io_logging_t log, loadbalance_t lb)
 extern void
 loadbalance_minimalMemory(io_logging_t log, loadbalance_t lb)
 {
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
 	io_logging_msg(log, INT32_C(3),
 	               "Minimizing memory usage of loadbalance structure.");
 	if (lb->bf == NULL) {
@@ -308,6 +320,9 @@ loadbalance_minimalMemory(io_logging_t log, loadbalance_t lb)
 		               "Free'd local bf array (%fMB returned)",
 		               sizeof(uint32_t)*lb->totkeys/(1024.*1024.));
 	}
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 
 

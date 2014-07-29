@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
-#ifdef WITH_OPENMP
 #include <omp.h>
+
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
 #endif
+
 
 /* the important definitions have to be included first */
 #include "../common.h"
@@ -21,6 +24,8 @@
 #include "set_patch_trunk.h"
 #include "set_patch_radii.h"
 #include "set_patch_pos.h"
+
+#define MAX_FILENAME_LENGTH 256
 
 //Internal functions declaration
 int subcube_refine(subcube_t**, subcube_t*, partptr);
@@ -75,6 +80,9 @@ int initial_box_division(long unsigned npart, partptr fst_part, int initial_dept
   partptr p_part=NULL;
   partptr* pp_part=NULL; //We do need pointer to pointer to particle:
                          // UTarray stores simple pointers 'partptr' type, we pass/receive "re-pointers" to/from routines
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
   if(initial_depth>MAX_DEPTH){
     fprintf(stderr, "ERROR: initial_depth (%d) cannot be larger than MAX_DEPTH (%d).\nAborting...\n", initial_depth, MAX_DEPTH);
@@ -97,12 +105,20 @@ int initial_box_division(long unsigned npart, partptr fst_part, int initial_dept
     //Add the particle-ID (position) to the particles array in the subcube structue
     subcube_add_particle(sc_aux, pp_part);
   }                            //for(ipart)
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
   return table_get_num_subcubes(sc_table[initial_depth]);
 }
 
 void refine_box_division(int initial_depth, subcube_t **sc_table, int threshold, partptr fst_part) {
   int depth;
   subcube_t *sc_aux, *sc_tmp;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
   for (depth=initial_depth; depth<NLEVELS; depth++){
     sc_aux=NULL;
@@ -120,8 +136,12 @@ void refine_box_division(int initial_depth, subcube_t **sc_table, int threshold,
     else{
       //If the subcube-table is empty, all the deeper levels will be empty as well
       if (depth>initial_depth) break; //break the for depth loop
-    }
-  }
+    }//else
+  }//for
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 }
 
 //generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom);
@@ -138,20 +158,24 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
 
   ahf2_patches_t* patches=NULL;
 
-  clock_t t_start, t_end;       //Timing variables for POSIX Clock
+  double t_start, t_end;       //Timing variables for POSIX Clock
   double elapsed;
 
 #ifdef GENERATE_TREE_LOG
   FILE* generate_treeF=NULL;
-  char generate_tree_name[256];
+  char generate_tree_name[MAX_FILENAME_LENGTH];
 #endif
   FILE* patchtreeF=NULL;
 
 #ifdef DUMP_TREES
-  char filename_aux[128]="";
+  char filename_aux[MAX_FILENAME_LENGTH]="";
   FILE* partCSV=NULL;
   FILE* subcubesCSV=NULL;
   FILE* patchesCSV=NULL;
+#endif
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
 #endif
 
   NtreeMin=(int) (Nth_dom+0.5);
@@ -160,19 +184,24 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
     sc_table[i]=NULL;
 
 #ifdef GENERATE_TREE_LOG
-  strncpy(generate_tree_name,global_io.params->outfile_prefix,256);
-  strcat(generate_tree_name, ".generate_tree.log");
+#ifdef WITH_MPI
+  snprintf(generate_tree_name, MAX_FILENAME_LENGTH, "%s.%04d.", global_io.params->outfile_prefix, global_mpi.rank);
+#else
+  snprintf(generate_tree_name, MAX_FILENAME_LENGTH, "%s.", global_io.params->outfile_prefix);
+#endif
+
+  strcat(generate_tree_name, "generate_tree");
   if((generate_treeF=fopen(generate_tree_name, "w"))==NULL){
-    perror("fopen(generate_tree.out): ");
-    fprintf(stderr, "Error opening generate_tree.out\n");
-    return NULL;
+    perror("fopen(generate_tree): ");
+    fprintf(stderr, "Error opening %s\n",generate_tree_name);
+    exit(EXIT_FAILURE);
   }
   fprintf(generate_treeF, "Memory size of basic structures:\n");
   fprintf(generate_treeF, "\tsize of particle ID: %lu bytes\n", sizeof(part_id_t));
   fprintf(generate_treeF, "\tsize of cubekey: %lu bytes\n", sizeof(cubekey_t));
   fprintf(generate_treeF, "\tsize of subcube structure: %lu bytes\n", sizeof(subcube_t));
   fprintf(generate_treeF, "\tsize of patch structure: %lu bytes\n\n", sizeof(patch_t));
-#endif
+#endif //#ifdef GENERATE_TREE_LOG
 
   io_logging_msg(global_io.log, INT32_C(1), "Max particles per subcube: NtreeMin=%d", NtreeMin);
 
@@ -223,10 +252,10 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
    * Generate particle-tree
    *==================================================================================================================*/
   //Initial Box division at ptree_min_level depth
-  t_start=clock();
+  t_start=omp_get_wtime();
   initial_depth_nsubcubes=initial_box_division(npart, fst_part, initial_depth, sc_table);
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
 #ifdef GENERATE_TREE_LOG
   fprintf(generate_treeF, "DONE\n");
   fflush(generate_treeF);
@@ -250,10 +279,10 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   //Once the initial refinement at initial_depth level is done, let's split subcubes when num_particles > threshold
   //Doing it in depth order could generate problems when code is parallelized (hopefully soon)
 
-  t_start=clock();
+  t_start=omp_get_wtime();
   refine_box_division(initial_depth, sc_table, NtreeMin, fst_part);
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
 
   //Calculate the final_depth level where there exist subcubes
   final_depth=-1;
@@ -265,7 +294,7 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   }  //for
   if (final_depth==-1){
     fprintf(stderr, "[%s:%d] ERROR: Impossible to find the final_depth\n. Aborting...\n", __FILE__, __LINE__);
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
 
   //REFINEMENT IS OVER
@@ -279,8 +308,9 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fflush(generate_treeF);
 #endif
 
+#ifdef REVIEW_SUBCUBES_FORMATION
   //Review Subcubes formation
-  t_start=clock();
+  t_start=omp_get_wtime();
   for (depth=initial_depth; depth<NLEVELS; depth++){
     sc_count=0;
     sc_aux=NULL;
@@ -314,8 +344,8 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
     io_logging_msg(global_io.log, INT32_C(1), "Depth level=%2d (%10lu div per dim), sc_count=%10lu (HASH_COUNT=%10u), global_no_part=%10lu, stored_particles=%10lu", depth, (uint64_t)1L<<depth,
         sc_count, HASH_COUNT(sc_table[depth]), global_info.no_part, part_count);
   }  //for
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed=t_end-t_start;
 
   io_logging_msg(global_io.log, INT32_C(1), "=timing= Review Subcubes formation took %f seconds", elapsed);
 #ifdef GENERATE_TREE_LOG
@@ -323,6 +353,7 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fflush(generate_treeF);
 #endif
 
+#endif //REVIEW_SUBCUBES_FORMATION
   /*==================================================================================================================
    * Generate patch-tree
    *==================================================================================================================*/
@@ -332,10 +363,10 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fflush(generate_treeF);
 #endif
 
-  t_start=clock();
+  t_start=omp_get_wtime();
   patches_generation(&patches, sc_table, initial_depth, final_depth, NminPerHalo);
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
 
   io_logging_msg(global_io.log, INT32_C(1), "=timing= patches_generation() took %f seconds", elapsed);
 #ifdef GENERATE_TREE_LOG
@@ -358,7 +389,7 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   if((partCSV=fopen(filename_aux, "w"))==NULL){
     perror("fopen(particles.csv): ");
     fprintf(stderr, "Error opening/creating particles.csv");
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
   fprintf(stderr, "Dumping %s file...\n",filename_aux);
 
@@ -426,10 +457,10 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fflush(generate_treeF);
 #endif
 
-  t_start=clock();
+  t_start=omp_get_wtime();
   patch_connect_tree(patches->tree, sc_table, patches->n_patches);
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
 
   io_logging_msg(global_io.log, INT32_C(1), "Patches->tree connection has finished.");
 #ifdef GENERATE_TREE_LOG
@@ -447,7 +478,7 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   // prepare things for patchtree2halos() of libahf2.a
   // (do not change the ordering, i.e. pos need to be set *before* trunk needs to be set *before* radii!)
   //=======================================================================================
-  t_start=clock();
+  t_start=omp_get_wtime();
 #ifdef GENERATE_TREE_LOG
   fprintf(generate_treeF, "Calling to set_patch_pos()\n");
   fflush(generate_treeF);
@@ -465,22 +496,22 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fflush(generate_treeF);
 #endif
   set_patch_radii(patches->tree, patches->n_patches);
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
   io_logging_msg(global_io.log, INT32_C(1), "=timing= set_patch_pos/trunk/radii took %f seconds", elapsed);
 #ifdef GENERATE_TREE_LOG
   fprintf(generate_treeF, "\t=TIMING= set_patch_pos/trunk/radii took %f seconds\n", elapsed);
   fflush(generate_treeF);
 #endif
 
-#ifdef DEBUG_AHF2libtree
+#ifdef AHF2_write_particles_geom
   {
     FILE *fp;
     int initial_depth, final_depth, ilevel, ipatch;
     partptr cur_part;
     float r,g,b;
 
-    fp = fopen("patchtree.geom","w");
+    fp = fopen("particles.geom","w");
 
     // determine initial level
     initial_depth = 0;
@@ -507,43 +538,24 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
     fprintf(fp,"l   1 0 0   1 0 1      0 0 1\n");
     fprintf(fp,"l   1 1 0   1 1 1      0 0 1\n");
 
-    // add all patches
-    for(ilevel=initial_depth; ilevel<final_depth; ilevel++){
-      for(ipatch=0; ipatch<(patches->n_patches)[ilevel]; ipatch++){
-
-        r = sqrt((float)(ilevel-initial_depth)/(float)(final_depth-initial_depth-1));
-        g = 0.0;
-        b = 1.0-(float)(ilevel-initial_depth)/(float)(final_depth-initial_depth-1);
-
-        fprintf(fp,"s %f %f %f %f %f %f %f   %d %d  %lf %lf %lf %lf %lf %lf %"PRIu64"\n",
-            (float)(patches->tree)[ilevel][ipatch].pos[0],
-            (float)(patches->tree)[ilevel][ipatch].pos[1],
-            (float)(patches->tree)[ilevel][ipatch].pos[2],
-            //0.01,
-            (float)(patches->tree)[ilevel][ipatch].radius,
-            r,g,b,
-            ilevel,ipatch,
-            (patches->tree)[ilevel][ipatch].Xmin,(patches->tree)[ilevel][ipatch].Xmax,
-            (patches->tree)[ilevel][ipatch].Ymin,(patches->tree)[ilevel][ipatch].Ymax,
-            (patches->tree)[ilevel][ipatch].Zmin,(patches->tree)[ilevel][ipatch].Zmax,
-            (patches->tree)[ilevel][ipatch].Npart
-        );
-
-      } // ipatch
-    } // ilevel
-
     // add all particles
     for(cur_part=fst_part; cur_part<fst_part+npart; cur_part++){
-      fprintf(fp,"p %f %f %f 0 1 0\n",
+      fprintf(fp,"P %f %f %f 0 1 0 1\n",
           (float)cur_part->pos[0],
           (float)cur_part->pos[1],
           (float)cur_part->pos[2]);
     }
 
     fclose(fp);
-    exit(0);
   }
-#endif
+#endif // AHF2_write_particles_geom
+  
+#ifdef AHF2_write_patchtreefile
+  //======================================================================================
+  // write patch_tree[][] to file
+  //======================================================================================
+  write_patchtreefile(patches->tree, patches->n_patches);
+#endif // AHF2_write_patchtreefile
 
   /*===================================================================
    * FREE MEMORY OF ALL SUBCUBES, and the internal particles in UTarray's,
@@ -552,12 +564,14 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
    * We do also set patch->psubcubes pointers to NULL to avoid later access
    * to freed memory
    *===================================================================*/
+#ifndef DEBUG_AHF2
+  
 #ifdef GENERATE_TREE_LOG
   fprintf(generate_treeF, "Freeing hash tables of subcubes, and arrays of pointers to subcubes from patches\n");
   fflush(generate_treeF);
 #endif
 
-  t_start=clock();
+  t_start=omp_get_wtime();
   for (it_level=0; it_level<NLEVELS; it_level++){
     if (sc_table[it_level]==NULL) continue;
     sc_aux=NULL;
@@ -584,8 +598,8 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
     } //if
   } //for(it_level)
 
-  t_end=clock();
-  elapsed= ((double) (t_end-t_start))/CLOCKS_PER_SEC;
+  t_end=omp_get_wtime();
+  elapsed= t_end-t_start;
 
   io_logging_msg(global_io.log, INT32_C(1), "=timing= Freeing memory of UThash tables of subcubes and internal UTarrays of particles took %f seconds", elapsed);
 #ifdef GENERATE_TREE_LOG
@@ -593,6 +607,8 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   fprintf(generate_treeF, "\t=TIMING= Freeing memory of UThash tables of subcubes and internal UTarrays of particles took %f seconds\n", elapsed);
   fflush(generate_treeF);
 #endif
+
+#endif // DEBUG_AHF2
 
   if (patchtreeF){
     fclose(patchtreeF);
@@ -606,5 +622,8 @@ ahf2_patches_t* generate_tree(long unsigned npart, partptr fst_part, double Nth_
   }
 #endif
 
+#ifdef  EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
   return patches;
 }

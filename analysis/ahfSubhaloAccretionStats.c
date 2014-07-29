@@ -41,7 +41,8 @@ isnap = filemap[n].isnap; }}
 
 
 
-//#define FULL_INFORMATION   // will write the full AHF_halos line into the output file
+//#define FULL_AHF_INFORMATION   // will write the full AHF_halos line into the output file
+#define MINIMAL_OUTPUT // only writes the information needed by Noam to re-do the subaccretion analysis excl. the backsplashed haloes
 
 /*-------------------------------------------------------------------------------------
  *                                  THE STRUCTURES
@@ -55,7 +56,7 @@ typedef struct AHFhalos {
   float    Xc;
   float    Yc;
   float    Zc;
-#ifdef FULL_INFORMATION
+#ifdef FULL_AHF_INFORMATION
   float    VXc;
   float    VYc;
   float    VZc;
@@ -146,7 +147,7 @@ char **argv;
   char prefix_list[MAXSTRING], haloid_list[MAXSTRING], outfile[MAXSTRING], haloline[MAXSTRING], zred_list[MAXSTRING];
   zred_isnap_map_t *filemap;
   int i, n;
-  int64_t ihalo, hostHalo_track;
+  int64_t ihalo, ihalo_0, hostHalo_track;
   double z;
   int    isnap;
   
@@ -193,6 +194,10 @@ char **argv;
   sprintf(outfile,"ahfSubhaloAccretionStats_%03d.dat",filemap[0].isnap);
   fpout = fopen(outfile,"w");
   assert(fpout != NULL);
+#ifndef MINIMAL_OUTPUT
+  fprintf(fpout,"#haloid(1) hostHalo(2) numSubStruct(3) Mvir(4) npart(5) Xc(6) Yc(7) Zc(8)\n");
+  fprintf(fpout,"#  h/s/b(1) ISNAP(2) z(3) hostHalo(4) ihalo(5)\n");
+#endif
   
   /*==================================================================*
    *                            DO THE WORK                           *
@@ -214,11 +219,12 @@ char **argv;
   for(i=0; i<num_files-1; i++) {
     mtree[i]  = read_mtree_idx(mtree_idx[i], &(num_mtree[i]));
     qsort((void *)(mtree[i]), num_mtree[i], sizeof(mtree_t), qcompareMtreeIDs);
-    fprintf(stderr,"read and sorted %d entries from mtree file %s\n",num_mtree,mtree_idx[i]);
+    fprintf(stderr,"read and sorted %d entries from mtree file %s\n",num_mtree[i],mtree_idx[i]);
   }
   
   for(i=0; i<num_haloid; i++) {
-    ihalo = haloid[i];
+    ihalo   = haloid[i];
+    ihalo_0 = ihalo;    // remember the halo traced (primarily for MINIMAL_OUTPUT)
     fprintf(stderr," + tracing halo %"PRIu64" through %d files: ",ihalo,num_files);
     
     
@@ -234,6 +240,7 @@ char **argv;
     }
     jhalo         = (uint64_t) (itmp_halo - halos[0]);
     hostHalo_prev = halos[0][jhalo].hostHalo;
+#ifndef MINIMAL_OUTPUT
     fprintf(fpout,"%"PRIu64" %"PRIu64" %"PRIu32" %g %"PRIu32" %f %f %f\n",
             halos[0][jhalo].haloid,
             halos[0][jhalo].hostHalo,
@@ -243,6 +250,7 @@ char **argv;
             halos[0][jhalo].Xc,
             halos[0][jhalo].Yc,
             halos[0][jhalo].Zc);
+#endif
     //--------------------------------------------
     
     
@@ -263,20 +271,17 @@ char **argv;
       hostHalo_now = halos[i][jhalo].hostHalo;
       //--------------------------------------------
       
-#ifdef DEBUG
-      SET_ZRED_AND_ISNAP;
-      fprintf(fpout,"%03d %8.4lf  %021"PRIu64" %021"PRIu64" %021"PRIi64"\n",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
-#endif
-      
       // hostHalo ID changed and now points to nowhere
       if(hostHalo_becomes_hosthalo(hostHalo_prev,hostHalo_now)) {
         
         // keep track of the last host it belonged to
         hostHalo_track = hostHalo_prev;
         
+#ifndef MINIMAL_OUTPUT
         SET_ZRED_AND_ISNAP;
         //fprintf(fpout," h %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"/",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
-        fprintf(fpout,"h %03d %8.4lf %"PRIu64"\n",isnap,z,hostHalo_prev);
+        fprintf(fpout,"h %03d %8.4lf %"PRIu64" %"PRIu64"\n",isnap,z,hostHalo_prev,ihalo);
+#endif
         
         //--------------------------------------------
         // but update hostHalo_track to the present host halo
@@ -299,11 +304,18 @@ char **argv;
         
         // does it becomes subhalo of a new host halo
         if(hostHalo_track != hostHalo_now) {
+#ifndef MINIMAL_OUTPUT
           //fprintf(fpout," s %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"\n",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
-          fprintf(fpout,"s %03d %8.4lf %"PRIu64"\n",isnap,z,hostHalo_now);
+          fprintf(fpout,"s %03d %8.4lf %"PRIu64" %"PRIu64"\n",isnap,z,hostHalo_now,ihalo);
+#endif
         } else {
+#ifndef MINIMAL_OUTPUT
           //fprintf(fpout," b %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"\n",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
-          fprintf(fpout,"b %03d %8.4lf %"PRIu64"\n",isnap,z,hostHalo_now);
+          fprintf(fpout,"b %03d %8.4lf %"PRIu64" %"PRIu64"\n",isnap,z,hostHalo_now,ihalo);
+#else
+          fprintf(fpout,"%"PRIu64"\n",ihalo_0);
+          break;
+#endif
         }
       }
       
@@ -312,9 +324,6 @@ char **argv;
       
       // follow last hostHalo backward in time
       if(hostHalo_track > 0) {
-#ifdef DEBUG
-        fprintf(fpout,"    tracking hostHalo_track=%"PRIi64" in %s: ",hostHalo_track,mtree_idx[n]);
-#endif
         //--------------------------------------------
         //hostHalo_track = get_haloidx(mtree_idx[n], hostHalo_track);
         itmp_mtree = (mtree_t *) bsearch(&(hostHalo_track), (void *)(mtree[n]), num_mtree[n], sizeof(mtree_t), bcompareMtreeIDs);
@@ -327,9 +336,6 @@ char **argv;
           hostHalo_track = mtree[n][jmtree].progid;
         }
         //--------------------------------------------
-#ifdef DEBUG
-        fprintf(fpout,"%"PRIi64"\n",hostHalo_track);
-#endif
       }
       
       //--------------------------------------------
@@ -376,9 +382,11 @@ char **argv;
         // keep track of the last host it belonged to
         hostHalo_track = hostHalo_prev;
         
+#ifndef MINIMAL_OUTPUT
         SET_ZRED_AND_ISNAP;
         //fprintf(fpout," h %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"/",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
         fprintf(fpout," h %03d %8.4lf END\n",isnap,z);
+#endif
         
         //--------------------------------------------
         // but update hostHalo_track to the present host halo
@@ -393,8 +401,6 @@ char **argv;
           hostHalo_track = mtree[n-1][jmtree].progid;
         }
         //--------------------------------------------
-        
-        //fprintf(fpout,"%021"PRIi64"\n",hostHalo_track);
       }
       
       // hostHalo ID changed and now points to a host halo
@@ -403,11 +409,17 @@ char **argv;
         
         // does it becomes subhalo of a new host halo
         if(hostHalo_track != hostHalo_now) {
+#ifndef MINIMAL_OUTPUT
           //fprintf(fpout," s %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"\n",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
           fprintf(fpout," s %03d %8.4lf END\n",isnap,z);
+#endif
         } else {
+#ifndef MINIMAL_OUTPUT
           //fprintf(fpout," b %03d %8.4lf %021"PRIu64" %021"PRIu64" %021"PRIi64"\n",isnap,z,hostHalo_now,hostHalo_prev,hostHalo_track);
           fprintf(fpout," b %03d %8.4lf END\n",isnap,z);
+#else
+          fprintf(fpout,"%"PRIu64"\n",ihalo_0);
+#endif
         }
       }
     }
@@ -732,7 +744,7 @@ halo_t *read_halos(char *infile, int *num_halos)
     halos = (halo_t *) realloc(halos, ((*num_halos)+1)*sizeof(halo_t));
     
     // read line
-#ifdef FULL_INFORMATION
+#ifdef FULL_AHF_INFORMATION
     sscanf(line,
            "%"SCNi64" %"SCNi64" %"SCNi32" %f %"SCNi32" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %"SCNi32" %f %f %f %f %f %f",
            &(halos[*num_halos].haloid),

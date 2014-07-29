@@ -1914,7 +1914,14 @@ ahf_binwrite_halos(char          *prefix,
 		        "mean_z_gas(%i) mean_z_star(%i) ",
 		        i + 1, i + 2);
 	i += 2;
+#ifdef AHFexciseSubhaloStars
+	if (f_info != NULL)
+		fprintf(f_info,
+		        "npart_uniquestars(%i) Mstar_excised(%i) mean_z_star_excised(%i) ",
+		        i + 1, i + 2, i + 3);
+	i += 3;
 #endif
+#endif // METALHACK
 #  endif
 	if (f_info != NULL)
 		fprintf(f_info,"\n");
@@ -2272,6 +2279,13 @@ void write_halos_line(FILE *fout, HALO *halos, long unsigned j, long unsigned i,
   fprintf(fout, "\t%e",			        halos[i].mean_z_gas);
   fprintf(fout, "\t%e",			        halos[i].mean_z_star);
 #  endif
+  
+#ifdef AHFexciseSubhaloStars
+  fprintf(fout, "\t%10ld",          halos[i].npart_uniquestars);
+  fprintf(fout, "\t%12.6g",         halos[i].Mstar_excised * m_fac);
+  fprintf(fout, "\t%e",             halos[i].mean_z_star_excised);
+#endif
+  
   fprintf(fout, "\n");
 }
 

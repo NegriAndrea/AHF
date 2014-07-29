@@ -1131,6 +1131,7 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   grid_timing.hydro     = 0;
   
   
+#ifndef AHF2
   /* get number of particles attached to domain grid */
   if(global.fin_l1dim > global.dom_grid->l1dim)
    {
@@ -1149,6 +1150,8 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"\n");
   fprintf(io.logfile,"grid information\n");
   fprintf(io.logfile,"----------------\n");
+  fflush(io.logfile);
+
   /* write grid information to logfile */
   for(for_grid = global.dom_grid; for_grid->l1dim < global.fin_l1dim; for_grid++)
    {
@@ -1177,7 +1180,7 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
     for_grid->time.grid      = 0;
     for_grid->time.hydro     = 0;
    }
-  
+  fflush(io.logfile);
   /* treat grid with for_grid->l1dim==global.fin_l1dim separately
    * in order to avoid incrementing for_grid++ too far!!! */
   
@@ -1205,7 +1208,8 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   for_grid->time.hydro     = 0;  
   fprintf(io.logfile, "                                                                                   %6ld      %6ld    %6ld\n", grid_timing.potential, grid_timing.density, grid_timing.grid);
   
-  
+#endif //#ifndef AHF2
+
   /* write detailed breakdown of timing */
   /*------------------------------------*/
   fprintf(io.logfile,"detailed timing information (in sec.)\n");
@@ -1235,10 +1239,16 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"ahf_halos    = %ld\n",timing.ahf_halos);
   fprintf(io.logfile,"      - RefCentre                   = %ld\n",timing.RefCentre);
   fprintf(io.logfile,"      - analyseRef                  = %ld\n",timing.analyseRef);
+#ifdef AHF2
+  fprintf(io.logfile,"      - generate_tree_v2            = %f\n",timing.generate_tree_v2);
+#else
+  fprintf(io.logfile,"      - generate_tree               = %ld\n",timing.generate_tree);
+#endif
   fprintf(io.logfile,"      - spatialRef2halos            = %ld\n",timing.spatialRef2halos);
   fprintf(io.logfile,"      - ahf_halos_sfc_constructHalo = %ld\n",timing.ahf_halos_sfc_constructHalo);
   fprintf(io.logfile,"      - I/O                         = %ld\n",timing.ahf_io);
   
+  fflush(io.logfile);
   
   /* write summary information */
   /*---------------------------*/
@@ -1264,7 +1274,10 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"\n");
   fprintf(io.logfile,"summary information\n");
   fprintf(io.logfile,"-------------------\n");
+#ifndef AHF2
   fprintf(io.logfile, "force resolution    ~ %8.2g kpc/h\n", 3000.*simu.boxsize/(double)for_grid->l1dim);
+#endif
+
   if(ahf.time > 0)
     fprintf(io.logfile, "time for AHF        = %8ld seconds (%8.3g hours)\n",ahf.time,ahf.time/3600.);
   fprintf(io.logfile, "total time          = %8.0f seconds (%8.3g hours)\n", total_time_step * 3600., total_time_step);

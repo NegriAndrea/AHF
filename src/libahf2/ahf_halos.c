@@ -33,6 +33,9 @@
 #  include "ahf_io_sql.h"
 #endif
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
 
 /***************************************************************************
  *   Macros and assorted definitions                                       *
@@ -90,6 +93,10 @@ ahf_halos(ahf2_patches_t *patches)
   int           numSubStruct, *SubStruct, ihost, isub;
   
   halo_s       *ptree2halos;
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
 
 	/* conversion factors to get physical units */
 	r_fac   = simu.boxsize * global.a;
@@ -3821,9 +3828,20 @@ void exciseSubhaloStars(HALO *halos, long ihost)
       fprintf(stderr,"exciseSubhaloStars(2): number of stars in host does not add up: khoststar=%ld halos[ihost].stars_only.npart=%ld\n",khoststar,halos[ihost].stars_only.npart);
       common_terminate(EXIT_FAILURE);
     }
+    
+    // update Mstar_excised
+    halos[ihost].Mstar_excised = 0.0;
+    for(i=0; i<halos[ihost].npart_uniquestars; i++) {
+      cur_part = global.fst_part + halos[ihost].ipart_uniquestars[i];
+      halos[ihost].mean_z_star_excised   += cur_part->weight * (cur_part->z);
+      halos[ihost].Mstar_excised         += cur_part->weight;
+    }
+    halos[ihost].mean_z_star_excised /= halos[ihost].Mstar_excised;
 
   }
-  
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
 }
 #endif /* AHFexciseSubhaloStars */
 

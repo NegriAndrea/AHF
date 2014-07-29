@@ -13,6 +13,10 @@
 #include "amr_serial.h"
 #include "../libutility/utility.h"
 
+#ifdef EXTRAE_API_USAGE
+#include <extrae_user_events.h>
+#endif
+
 /*===============================================================================
  * gen_domgrids: generate the domain grids
  *===============================================================================*/
@@ -25,7 +29,11 @@ gridls *gen_domgrids(int *no_grids)
   double  frac, dl1dim, dno_part;
   int     exp;
   int     l1dim;
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   /* calculate the total number of domain grids */
   frac        = (double) simu.NGRID_DOM / (double) simu.NGRID_MIN;
   exp         = (float) (log(frac)/log(2.));
@@ -98,7 +106,11 @@ gridls *gen_domgrids(int *no_grids)
    *===========================*/
   global.dom_grid   = grid_list + (*no_grids - 1);
   global.domgrid_no = (*no_grids - 1);
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
   return(grid_list);
 }
 
@@ -273,6 +285,10 @@ boolean gen_AMRhierarchy(gridls **grid_list, int *no_grids)
   boolean runAHF;  /* only run AHF when the finest grid level has been reached */
   boolean refined; /* refinement flag                                          */
   
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
   /* up to now we plan to run AHF */
   runAHF = TRUE;
   
@@ -405,7 +421,11 @@ boolean gen_AMRhierarchy(gridls **grid_list, int *no_grids)
     
    }
   ahf.time += time(NULL);
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
   /* return FALSE indicating that AHF has been run */
   return(FALSE);
 } 

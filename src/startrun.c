@@ -59,6 +59,10 @@ local_startrunRetset(double *timecounter,
  *====================================================================================================*/
 extern void startrun(char *paramfile, double *timecounter, double *timestep, int32_t *no_first_timestep)
 {
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(1);
+#endif
+
 	/* Read the parameters */
 	local_startrunParams(paramfile);
 
@@ -119,7 +123,11 @@ extern void startrun(char *paramfile, double *timecounter, double *timestep, int
 
   
   write_parameterfile();
-  
+
+#ifdef EXTRAE_API_USAGE
+  Extrae_user_function(0);
+#endif
+
 	return;
 }
 
@@ -316,6 +324,17 @@ local_startrunRead(void)
 	strg.u.val = NULL;
 	strg.u.stride = (ptrdiff_t)0;
 #	endif
+#ifdef STORE_MORE
+  strg.rho.val = (void *)&(global_info.fst_part->rho);
+  strg.rho.stride =   (char *)&((global_info.fst_part+1)->rho) - (char *)&(global_info.fst_part->rho);
+  strg.eps.val = (void *)&(global_info.fst_part->rho);
+  strg.eps.stride =   (char *)&((global_info.fst_part+1)->eps) - (char *)&(global_info.fst_part->eps);
+#else
+  strg.rho.val = NULL;
+  strg.rho.stride =(ptrdiff_t)0;
+  strg.eps.val = NULL;
+  strg.eps.stride =(ptrdiff_t)0;
+#endif
 	strg.bytes_float = sizeof(global_info.fst_part->pos[0]);
 #	if (!(defined AHFlean && defined AHF_NO_PARTICLES))
 	strg.bytes_int = sizeof(global_info.fst_part->id);

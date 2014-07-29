@@ -150,7 +150,7 @@ halo_s* patchtree2halos (patch_t **patch_tree, uint64_t *n_patches)
 
     // next parent halo
     ihalo++;
-  }
+  } // for(iparent)
   
   // consistency check
   if(ihalo != nhalos) {
@@ -404,7 +404,7 @@ void set_gatherRad_like_AHF1(HALO *halos, uint64_t numHalos)
 //======================================================================================
 // read spatialRef[][] from file (as written by AHF1)
 //======================================================================================
-void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
+void read_spatialRef(patch_t ***patch_tree, uint64_t **n_patches)
 {
   FILE *fp;
   char     infile[MAXSTRING], fprefix[MAXSTRING], file_no[MAXSTRING];
@@ -414,7 +414,7 @@ void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
   uint64_t ipatch;
   
   // AHF language
-  int      min_ref, no_grids;
+  int      min_ref, no_grids, ngrid_dom_level;
   int      i, j, k, numIsoRef, refLevel, isoRefIndex, numSubStruct;
   double   closeRefDist;
   int      numNodes;
@@ -453,9 +453,11 @@ void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
   
   // read min level and total number of levels (in AHF1 language)
   fscanf(fp,"%d %d", &min_ref, &no_grids);
+  ngrid_dom_level = (int) (log((double)simu.NGRID_DOM)/log(2.0));
+  min_ref += ngrid_dom_level;
   
 #ifdef DEBUG_AHF2
-  fprintf(stderr,"  min_ref=%d no_grids=%d (ahf.min_ref=%d)\n",min_ref,no_grids,ahf.min_ref);
+  fprintf(stderr,"  min_ref=%d no_grids=%d\n",min_ref,no_grids);
 #endif
   
   // ignore all levels before min_ref (patch_tree[] pointers are NULL)
@@ -463,6 +465,7 @@ void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
     
     // number of patches on ilevel
     fscanf(fp, "%d %d", &i, &numIsoRef);
+    i += ngrid_dom_level;
     
     // store number of patches
     (*n_patches)[ilevel] = numIsoRef;
@@ -493,6 +496,7 @@ void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
              &refLevel,          // of daughter!
              &isoRefIndex,       // of daughter!
              &numSubStruct);
+      refLevel += ngrid_dom_level;
       
       if(isoRefIndex != -1 && refLevel != ilevel+1) {
         fprintf(stderr,"  a) spatialRef[][] not as expected: refLevel=%d ilevel+1=%d (%d %d , min_ref=%d)\n",refLevel,ilevel+1,refLevel,isoRefIndex,min_ref);
@@ -523,6 +527,8 @@ void read_spatialRef(patch_t *** patch_tree, uint64_t **n_patches)
       // loop over all substructures
       for(k=0; k<numSubStruct; k++) {
         fscanf(fp,"%d %d", &refLevel, &isoRefIndex);
+        refLevel += ngrid_dom_level;
+        
         if(refLevel != ilevel+1) {
           fprintf(stderr,"  b) spatialRef[][] not as expected: refLevel=%d ilevel+1=%d (%d %d , min_ref=%d)\n",refLevel,ilevel+1,refLevel,isoRefIndex,min_ref);
           exit(0);

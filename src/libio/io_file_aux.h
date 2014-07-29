@@ -49,6 +49,8 @@ struct io_file_strg_struct {
 #endif
 	uint32_t bytes_float;
 	uint32_t bytes_int;
+  io_file_val_struct_t rho;
+  io_file_val_struct_t eps;
 };
 
 /** Convenient typedef */

@@ -1,7 +1,7 @@
 # If ${OPTIMIZE}, ${CCFLAGS} and/or ${DEFINEFLAGS} are set, they will be
 # used for the compilation
 CFLAGS+=${OPTIMIZE} ${CCFLAGS} ${DEFINEFLAGS}
-CFLAGS+=-Wall -Winline -fopenmp
+CFLAGS+=-Wall -Winline -fopenmp -finline-functions -findirect-inlining 
 # If a different MAKE is specified use that one, otherwise try your luck
 # with just make; maybe it will work.
 MAKE?=make

@@ -140,6 +140,8 @@ local_get_block_u(io_logging_t log,
                   uint64_t pread,
                   io_file_strg_struct_t strg);
 
+void local_find_block(io_gadget_t, char *);
+
 #ifdef METALHACK
 static uint64_t
 local_get_block_z(io_logging_t log,
@@ -451,7 +453,11 @@ io_gadget_readpart_raw(io_logging_t log,
 	fseek(f->file, skipsize, SEEK_SET);
 
 	/* Positions */
+#ifdef GADGET_MAGNETICUM
+  local_find_block(f, "POS ");
+#else
 	VERIFY_BLOCK("POS ");
+#endif
 	funcrtn = local_get_block_pos(log, f, &pskip, &pread, strg);
 	if (funcrtn != pread) {
 		io_logging_fatal(log, 
@@ -1772,6 +1778,39 @@ local_get_block_u(io_logging_t log,
 	return pread;
 }
 
+#ifdef GADGET_MAGNETICUM
+#include "../define.h"
+#define GET_BLOCK {\
+SKIP;\
+io_util_readstring(f->file, str, (size_t)4);\
+io_util_readuint32(f->file, &nextblocksize, f->swapped);\
+io_logging_msg(log, INT32_C(1),\
+"Arrived at block %s, size of it will be %" \
+PRIi32, str, nextblocksize);\
+SKIP2;\
+CHECK_BLOCK;\
+}
+void local_find_block(io_gadget_t f, char *blockname)
+{
+	uint32_t blocksize, blocksize2, nextblocksize;
+	int32_t partsize, bytes_file;
+	char str[5];
+	int tries;
+  
+  str[0] = 'A';
+  tries = 0;
+  nextblocksize = 0;
+  while ( (strncmp(str, blockname, 4) != 0) && (tries < 10)) {
+    fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
+    fseek(f->file, nextblocksize, SEEK_CUR);
+    GET_BLOCK;
+    tries++;
+  }
+  fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
+}
+#endif
+
+
 #ifdef METALHACK
 #include "../define.h"
 #define GET_BLOCK {\
@@ -1784,6 +1823,7 @@ local_get_block_u(io_logging_t log,
 	SKIP2;\
 	CHECK_BLOCK;\
 }
+
 static uint64_t
 local_get_block_z(io_logging_t log,
                   io_gadget_t f,
@@ -1800,7 +1840,7 @@ local_get_block_z(io_logging_t log,
 	float dummy;
 	
 	/* if this is not a Gadget 2 file, skip until METAL block */
-  /* (assuming the orderting POS,VEL,ID,MASS,UGAS,RHO,NE,NH,HSML,SFR,AGE,METAL) */
+  /* (assuming the orderting POS,VEL,ID,MASS,UGAS,RHO,NE,NH,HSML,SFR,AGE,Z) */
 	if (f->ver != 2) {
     local_skip_GADGET1_blocks(f->file, f->swapped, 11); // we skip the first 11 blocks
 	}
@@ -1811,12 +1851,18 @@ local_get_block_z(io_logging_t log,
     str[0] = 'A';
     tries = 0;
     nextblocksize = 0;
-    while ( (strncmp(str, "Z   ", 4) != 0) && (tries < 10)) {
+    while ( (strncmp(str, "Z   ", 4) != 0) && (tries < 100)) {
+#ifdef GADGET_MAGNETICUM
+      fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
       fseek(f->file, nextblocksize, SEEK_CUR);
       GET_BLOCK;
       tries++;
     }
-    if (tries >= 15) {
+#ifdef GADGET_MAGNETICUM
+    fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
+    if (tries >= 150) {
       METALDIE;
     }
   }
@@ -1958,12 +2004,18 @@ local_get_block_age(io_logging_t log,
     str[0] = 'X';
     tries = 0;
     nextblocksize = 0;
-    while ( (strncmp(str, "AGE ", 4) != 0) && (tries < 10)) {
+    while ( (strncmp(str, "AGE ", 4) != 0) && (tries < 100)) {
+#ifdef GADGET_MAGNETICUM
+      fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
       fseek(f->file, nextblocksize, SEEK_CUR);
       GET_BLOCK;
       tries++;
     }
-    if (tries >= 15) {
+#ifdef GADGET_MAGNETICUM
+    fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
+    if (tries >= 150) {
       METALDIE;
     }
   }

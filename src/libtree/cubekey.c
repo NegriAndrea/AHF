@@ -301,7 +301,7 @@ void printbits_ck_shift(ck_shift_t n){
 /*
  * Given a depth and 3 coordinates, return the corresponding key
  */
-int_fast8_t coor2ck(cubekey_t* ckey, const flouble xcoor, const flouble ycoor, const flouble zcoor, const uint_fast8_t depth){
+inline int_fast8_t coor2ck(cubekey_t* ckey, const flouble xcoor, const flouble ycoor, const flouble zcoor, const uint_fast8_t depth){
 //	ck_shift_t x=0,y=0,z=0;
 	int i=0;
 	flouble cur_x=0, cur_y=0, cur_z=0;
@@ -384,7 +384,7 @@ int_fast8_t coor2ck(cubekey_t* ckey, const flouble xcoor, const flouble ycoor, c
 	return 0;
 }
 
-void ck2coor(flouble* x, flouble* y, flouble* z, flouble* edge, cubekey_t cubekey){
+inline void ck2coor(flouble* x, flouble* y, flouble* z, flouble* edge, cubekey_t cubekey){
 	int flag_pos=0;
 	flouble half;
 
@@ -414,7 +414,7 @@ void ck2coor(flouble* x, flouble* y, flouble* z, flouble* edge, cubekey_t cubeke
 	*edge=half;
 }
 
-void ck2coor_center(flouble* x, flouble* y, flouble* z, cubekey_t ck){
+inline void ck2coor_center(flouble* x, flouble* y, flouble* z, cubekey_t ck){
 	flouble edge;
 	ck2coor(x,y,z,&edge,ck);
 	edge=edge/2;
@@ -524,7 +524,7 @@ inline void ck_get_shifts(cubekey_t ck, ck_shift_t* ckX, ck_shift_t* ckY, ck_shi
 	
 }
 
-void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
+inline void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
   int i=0;
   cubekey_t *p_ck_iter=NULL;
   int depth=ck_get_depth(ck);
@@ -731,18 +731,233 @@ void ck_get_adjacents(cubekey_t ck, ck_adjacents_t* ck_adjacents){
 	}	
 }
 
-void ck_get_adjacents_side_edge(cubekey_t ck, ck_adjacents_t* ck_adjacents){
-	//Calculate 26 adjacents and clear those connected by corners
-	ck_get_adjacents(ck,ck_adjacents);
-	
-	//When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents' ck
-	ck_adjacents->ckBBB=0;
-	ck_adjacents->ckBBF=0;
-	ck_adjacents->ckBFB=0;
-	ck_adjacents->ckBFF=0;
-	ck_adjacents->ckFBB=0;
-	ck_adjacents->ckFBF=0;
-	ck_adjacents->ckFFB=0;
-	ck_adjacents->ckFFF=0;
-}
+//inline void ck_get_adjacents_side_edge(cubekey_t ck, ck_adjacents_t* ck_adjacents){
+//	//Calculate 26 adjacents and clear those connected by corners
+//	ck_get_adjacents(ck,ck_adjacents);
+//
+//	//When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents' ck
+//	ck_adjacents->ckBBB=0;
+//	ck_adjacents->ckBBF=0;
+//	ck_adjacents->ckBFB=0;
+//	ck_adjacents->ckBFF=0;
+//	ck_adjacents->ckFBB=0;
+//	ck_adjacents->ckFBF=0;
+//	ck_adjacents->ckFFB=0;
+//	ck_adjacents->ckFFF=0;
+//}
 
+inline void ck_get_adjacents_side_edge(cubekey_t ck, ck_adjacents_t* ck_adjacents){
+  int i=0;
+  cubekey_t *p_ck_iter=NULL;
+  int depth=ck_get_depth(ck);
+  int ckFlagPos=ck_get_flag_pos(ck);
+  ck_shift_t ckX=0,ckY=0,ckZ=0;
+  ck_shift_t ckX_B,ckX_S,ckX_F;
+  ck_shift_t ckY_B,ckY_S,ckY_F;
+  ck_shift_t ckZ_B,ckZ_S,ckZ_F;
+  int module;
+
+  //Point cubekey pointer iterator to the first adjacent cubekey
+  p_ck_iter=&ck_adjacents->ckBBB;
+  //Initialize all 26 adjacent subcubes to 0
+  memset(p_ck_iter,0,SIZEOF_CUBEKEY*NUM_ADJACENT);
+
+
+  //In the special case depth==1, any subcube has 7 adjacent subcubes. Let's calculate them
+  if(depth==1){
+    //Clear Flag-bit
+    clr_bit_ck(&ck,ckFlagPos);
+    for(i=0;i<7;i++){ //7 is the number of adjacent subcubes
+      *p_ck_iter=(ck+i+1)%8;
+      set_bit_ck(p_ck_iter,ckFlagPos);
+      p_ck_iter++;
+    }
+    return;
+  }
+
+  /*
+   * Extract shifts per dimension (X, Y and Z) from cubekey
+   * Since we insert the most significant bits from right to left in the cubekey,
+   * we will extract it from rigth to left and insert in the per-coordinate cubekeys (ckX,ckY,ckZ)
+   * shifting to the left.
+   */
+
+  ck_get_shifts(ck,&ckX,&ckY,&ckZ);
+
+  /*
+   * For periodic boundary condition, we must consider -1 (backward) and +1 (forward) shifts, even in the limits of the cube
+   * Applying module operation we will obtain, for example, 111 and 001 as adjacent to 000 (module 8).
+   * The module will depend on the refinement depth, this is the number of bits per dimension.
+   * i.e.: If we are using 4 bits per dimension (depth=4), module will be 2^4=16.
+   */
+  module=1<<depth;
+  ckX_S=ckX;
+  ckX_B=(ckX-1)%(module);
+  ckX_F=(ckX+1)%(module);
+
+  ckY_S=ckY;
+  ckY_B=(ckY-1)%(module);
+  ckY_F=(ckY+1)%(module);
+
+  ckZ_S=ckZ;
+  ckZ_B=(ckZ-1)%(module);
+  ckZ_F=(ckZ+1)%(module);
+
+//Compose cubekeys for 26 adjacent subcubes
+
+  //Set Pos-Flag
+  for(i=0;i<NUM_ADJACENT;i++){
+    set_bit_ck(p_ck_iter,ckFlagPos);
+    p_ck_iter++;
+  }
+
+  for(i=depth;i>0;i--){
+    //Z Backward (at depth=i)
+    if(get_bit_ck_shift(ckZ_B,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3);
+    }
+
+    //Z Still (at depth=i)
+    if(get_bit_ck_shift(ckZ_S,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3);
+      //set_bit_ck(&(ck_adjacents->ckSSS),(i*3)-1); SSS is original cubekey-> No sense!
+      set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3);
+    }
+
+    //Z Forward (at depth=i)
+    if(get_bit_ck_shift(ckZ_F,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3);
+
+      set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3);
+      set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3);
+    }
+
+/*************/
+
+    //Y Backward (at depth=i)
+    if(get_bit_ck_shift(ckY_B,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3+1);
+    }
+
+    //Y Still (at depth=i)
+    if(get_bit_ck_shift(ckY_S,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3+1);
+      //set_bit_ck(&(ck_adjacents->ckSSS),(i*3)-2); SSS is original cubekey-> No sense!
+      set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3+1);
+    }
+
+    //Y Forward (at depth=i)
+    if(get_bit_ck_shift(ckY_F,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3+1);
+
+      set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3+1);
+      set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3+1);
+    }
+
+/*************/
+
+    //X Backward (at depth=i)
+    if(get_bit_ck_shift(ckX_B,i-1)){
+      set_bit_ck(&(ck_adjacents->ckBBB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBSB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBFB),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckBBS),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBSS),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBFS),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckBBF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBSF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckBFF),(depth-i)*3+2);
+    }
+
+    //X Still (at depth=i)
+    if(get_bit_ck_shift(ckX_S,i-1)){
+      set_bit_ck(&(ck_adjacents->ckSBB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckSSB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckSFB),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckSBS),(depth-i)*3+2);
+      //set_bit_ck(&(ck_adjacents->ckSSS),(depth-i)*3+2); SSS is original cubekey-> No sense!
+      set_bit_ck(&(ck_adjacents->ckSFS),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckSBF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckSSF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckSFF),(depth-i)*3+2);
+    }
+
+    //X Forward (at depth=i)
+    if(get_bit_ck_shift(ckX_F,i-1)){
+      set_bit_ck(&(ck_adjacents->ckFBB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFSB),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFFB),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckFBS),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFSS),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFFS),(depth-i)*3+2);
+
+      set_bit_ck(&(ck_adjacents->ckFBF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFSF),(depth-i)*3+2);
+      set_bit_ck(&(ck_adjacents->ckFFF),(depth-i)*3+2);
+    }
+  }
+  //When connected by a cube corner, all the shifts are different to STILL. Let's clear the 8 corner adjacents' ck
+  ck_adjacents->ckBBB=0;
+  ck_adjacents->ckBBF=0;
+  ck_adjacents->ckBFB=0;
+  ck_adjacents->ckBFF=0;
+  ck_adjacents->ckFBB=0;
+  ck_adjacents->ckFBF=0;
+  ck_adjacents->ckFFB=0;
+  ck_adjacents->ckFFF=0;
+}
