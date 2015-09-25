@@ -1670,7 +1670,7 @@
 06/12/2012   - some more changes related to the spatialRef[][] and halos[] tree
 (BUILD 039)    -> in particular, added an if() in spatialRef2halos() capturing halos with position (0/0/0)
 
-10/12/1012   - adjustment of IORD in interpolate() in libutility/general.c
+10/12/2012   - adjustment of IORD in interpolate() in libutility/general.c
 (BUILD 040)  - now also counting the number of spatialRef[][] with numParts=0
              - added   "if(halo->npart == 0) return;"  to ahf_halos_sfc_constructHalo()
              
@@ -1886,3 +1886,6 @@
 (BUILD 085)     - npart_uniquestars
                 - Mstar_excised
                 - mean_z_star_excised
+
+20/03/2015   - added -DAHFdmonlypeaks
+(BUILD 086)

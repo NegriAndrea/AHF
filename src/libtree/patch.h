@@ -25,7 +25,7 @@ typedef struct patch_s{
   uint32_t   n_daughters;          // 2^32 should be sufficient for daughters (any more casts doubt on the simulation)
   struct     patch_s** daughters;  // there are n_daughters
 
-//#ifdef AHF2_read_spatialRef
+//#ifdef AHF2_read_gridtree
   uint64_t  *idaughter;
 //#endif
   

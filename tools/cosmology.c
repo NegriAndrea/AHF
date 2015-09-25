@@ -77,8 +77,8 @@ void create_timeline2(double a_init, double a_fin, tlptr timeline)
       
       //fprintf(stderr,"%16.8g %16.8g %16.8g   %16.8g %16.8g    %16.8g\n",1.0/a-1,rhoc,3*pow2(hubble)/8./PI/Grav,hubble,calc_Hubble(a),calc_Hubble_VDE(a));
       
-      fprintf(fpout,"%12.4f %12.4f %12.6f %12.6f %12.6f %12.4f %12.6g %12.6g %12.6g %12.6g\n",
-              1.0/a-1,a,t*Mpc/H0/Gyr,omega,lambda,hubble,rhoc,timeline->virial[iloop],timeline->growth[iloop],calc_q(a));
+      fprintf(fpout,"%12.4f %12.4f %12.6f %12.6f %12.6f %12.4f %12.6g %12.6g %12.6g %12.6g %12.6g\n",
+              1.0/a-1,a,t*Mpc/H0/Gyr,omega,lambda,hubble,rhoc,timeline->virial[iloop],timeline->growth[iloop],calc_q(a),calc_growthr(a));
       fflush(fpout);
      }
 }

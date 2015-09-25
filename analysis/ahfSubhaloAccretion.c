@@ -26,7 +26,7 @@
 /*-------------------------------------------------------------------------------------
  *                                      DEFINES
  *-------------------------------------------------------------------------------------*/
-
+#define OLD_FORMAT
 
 /*-------------------------------------------------------------------------------------
  *                                  THE STRUCTURES
@@ -520,6 +520,7 @@ halo_t *read_halos(char *infile, int *num_halos)
   char    line[MAXSTRING];
   
   FILE *fp;
+  float fdummy;
   
   // open file
   fp = fopen(infile,"r");
@@ -537,6 +538,53 @@ halo_t *read_halos(char *infile, int *num_halos)
     // make room for one more halo
     halos = (halo_t *) realloc(halos, ((*num_halos)+1)*sizeof(halo_t));
     
+#ifdef OLD_FORMAT
+    // read line
+    sscanf(line,
+           "%"SCNi32" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %"SCNi32" %f %f %f %f %f %f",
+           &(halos[*num_halos].npart),
+           &fdummy,
+           &(halos[*num_halos].Xc),
+           &(halos[*num_halos].Yc),
+           &(halos[*num_halos].Zc),
+           &(halos[*num_halos].VXc),
+           &(halos[*num_halos].VYc),
+           &(halos[*num_halos].VZc),
+           &(halos[*num_halos].Mvir),
+           &(halos[*num_halos].Rvir),
+           &(halos[*num_halos].Vmax),
+           &(halos[*num_halos].Rmax),
+           &(halos[*num_halos].sigV),
+           &(halos[*num_halos].lambda),
+           &(halos[*num_halos].Lx),
+           &(halos[*num_halos].Ly),
+           &(halos[*num_halos].Lz),
+           &fdummy, // a
+           &(halos[*num_halos].Eax),
+           &(halos[*num_halos].Eay),
+           &(halos[*num_halos].Eaz),
+           &(halos[*num_halos].b),
+           &(halos[*num_halos].Ebx),
+           &(halos[*num_halos].Eby),
+           &(halos[*num_halos].Ebz),
+           &(halos[*num_halos].c),
+           &(halos[*num_halos].Ecx),
+           &(halos[*num_halos].Ecy),
+           &(halos[*num_halos].Ecz),
+           &(halos[*num_halos].ovdens),
+           &fdummy, // Redge
+           &(halos[*num_halos].nbins),
+           &(halos[*num_halos].Ekin),
+           &(halos[*num_halos].Epot),
+           &(halos[*num_halos].mbp_offset),
+           &(halos[*num_halos].com_offset),
+           &(halos[*num_halos].r2),
+           &(halos[*num_halos].lambdaE)
+           );
+    
+    halos[*num_halos].haloid   = *num_halos;
+    halos[*num_halos].hostHalo = 0;  // TODO: must be set!!!
+#else
     // read line
     sscanf(line,
            "%"SCNi64" %"SCNi64" %"SCNi32" %f %"SCNi32" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %"SCNi32" %f %f %f %f %f %f",
@@ -584,6 +632,7 @@ halo_t *read_halos(char *infile, int *num_halos)
            &(halos[*num_halos].Phi0),
            &(halos[*num_halos].cNFW)
            );
+#endif // OLD_FORMAT
     
     // increment halo counter
     (*num_halos)++;
@@ -607,6 +656,7 @@ mtree_t *read_mtree_idx(char *infile, int *num_mtree)
   char    line[MAXSTRING];
   
   FILE *fp;
+  int64_t idummy, ihalo, jhalo;
   
   // open file
   fp = fopen(infile,"r");
@@ -625,7 +675,23 @@ mtree_t *read_mtree_idx(char *infile, int *num_mtree)
     mtree = (mtree_t *) realloc(mtree, ((*num_mtree)+1)*sizeof(mtree_t));
     
     // read line
+#ifdef OLD_FORMAT
+    if(strncmp(line,"#",1) == 0)
+      break;
+    else {
+      sscanf(line, "%"SCNi64" %"SCNi64" %"SCNi64" %"SCNi64" %"SCNi64, &(ihalo), &idummy, &idummy, &idummy, &(jhalo));
+      
+      if(jhalo < 0) {
+        (*num_mtree)--;
+      }
+      else {
+        mtree[(*num_mtree)].haloid = ihalo;
+        mtree[(*num_mtree)].progid = jhalo;
+      }
+    }
+#else
     sscanf(line, "%"SCNi64" %"SCNi64, &(mtree[(*num_mtree)].haloid), &(mtree[(*num_mtree)].progid));
+#endif
     
     // increment line counter
     (*num_mtree)++;
@@ -633,6 +699,10 @@ mtree_t *read_mtree_idx(char *infile, int *num_mtree)
     // next line
     fgets(line,MAXSTRING,fp);
   }
+  
+#ifdef OLD_FORMAT
+  (*num_mtree) -= 2;
+#endif
   
   // close file
   fclose(fp);

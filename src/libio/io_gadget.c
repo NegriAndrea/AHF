@@ -2000,7 +2000,7 @@ local_get_block_age(io_logging_t log,
 
   /* we have a Gadget 2 file and hence use the HEAD to find AGE */
   else {
-    /* Go to the metal block */
+    /* Go to the AGE block */
     str[0] = 'X';
     tries = 0;
     nextblocksize = 0;

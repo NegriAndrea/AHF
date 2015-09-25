@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   85
+#define BUILD   86
 
 #ifdef AHF2
   #undef  VERSION
@@ -68,14 +68,14 @@
 //#define AHF2_centre_cube_geom
 
 // mimic AHF1 behaviour
-#define AHF2_set_gatherRad_like_AHF1
-//#define AHF2_read_spatialRef
+//#define AHF2_set_gatherRad_like_AHF1
+//#define AHF2_read_gridtree
 //#define AHF2_read_preliminary_halos
 
 // highly technical parameters
-#define AHF2_libtree_18neighbours
-//#define AHF2_libtree_26neighbours    // ONLY one of 18 or 26 neighbours is allowed to be defined
-#define AHF2_hostradius_is_patchdiagonal
+//#define AHF2_libtree_18neighbours
+#define AHF2_libtree_26neighbours    // ONLY one of 18 or 26 neighbours is allowed to be defined
+//#define AHF2_hostradius_is_patchdiagonal
 
 // write debug data
 //#define AHF2_write_preliminary_halos

@@ -1,7 +1,7 @@
 /*
  * subcube.c
  * 
- * Copyright 2014 F. Campos <fernandocdelpozo@gmail.com>
+ * Copyright 2014 F. Campos <fernando.campos@gmx.es>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -59,6 +59,9 @@
 //#define USE_LINENUMBER_AS_HALOID      // overwrites(!) haloid as found in _particles
 //#define CLUES_CROSS_CORRELATION         // fiddle with IDs for CLUES data to allow for CroCos
 
+// only relevant for read_particles_bin()
+#define SWAPBYTES 0
+
 /*-------------------------------------------------------------------------------------
  *                                   DEPENDENCIES
  *-------------------------------------------------------------------------------------*/
@@ -110,6 +113,7 @@ uint64_t    PidMin=(1<<62);
  *                                 ALL THOSE FUNCTIONS
  *-------------------------------------------------------------------------------------*/
 int      read_particles         (char filename[MAXSTRING], int isimu);
+int      read_particles_bin     (char filename[MAXSTRING], int isimu);
 int      particle_halo_mapping  (int  isimu);
 int      cross_correlation      (char OutFile[MAXSTRING]);
 int      create_mtree           (uint64_t ihalo, int  isimu0,int isimu1);
@@ -266,6 +270,123 @@ int main()
   return(1);
 }
 
+
+/*==================================================================================================
+ * read_particles_bin:
+ *
+ * read AHF_particles_bin files (only existent for CLUES-WMAP3 simulation!?)
+ *
+ *==================================================================================================*/
+int read_particles_bin(char filename[MAXSTRING], int isimu)
+{
+  FILE     *fpin, *fphids;
+  char      line[MAXSTRING], infile[MAXSTRING], hidsname[MAXSTRING];
+  int64_t   ihalo, jhalo;
+  uint64_t  nPartInHalo, nPartInUse, ipart, jpart, Pid, Ptype, haloid, haloid_from_file;
+  uint64_t  PidMin_local=(1<<62);
+  uint64_t  PidMax_local=0;
+  clock_t   elapsed;
+  
+  char c;
+  int  i32, nh, ih;
+  long i64;
+  
+  elapsed = clock();
+  
+  fprintf(stderr,"  o reading file %s ...",filename);
+  
+  fpin = fopen(filename,"rb");
+  if(fpin == NULL)
+  {
+    fprintf(stderr,"could not open file %s\nexiting!\n",filename);
+    exit(0);
+  }
+  
+  /* reset all variables */
+  nHalos[isimu] = 0;
+  halos[isimu]  = NULL;
+  
+  // rubbish ?
+  ReadInt(fpin,&i32,SWAPBYTES);
+  ReadInt(fpin,&i32,SWAPBYTES);
+  
+  // nuber of haloes
+  ReadInt(fpin,&i32,SWAPBYTES);
+  nh = i32;
+  
+  // rubbish ?
+  fread(&c,sizeof(char),1,fpin);
+  ReadInt(fpin,&i32,SWAPBYTES);
+  ReadInt(fpin,&i32,SWAPBYTES);
+  ReadLong(fpin,&i64,SWAPBYTES);
+  
+  // loop over halos and their particle ids  
+  for(ihalo=0; ihalo<nh; ihalo++) {
+
+    // use halo counter as haloid
+    haloid = ihalo;
+
+    // nparticles in halo
+    ReadLong(fpin,&i64,SWAPBYTES);
+    nPartInHalo = i64;
+    
+    /* found yet another halo */
+    nHalos[isimu] += 1;
+    halos[isimu]   = (HALOptr) realloc(halos[isimu], (nHalos[isimu]+1)*sizeof(HALOS));
+    
+    /* store haloid */
+    halos[isimu][ihalo].haloid = haloid;
+    
+    /* halos[][].Pid will be incrementally filled using realloc() */
+    halos[isimu][ihalo].Pid   = NULL;
+    halos[isimu][ihalo].mtree = NULL;
+    
+    /* read all their id's */
+    nPartInUse = 0;
+    for(ipart=0; ipart<nPartInHalo; ipart++)
+    {
+      // read particle id
+      ReadInt(fpin,&i32,SWAPBYTES);
+      Pid = i32;
+      
+      // simulation only contains DM particles
+      Ptype = 1;
+      
+      // here we can restrict the cross-correlation to a ceratain sub-set of all particles
+#ifdef ONLY_USE_PTYPE
+      if(Ptype == ONLY_USE_PTYPE)
+#endif
+      {
+        halos[isimu][ihalo].Pid             = (uint64_t *) realloc(halos[isimu][ihalo].Pid, (nPartInUse+1)*sizeof(uint64_t));
+        if(halos[isimu][ihalo].Pid == NULL) {
+          fprintf(stderr,"read_particles: could not realloc() halos[%d][%ld].Pid for %"PRIu64"particles\nABORTING\n",isimu,(long)ihalo,(nPartInUse+1));
+          exit(-1);
+        }
+        halos[isimu][ihalo].Pid[nPartInUse] = Pid;
+        
+        if(halos[isimu][ihalo].Pid[nPartInUse] > PidMax[isimu])       PidMax[isimu] = (halos[isimu][ihalo].Pid[nPartInUse]);
+        if(halos[isimu][ihalo].Pid[nPartInUse] < PidMin)              PidMin        = (halos[isimu][ihalo].Pid[nPartInUse]);
+        if(halos[isimu][ihalo].Pid[nPartInUse] > PidMax_local)        PidMax_local  = (halos[isimu][ihalo].Pid[nPartInUse]);
+        if(halos[isimu][ihalo].Pid[nPartInUse] < PidMin_local)        PidMin_local  = (halos[isimu][ihalo].Pid[nPartInUse]);
+        
+        nPartInUse++;
+      }
+    }
+    
+    /* store number of particles in halo */
+    halos[isimu][ihalo].npart = nPartInUse;
+  } // for()
+  
+  fclose(fpin);
+  
+  elapsed = clock()-elapsed;
+  
+  fprintf(stderr," done in %4.2f sec. (nhalos = %"PRIu64", full ID range = %"PRIu64" -> %"PRIu64", local ID range = %"PRIu64" -> %"PRIu64")\n",
+          (float)elapsed/CLOCKS_PER_SEC,nHalos[isimu],PidMin,PidMax[isimu],PidMin_local,PidMax_local);
+  
+  
+  return(1);
+}
 
 /*==================================================================================================
  * read_particles:

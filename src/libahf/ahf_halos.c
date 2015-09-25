@@ -4132,7 +4132,22 @@ HaloProfiles(HALO *halo)
 	double M_shell_gas;
 	double M_shell_star;
 #endif
+  
 
+//  double VVVx=0., VVVy=0., VVVz=0.;
+//  jpart = 0;
+//  while (jpart < halo->npart) {
+//    cur_part = global.fst_part + halo->ipart[jpart];
+//    VVVx += cur_part->mom[X];
+//    VVVy += cur_part->mom[Y];
+//    VVVz += cur_part->mom[Z];
+//    jpart++;
+//  }
+//  VVVx /= (double)halo->npart;
+//  VVVy /= (double)halo->npart;
+//  VVVz /= (double)halo->npart;
+  
+  
 	/* only consider decent halos
 	 * NOTE: npart may have changed since the last if-statement in ConstructHalos() */
 	if (halo->npart < simu.AHF_MINPART)
@@ -4442,14 +4457,14 @@ HaloProfiles(HALO *halo)
 			VYc += weight * cur_part->mom[Y];
 			VZc += weight * cur_part->mom[Z];
 
-			/* particle velocity in halo rest frame (Hubble correction not
-			 *needed for L as r x r = 0) */
+			/* particle velocity in halo rest frame (Hubble correction not needed for L as r x r = 0) */
 			VXp = (double)cur_part->mom[X];
 			VYp = (double)cur_part->mom[Y];
 			VZp = (double)cur_part->mom[Z];
 			dVX = (VXp - VXc / M_sphere);
 			dVY = (VYp - VYc / M_sphere);
 			dVZ = (VZp - VZc / M_sphere);
+      
 
 			/* angular momentum of particles within sphere [0, cur_rad] */
 			Lx += weight * (dY * dVZ - dZ * dVY);
@@ -4461,7 +4476,7 @@ HaloProfiles(HALO *halo)
 			dVY += Hubble * dY * r_fac / v_fac;
 			dVZ += Hubble * dZ * r_fac / v_fac;
 
-			/* kinetic energy of particle */
+      /* kinetic energy of particle */
 			Tpart = weight * (pow2(dVX) + pow2(dVY) + pow2(dVZ));
 
 			/* get potential energy of particle */

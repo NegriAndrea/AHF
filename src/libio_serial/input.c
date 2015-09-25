@@ -128,6 +128,9 @@ struct particle_data
    float     Vel[3];       /* particle velocity   */  
    float     Mass;         /* particle mass       */
    float     u;            /* gas internal energy */
+#ifdef STORE_MORE
+  float      rho;
+#endif
 #ifdef LGADGET
    long long ID;           /* unique particle identifier */  
 #else
@@ -1929,8 +1932,47 @@ void read_gadget(FILE *icfile)
       
      } 
    /*================= read in GADGET gas particle energies =================*/
-   
-   
+  
+#ifdef STORE_MORE
+  /*================= read in GADGET gas particle energies =================*/
+  if(gadget.header.np[0] > 0)
+  {
+    if(version==2){
+      GADGET_SKIP;
+      
+      fread(DATA,sizeof(char),4,icfile);
+      DATA[4] = '\0';
+      GADGET_SKIP;
+      
+      GADGET_SKIP;
+      fprintf(stderr,"reading %s",DATA);
+    }
+    else {
+      fprintf(stderr,"reading ");
+    }
+    
+    GADGET_SKIP;
+    fprintf(stderr,"(%8.2g MB) ... ",blklen/1024./1024.);
+    
+    for(i=0; i<gadget.header.np[0]; i++)
+    {
+#ifdef BYTESWAP
+      ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
+#else
+      fread(&dummy[0],sizeof(float),1,icfile);
+#endif
+      /* store additional gas particle property */
+      P_gadget[i].rho = dummy[0];
+    }
+    
+    GADGET_SKIP;
+    fprintf(stderr,"(%8.2g MB) done.\n",blklen/1024./1024.);
+    
+  }
+  /*================= read in GADGET gas particle energies =================*/
+#endif
+  
+  
    /* be verbose */
    fprintf(stderr,"\n");
    if(gadget.header.np[0] > 0) fprintf(stderr,"    gas:    tot_mass[0]=%16.8g Msun/h (%16.8g Msun/h per particle)\n",tot_mass[0]*GADGET_MUNIT,tot_mass[0]/(double)gadget.header.np[0]*GADGET_MUNIT);
@@ -2188,6 +2230,9 @@ void read_gadget(FILE *icfile)
          else {
            cur_part->u       = PDM;
          }
+#endif
+#ifdef STORE_MORE
+          cur_part->rho     = P_gadget[ppart].rho;
 #endif
          
          /* move to next particle in P_gadget[] array */

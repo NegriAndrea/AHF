@@ -444,8 +444,8 @@ double dsuper_tda(double a)
 
 
 /*==========================================================================
-* calc_growth: calculates the linear growth factor
-*==========================================================================*/
+ * calc_growth: calculates the linear growth factor (without Omega_r)
+ *==========================================================================*/
 double dtda3(double a)
 {
    double t1;
@@ -464,6 +464,36 @@ double calc_growth(double a)
    return(2.5 * simu.omega0 * t1 * t2);
 }
 
+/*==========================================================================
+ * calc_growthr: calculates the linear growth factor
+ * with Omega_r=9.2364e-5 according to Planck:
+ * http://physics.stackexchange.com/questions/94181/where-is-radiation-density-in-the-planck-2013-results
+ *==========================================================================*/
+double adot(double a)
+{
+  double omegar0 = 9.2364e-5;
+  
+  return(sqrt((simu.omega0/a+simu.lambda0*pow2(a)+omegar0/pow2(a))));
+}
+
+double dtda3r(double a)
+{
+  double t1;
+  
+  t1 = 1./adot(a);
+  
+  return(pow3(t1));
+}
+
+double calc_growthr(double a)
+{
+  double t1, t2;
+  
+  t1 = INTEGRATE(dtda3r, 0.0, a, a/10., 1e-8);
+  t2 = adot(a)/a;
+  
+  return(2.5 * simu.omega0 * t1 * t2);
+}
 
 /*===========================================================================
 * create a timeline for current cosmological model

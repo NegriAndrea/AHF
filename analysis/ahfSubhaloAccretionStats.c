@@ -42,7 +42,8 @@ isnap = filemap[n].isnap; }}
 
 
 //#define FULL_AHF_INFORMATION   // will write the full AHF_halos line into the output file
-#define MINIMAL_OUTPUT // only writes the information needed by Noam to re-do the subaccretion analysis excl. the backsplashed haloes
+//#define MINIMAL_OUTPUT // only writes the information needed by Noam to re-do the subaccretion analysis excl. the backsplashed haloes
+//-> MINIMAL_OUTPUT is not used as Noam only wants the ihalo_0 id in the end ... very minimal!
 
 /*-------------------------------------------------------------------------------------
  *                                  THE STRUCTURES

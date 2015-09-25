@@ -609,7 +609,7 @@ int main(int argc, char **argv)
   
   /* 1. organize the particles into a tree */
   fprintf(stderr,"[main] Calling generate_tree...\n");
-#ifndef AHF2_read_spatialRef
+#ifndef AHF2_read_gridtree
   timing.generate_tree_v2 = omp_get_wtime();
   patches=generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom, simu.AHF_MINPART);
   timing.generate_tree_v2 = omp_get_wtime() - timing.generate_tree_v2;

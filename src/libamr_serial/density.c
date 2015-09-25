@@ -304,105 +304,110 @@ boolean assign_npart(gridls *cur_grid)
                   for(cur_nquad=icur_cquad->loc;
                       cur_nquad<icur_cquad->loc+icur_cquad->length;
                       cur_nquad++, y++){
-                     for(icur_nquad=cur_nquad;icur_nquad!=NULL;icur_nquad=icur_nquad->next){
-                        x = icur_nquad->x;
+                    for(icur_nquad=cur_nquad;icur_nquad!=NULL;icur_nquad=icur_nquad->next){
+                      x = icur_nquad->x;
+                      
+                      for(cur_node = icur_nquad->loc;
+                          cur_node < icur_nquad->loc + icur_nquad->length;
+                          cur_node++, x++)
+                      {
+                        /* increment number of nodes associated with current grid */
+                        no_nodes++;
                         
-                        for(cur_node = icur_nquad->loc; 
-                            cur_node < icur_nquad->loc + icur_nquad->length; 
-                            cur_node++, x++)
+                        /* calculate realspace coords of cur_node */
+                        temp_coords[X] = (((double)x) / (double)cur_grid->l1dim) + cur_shift;
+                        temp_coords[Y] = (((double)y) / (double)cur_grid->l1dim) + cur_shift;
+                        temp_coords[Z] = (((double)z) / (double)cur_grid->l1dim) + cur_shift;
+                        
+                        xyz_coords[X]  = f1mod(temp_coords[X]+1.0, 1.0);
+                        xyz_coords[Y]  = f1mod(temp_coords[Y]+1.0, 1.0);
+                        xyz_coords[Z]  = f1mod(temp_coords[Z]+1.0, 1.0);
+                        
+                        /* obtain 26 neighbours for TSC mass assignment */
+                        tsc_nodes[1][1][1] = cur_node;
+                        get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
+                        
+                        /* loop over all particles attached to cur_node */
+                        for(cur_part = cur_node->ll; cur_part != NULL; cur_part = cur_part->ll)
+                        {
+#if (defined GAS_PARTICLES && defined AHFdmonlypeaks)
+                          if(fabs(cur_part->u-PDM) < ZERO)
+#endif
                           {
-                           /* increment number of nodes associated with current grid */
-                           no_nodes++;
-                           
-                           /* calculate realspace coords of cur_node */
-                           temp_coords[X] = (((double)x) / (double)cur_grid->l1dim) + cur_shift;
-                           temp_coords[Y] = (((double)y) / (double)cur_grid->l1dim) + cur_shift;
-                           temp_coords[Z] = (((double)z) / (double)cur_grid->l1dim) + cur_shift;
-                           
-                           xyz_coords[X]  = f1mod(temp_coords[X]+1.0, 1.0);
-                           xyz_coords[Y]  = f1mod(temp_coords[Y]+1.0, 1.0);
-                           xyz_coords[Z]  = f1mod(temp_coords[Z]+1.0, 1.0);
-                           
-                           /* obtain 26 neighbours for TSC mass assignment */
-                           tsc_nodes[1][1][1] = cur_node;
-                           get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
-                           
-                           /* loop over all particles attached to cur_node */
-                           for(cur_part = cur_node->ll; cur_part != NULL; cur_part = cur_part->ll)
-                             {
-                              /* increment number of particles associated with current grid */
-                              no_part++;
+                            
+                            /* increment number of particles associated with current grid */
+                            no_part++;
+                            
+                            /* calc fraction to be assigned to each tsc node */
+                            for(idim = 0; idim < 3; idim++)
+                            {
+                              pn_sep[idim] = ((double)cur_part->pos[idim] - xyz_coords[idim]) * (double)cur_grid->l1dim;
                               
-                              /* calc fraction to be assigned to each tsc node */
-                              for(idim = 0; idim < 3; idim++)
-                                {
-                                 pn_sep[idim] = ((double)cur_part->pos[idim] - xyz_coords[idim]) * (double)cur_grid->l1dim;
-                                 
-                                 /* deal with periodic boundary conditions */
-                                 if(fabs(pn_sep[idim]) > 0.5*(double)cur_grid->l1dim)
-                                   {
-                                    tpnarg       = (double)cur_part->pos[idim] + 0.5;
-                                    pnarg_a      = f1mod(tpnarg+1.0, 1.0);
-                                    tpnarg       = xyz_coords[idim] + 0.5;
-                                    pnarg_b      = f1mod(tpnarg+1.0, 1.0);
-                                    pn_sep[idim] = (pnarg_a - pnarg_b) * (double)cur_grid->l1dim;
-                                   }
-                                 
+                              /* deal with periodic boundary conditions */
+                              if(fabs(pn_sep[idim]) > 0.5*(double)cur_grid->l1dim)
+                              {
+                                tpnarg       = (double)cur_part->pos[idim] + 0.5;
+                                pnarg_a      = f1mod(tpnarg+1.0, 1.0);
+                                tpnarg       = xyz_coords[idim] + 0.5;
+                                pnarg_b      = f1mod(tpnarg+1.0, 1.0);
+                                pn_sep[idim] = (pnarg_a - pnarg_b) * (double)cur_grid->l1dim;
+                              }
+                              
 #ifdef TSC
-                                 weights[1][idim] = 0.75 - pow2(pn_sep[idim]);
-                                 weights[0][idim] = pow2((0.5 - pn_sep[idim]))/2;
-                                 weights[2][idim] = pow2((0.5 + pn_sep[idim]))/2;
+                              weights[1][idim] = 0.75 - pow2(pn_sep[idim]);
+                              weights[0][idim] = pow2((0.5 - pn_sep[idim]))/2;
+                              weights[2][idim] = pow2((0.5 + pn_sep[idim]))/2;
 #endif
 #ifdef CIC
-                                 if(pn_sep[idim] > 0.)
-                                   {
-                                    weights[0][idim] = 0.0;
-                                    weights[1][idim] = 1.0 - pn_sep[idim];
-                                    weights[2][idim] =       pn_sep[idim];
-                                   }
-                                 else
-                                   {
-                                    weights[0][idim] =      -pn_sep[idim];
-                                    weights[1][idim] = 1.0 + pn_sep[idim];
-                                    weights[2][idim] = 0.0;
-                                   }
+                              if(pn_sep[idim] > 0.)
+                              {
+                                weights[0][idim] = 0.0;
+                                weights[1][idim] = 1.0 - pn_sep[idim];
+                                weights[2][idim] =       pn_sep[idim];
+                              }
+                              else
+                              {
+                                weights[0][idim] =      -pn_sep[idim];
+                                weights[1][idim] = 1.0 + pn_sep[idim];
+                                weights[2][idim] = 0.0;
+                              }
 #endif
 #ifdef NGP
-                                 weights[0][idim] = 0.0;
-                                 weights[1][idim] = 1.0;
-                                 weights[2][idim] = 0.0;
+                              weights[0][idim] = 0.0;
+                              weights[1][idim] = 1.0;
+                              weights[2][idim] = 0.0;
 #endif
-                                }
-                              
-                              /* calculate correct particle to density conversion factor according to AMIGA setup */
-#if (defined REFINE_BARYONIC_MASS && defined GAS_PARTICLES)                              
-                              if(cur_part->u >= PGAS || cur_part->u == PSTAR)
-                                mass2dens = (double)cur_part->weight * cur_grid->masstodens;
-                              else
-                                mass2dens = cur_grid->masstopartdens;
+                            }
+                            
+                            /* calculate correct particle to density conversion factor according to AMIGA setup */
+#if (defined REFINE_BARYONIC_MASS && defined GAS_PARTICLES)
+                            if(cur_part->u >= PGAS || cur_part->u == PSTAR)
+                            mass2dens = (double)cur_part->weight * cur_grid->masstodens;
+                            else
+                            mass2dens = cur_grid->masstopartdens;
 #else /* REFINE_BARYONIC_MASS && GAS_PARTICLES */
-                              mass2dens = cur_grid->masstopartdens;
+                            mass2dens = cur_grid->masstopartdens;
 #endif /* REFINE_BARYONIC_MASS && GAS_PARTICLES */
-                              
-                              /* assign mass */
-                              for(k = 0; k < 3; k++){
-                                 for(j = 0; j < 3; j++){
-                                    for(i = 0; i < 3; i++){
-                                       if(tsc_nodes[k][j][i] != NULL)
-                                         {
-                                          tsc_nodes[k][j][i]->dens += mass2dens * weights[k][Z]*weights[j][Y]*weights[i][X];
-                                         } 
-                                    } } } 
-                              
-                             } /* cur_part */
-                          } /* cur_node */
-                     
-                     }
+                            
+                            /* assign mass */
+                            for(k = 0; k < 3; k++){
+                              for(j = 0; j < 3; j++){
+                                for(i = 0; i < 3; i++){
+                                  if(tsc_nodes[k][j][i] != NULL)
+                                  {
+                                    tsc_nodes[k][j][i]->dens += mass2dens * weights[k][Z]*weights[j][Y]*weights[i][X];
+                                  }
+                                } } }
+                          } /* if(DM particle) */
+                        } /* cur_part */
+                      } /* cur_node */
+                      
+                    }
                   }
                }
             }
            }
-                     
+          
         
    cur_grid->size.no_part  = no_part;
    cur_grid->size.no_nodes = no_nodes;

@@ -21,6 +21,7 @@ double calc_a_ddot    (double a);
 double calc_q         (double a);
 double calc_virial    (double a);
 double calc_growth    (double a);
+double calc_growthr   (double a);
 double collapse       (double age, double acc);
 
 void   create_timeline(double a_init, double a_fin, tlptr timeline);

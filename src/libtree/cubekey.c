@@ -1,7 +1,7 @@
 /*
  * cubekey.c
  * 
- * Copyright 2013 Fernando Campos <fernando.campos@uam.es>
+ * Copyright 2013 Fernando Campos <fernando.campos@gmx.es>
  * 
  * This file will contain the functions to convert from (and to) a 
  * 64bits integer to the shifts on each dimension wich will

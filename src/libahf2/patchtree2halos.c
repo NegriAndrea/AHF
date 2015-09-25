@@ -46,7 +46,7 @@ halo_s* patchtree2halos (patch_t **patch_tree, uint64_t *n_patches)
   double   x, y, z;
   
 
-#ifdef AHF2_read_spatialRef
+#ifdef AHF2_read_gridtree
   //======================================================================================
   // read spatialRef[][] from file and put it into patch_tree[][]
   //======================================================================================
@@ -280,7 +280,7 @@ void generate_daughter_halos(HALO *halos, patch_t *parent_patch, uint64_t ihost,
               *ihalo,daughter_patch->level,daughter_patch->id,parent_patch->level,parent_patch->id);
 #endif
       
-#ifdef AHF2_read_spatialRef
+#ifdef AHF2_read_gridtree
       // spatialRef[][] only stored linked particles on each isolated refinement
       halos[ihost].npart     += daughter_patch->Npart;
 #endif

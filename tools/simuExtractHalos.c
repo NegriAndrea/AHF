@@ -32,7 +32,7 @@ info_io io;
 /*=========================================================================================*/
 int main()
 {
-  double        xpart, ypart, zpart, vxpart, vypart, vzpart, mpart, *dist2, dist;
+  double        xpart, ypart, zpart, vxpart, vypart, vzpart, mpart, upart, rhopart, *dist2, dist;
   long unsigned no_halos;
   partptr       cur_part;
   
@@ -215,7 +215,13 @@ int main()
       for(ipart=0; ipart<nid; ipart++)
         {
           /* current particle coordinates */
-          if(id[ipart] >= 0) cur_part = io.fst_part + id[ipart];
+          if(id[ipart] >= 0 && id[ipart] < global.no_part) {
+            cur_part = io.fst_part + id[ipart];
+          }
+          else {
+            fprintf(stderr,"star particles not supported\naborting\n");
+            exit(0);
+          }
           
           xpart  = cur_part->pos[X] * x_fac;
           ypart  = cur_part->pos[Y] * x_fac;
@@ -228,19 +234,26 @@ int main()
 #else
           mpart  = m_fac;
 #endif
+#ifdef GAS_PARTICLES
+          upart   = cur_part->u;
+#endif
+#ifdef STORE_MORE
+          rhopart = cur_part->rho;
+#endif
           
 #ifdef DEBUG_HOLE
           dist = pow2(xpart-Xhole)+pow2(ypart-Yhole)+pow2(zpart-Zhole);
-          
           if(dist < pow2(HoleDistance))
 #endif
-#ifdef STEREO2        
+          {
+#ifdef STEREO2
             fprintf(fpout,"P  %20.10g %20.10g %20.10g    %4.3g %4.3g %4.3g  1\n",  xpart, ypart, zpart, r,g,b);
 #else
-          fprintf(fpout,"%14.8g %14.8g %14.8g    %14.8g %14.8g %14.8g    %16.8g\n", xpart, ypart, zpart, vxpart, vypart, vzpart, mpart);
+            fprintf(fpout,"%14.8g %14.8g %14.8g    %14.8g %14.8g %14.8g    %16.8g\n", xpart, ypart, zpart, vxpart, vypart, vzpart, mpart);
 #endif
-          fflush(fpout);
-        }
+            fflush(fpout);
+          }
+        } // ipart
       
       if(single_file == 0)
         {
