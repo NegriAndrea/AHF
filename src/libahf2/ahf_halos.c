@@ -2559,7 +2559,7 @@ HaloProfiles(HALO *halo)
   halo->cNFW     = calc_cNFW(halo->V2_max, halo->M_vir/halo->R_vir);
   
   /* surface pressure term ala Shaw et al. (2006) */
-  Ts    = (halo->prof.Ekin[nbins-1]-halo->prof.Ekin[nbins-2]);
+  Ts    = 2.0*(halo->prof.Ekin[nbins-1]-halo->prof.Ekin[nbins-2]);
   frad  = fabs(halo->prof.r[nbins-2]/halo->prof.r[nbins-1]);
   halo->SurfP    = -0.125*pow3(1.+frad)/(1.-pow3(frad))*Ts;;
   

@@ -1889,3 +1889,6 @@
 
 20/03/2015   - added -DAHFdmonlypeaks
 (BUILD 086)
+
+25/09/2015   - bug fix in surface pressure calculation: AHF was using Ekin (instead of 2*Ekin) with Eq.(4) of Shaw et al. (2006)
+(BUILD 087)

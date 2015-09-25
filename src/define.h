@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   86
+#define BUILD   87
 
 #ifdef AHF2
   #undef  VERSION
