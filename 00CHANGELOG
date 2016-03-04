@@ -1892,3 +1892,6 @@
 
 25/09/2015   - bug fix in surface pressure calculation: AHF was using Ekin (instead of 2*Ekin) with Eq.(4) of Shaw et al. (2006)
 (BUILD 087)
+
+04/03/2016   - bug fix for -DDARK_ENERGY: wrong if-statement in dark energy interpolation function (fixed thanks to Chi-Ting Chiang)
+(BUILD 088)

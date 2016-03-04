@@ -378,8 +378,8 @@ C     Dimension of the box
       do 200 iii=1,MAXLINES
 
 c         READ(1,*,end=666) lkl,fMhires,rc1,rc2,rc3,v1,v2,v3,xMvir   ! AHF v0.0
-         READ(1,*,end=666) ihalo,ihost,nsub,xMvir,lkl,rc1,rc2,rc3    ! AHF v1.0
-c         READ(1,*,end=666) rc1,rc2,rc3                              ! legacy
+c         READ(1,*,end=666) ihalo,ihost,nsub,xMvir,lkl,rc1,rc2,rc3    ! AHF v1.0
+         READ(1,*,end=666) rc1,rc2,rc3                              ! legacy
 
          if(icut.EQ.0)then
             if(xMvir.GE.MMIN .AND. xMvir.LT.MMAX)then

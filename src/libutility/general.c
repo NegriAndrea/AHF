@@ -165,7 +165,7 @@ double interpolate(double *x_array, double *y_array, int n_array, double x)
   while(ju-jl > 1)
    {
     jm = (ju+jl)/2;
-    if(x < x_array[jm])
+    if(x > x_array[jm])
       jl=jm;
     else
       ju=jm;
