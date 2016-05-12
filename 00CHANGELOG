@@ -1895,3 +1895,6 @@
 
 04/03/2016   - bug fix for -DDARK_ENERGY: wrong if-statement in dark energy interpolation function (fixed thanks to Chi-Ting Chiang)
 (BUILD 088)
+
+12/05/2016   - the DARK_ENERGY file with a, H(z)/H0, and OmegaM(z) was supposed to be ordered ascending
+(BUILD 089)    -> AHF now takes care of that itself and hence no need for an ordered table anymore

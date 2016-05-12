@@ -18,6 +18,8 @@ void read_dark_energy_table(char *dark_energy_url)
 {
   FILE   *fdark_energy=NULL;
   char    dummyline[MAXSTRING];
+  long   *idx, i;
+  double *a, *Hubble, *OmegaM;
   
   fdark_energy = fopen(dark_energy_url,"r");
   
@@ -40,6 +42,32 @@ void read_dark_energy_table(char *dark_energy_url)
            &(DarkEnergy.Hubble[DarkEnergy.n_entries]),
            &(DarkEnergy.OmegaM[DarkEnergy.n_entries]));
    }
+  
+  // sort DarkEnergy. entries by a[] (interpolate() expects this ascending ordering!)
+  idx = (long *) calloc(DarkEnergy.n_entries, sizeof(long));
+  indexx(DarkEnergy.n_entries, (DarkEnergy.a)-1, idx-1);
+
+  a      = (double *) calloc(DarkEnergy.n_entries, sizeof(double));
+  Hubble = (double *) calloc(DarkEnergy.n_entries, sizeof(double));
+  OmegaM = (double *) calloc(DarkEnergy.n_entries, sizeof(double));
+  for(i=0; i<DarkEnergy.n_entries; i++) {
+    a[i]      = DarkEnergy.a[idx[i]-1];
+    Hubble[i] = DarkEnergy.Hubble[idx[i]-1];
+    OmegaM[i] = DarkEnergy.OmegaM[idx[i]-1];
+  }
+  for(i=0; i<DarkEnergy.n_entries; i++) {
+    DarkEnergy.a[i]      = a[i];
+    DarkEnergy.Hubble[i] = Hubble[i];
+    DarkEnergy.OmegaM[i] = OmegaM[i];
+    
+    fprintf(stderr,"%lf %lf %f\n",DarkEnergy.a[i],DarkEnergy.Hubble[i],DarkEnergy.OmegaM[i]);
+  }
+  
+  free(idx);
+  free(a);
+  free(Hubble);
+  free(OmegaM);
+  
   
   fclose(fdark_energy);
 }
