@@ -34,6 +34,7 @@ uint64_t getSussing2013ID    (int isnap, int ihalo);
 extern int
 cmp_sfckey_part(const void *p1, const void *p2);
 int     check_gadgetversion  (FILE *fp);
+int     check_gadgetswap     (FILE *fp);
 int     ptree_min_level      (double Nthreshold);
 
 #define WRITEAHFLOGO(fx)  \

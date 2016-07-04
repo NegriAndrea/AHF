@@ -112,15 +112,8 @@ struct MN_header
 /*=========================================================================
 * definitions for read_gadget()
 *=========================================================================*/
-#ifdef LGADGET
-long long    blklen;
-#define GADGET_SKIP  ReadLongLong (icfile,&blklen,SWAPBYTES);
-//#define GADGET_SKIP  fread(&blklen,sizeof(long long),1,icfile)
-#else
 unsigned int blklen;
-#define GADGET_SKIP  ReadUInt     (icfile,&blklen,SWAPBYTES);
-//#define GADGET_SKIP  fread(&blklen,sizeof(int),1,icfile)
-#endif
+#define GADGET_SKIP        ReadUInt(icfile,&blklen,SWAPBYTES);
 
 struct particle_data 
 {
@@ -1276,16 +1269,15 @@ void read_mare_nostrum(FILE *icfile)
    
    int    massflag;           /* Are the masses contained in the header? */
    int    SWAPBYTES, version;
-   
-  /* determine file version */
-  version = check_gadgetversion(icfile);
   
-#ifdef BYTESWAP
-   SWAPBYTES = TRUE;
-#else
-   SWAPBYTES = FALSE;
+#ifdef GINNUNGAGAP
+  long long ID;
 #endif
-   
+  
+  /* determine file version */
+  version   = check_gadgetversion(icfile);
+  SWAPBYTES = check_gadgetswap(icfile);
+  
   /*================= read in GADGET IO header =================*/
   if(version==2){
     GADGET_SKIP;
@@ -1299,7 +1291,6 @@ void read_mare_nostrum(FILE *icfile)
   
    GADGET_SKIP;
    
-#ifdef BYTESWAP
    ReadInt(icfile,&(gadget.header.np[0]),SWAPBYTES);
    ReadInt(icfile,&(gadget.header.np[1]),SWAPBYTES);
    ReadInt(icfile,&(gadget.header.np[2]),SWAPBYTES);
@@ -1329,9 +1320,7 @@ void read_mare_nostrum(FILE *icfile)
    ReadDouble(icfile,&(gadget.header.OmegaLambda),SWAPBYTES);
    ReadDouble(icfile,&(gadget.header.HubbleParam),SWAPBYTES);
    ReadChars(icfile,&(gadget.header.unused[0]),SIZEOFGADGETHEADER- 6*4- 6*8- 2*8- 2*4- 6*4- 2*4 - 4*8);
-#else
-   fread(&gadget.header,sizeof(gadget.header),1,icfile);
-#endif
+
    fprintf(stderr,"expansion factor: %lf\n",gadget.header.expansion);
    fprintf(stderr,"redshift:         %lf\n",gadget.header.redshift);
    fprintf(stderr,"boxsize:          %lf (%lf Mpc/h)\n",gadget.header.BoxSize,gadget.header.BoxSize*GADGET_LUNIT);
@@ -1388,13 +1377,9 @@ void read_mare_nostrum(FILE *icfile)
    
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[1]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[2]),SWAPBYTES);
-#else
-      fread(&dummy[0],sizeof(float),3,icfile);
-#endif      
      }
    
    GADGET_SKIP;
@@ -1418,13 +1403,9 @@ void read_mare_nostrum(FILE *icfile)
    
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[1]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[2]),SWAPBYTES);
-#else
-      fread(&dummy[0],sizeof(float),3,icfile);
-#endif 
      }
    
    GADGET_SKIP;
@@ -1446,26 +1427,21 @@ void read_mare_nostrum(FILE *icfile)
    GADGET_SKIP;
    
    /* we need to read in *all* ID's as the masses are behind the ID's in the file... */
-#ifdef LGADGET      
+#ifdef LGADGET
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadLongLong(icfile,&(P_gadget[i].ID),SWAPBYTES);
-#else
-      fread(&P_gadget[i].ID,sizeof(long long),1,icfile);
+#ifdef GINNUNGAGAP
+       P_gadget[i].ID = i;
 #endif
      }
 #else /* LGADGET */
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadInt(icfile,&(P_gadget[i].ID),SWAPBYTES);
-#else
-      fread(&P_gadget[i].ID,sizeof(int),1,icfile);
-#endif
      }
-#endif
-   
+#endif // LGADGET
+  
    GADGET_SKIP;
    
    /*================= read in GADGET id's =================*/
@@ -1499,11 +1475,7 @@ void read_mare_nostrum(FILE *icfile)
             
             for(j=0; j<gadget.header.np[i]; j++)
               {
-#ifdef BYTESWAP
                ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
-#else
-               fread(&dummy[0],sizeof(float),1,icfile);
-#endif
                P_gadget[k].Mass  = dummy[0];
                
                k++;
@@ -1576,7 +1548,7 @@ void read_gadget(FILE *icfile)
 #else
    long           ID, IDmin, IDmax;
 #endif
-   
+ 
    double         tot_mass[6];
    double         DMmmin;
    
@@ -1590,32 +1562,27 @@ void read_gadget(FILE *icfile)
   int version;
 
   /* determine file version */
-  version = check_gadgetversion(icfile);
+  version   = check_gadgetversion(icfile);
+  SWAPBYTES = check_gadgetswap(icfile);
 
   
    fprintf(stderr,"\n===================================================================\n");
-#ifdef BYTESWAP
-   SWAPBYTES = TRUE;
-   fprintf(stderr,"           start reading BYTESWAPed GADGET particles\n");
-#else
-   SWAPBYTES = FALSE;
-   fprintf(stderr,"                 start reading GADGET particles\n");
-#endif
-   
+   if(SWAPBYTES)
+     fprintf(stderr,"           start reading BYTESWAPed GADGET particles\n");
+   else
+    fprintf(stderr,"                 start reading GADGET particles\n");
+  
    /*================= read in GADGET IO header =================*/
-  if(version==2){
+  if(version==2) {
     GADGET_SKIP;
-    
-    fread(DATA,sizeof(char),4,icfile);
+    fread(DATA,sizeof(char),blklen,icfile);
     DATA[4] = '\0';
-    GADGET_SKIP;
-    
+    fprintf(stderr,"#reading... %s\n",DATA);
     GADGET_SKIP;
   }
-   
-   GADGET_SKIP;
-   
-#ifdef BYTESWAP
+
+  GADGET_SKIP;
+  
    ReadInt(icfile,&(gadget.header.np[0]),SWAPBYTES);
    ReadInt(icfile,&(gadget.header.np[1]),SWAPBYTES);
    ReadInt(icfile,&(gadget.header.np[2]),SWAPBYTES);
@@ -1645,10 +1612,7 @@ void read_gadget(FILE *icfile)
    ReadDouble(icfile,&(gadget.header.OmegaLambda),SWAPBYTES);
    ReadDouble(icfile,&(gadget.header.HubbleParam),SWAPBYTES);
    ReadChars(icfile,&(gadget.header.unused[0]),SIZEOFGADGETHEADER- 6*4- 6*8- 2*8- 2*4- 6*4- 2*4 - 4*8);
-#else
-   fread(&gadget.header,sizeof(gadget.header),1,icfile);
-#endif
-   
+  
    GADGET_SKIP;
    
    fprintf(stderr,"\nFinished reading GADGET header\n\n");
@@ -1676,6 +1640,7 @@ void read_gadget(FILE *icfile)
 
    
    /* be verbose */
+   fprintf(stderr,"file format:      %d\n",              version);
    fprintf(stderr,"expansion factor: %lf\n",             gadget.header.expansion);
    fprintf(stderr,"redshift:         %lf\n",             gadget.header.redshift);
    fprintf(stderr,"boxsize:          %lf (%lf Mpc/h)\n", gadget.header.BoxSize,gadget.header.BoxSize*GADGET_LUNIT);
@@ -1719,13 +1684,9 @@ void read_gadget(FILE *icfile)
       
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[1]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[2]),SWAPBYTES);
-#else
-      fread(&dummy[0],sizeof(float),3,icfile);
-#endif      
       P_gadget[i].Pos[0]=dummy[0];
       P_gadget[i].Pos[1]=dummy[1];
       P_gadget[i].Pos[2]=dummy[2];      
@@ -1759,13 +1720,9 @@ void read_gadget(FILE *icfile)
    
    for(i=0;i<no_part;i++)
      {
-#ifdef BYTESWAP
       ReadFloat(icfile,&(dummy[0]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[1]),SWAPBYTES);
       ReadFloat(icfile,&(dummy[2]),SWAPBYTES);
-#else
-      fread(&dummy[0],sizeof(float),3,icfile);
-#endif 
       P_gadget[i].Vel[0]=dummy[0];
       P_gadget[i].Vel[1]=dummy[1];
       P_gadget[i].Vel[2]=dummy[2]; 
@@ -1799,17 +1756,12 @@ void read_gadget(FILE *icfile)
    for(i=0;i<no_part;i++)
      {
 #ifdef LGADGET
-#ifdef BYTESWAP
       ReadLongLong(icfile,&(P_gadget[i].ID),SWAPBYTES);
-#else
-      fread(&P_gadget[i].ID,sizeof(long long),1,icfile);
+#ifdef GINNUNGAGAP // no clue how the GINNUNGAGAP IDs were generated, but they do not comply with what we expect here...
+       P_gadget[i].ID = i;
 #endif
 #else /* LGADGET */
-#ifdef BYTESWAP
       ReadInt(icfile,&(P_gadget[i].ID),SWAPBYTES);
-#else
-      fread(&P_gadget[i].ID,sizeof(int),1,icfile);
-#endif
 #endif /* LGADGET */
      }
    
@@ -2224,9 +2176,11 @@ void read_gadget(FILE *icfile)
          if(i == 0) {
            cur_part->u       = P_gadget[ppart].u * u_fac;
          }
+#ifndef GINNUNGAGAP // there are no stars in the ICs, but only low-res DM particles
          else if (i==4) {
            cur_part->u       = PSTAR;
          }
+#endif // GINNUNGAGAP
          else {
            cur_part->u       = PDM;
          }

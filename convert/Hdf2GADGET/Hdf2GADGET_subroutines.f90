@@ -4,6 +4,7 @@ SUBROUTINE read_header(datadir,isnap)
 
 USE Hdf2GADGET_io
 USE hdf5_wrapper
+USE hdf5
 
 IMPLICIT NONE
 
@@ -57,6 +58,8 @@ SUBROUTINE get_gadget_file(datadir,isnap,ifile,n)
 
 USE Hdf2GADGET_io
 USE hdf5_wrapper
+USE hdf5
+
 
 IMPLICIT NONE
 LOGICAL :: file_exists
@@ -150,7 +153,8 @@ DO itype=0,5
 ! Advancing index of particles read
 
 		Ncum = Ncum + NumPart_ThisFile(itype)
-		WRITE (*,'('' read '',I8,'' particles from file '',I3,'' of a total of '',I11)') NumPart_ThisFile(itype), ifile, NumPart_Total(itype)
+                WRITE (*,'('' read '',I8,'' particles from file '',I3,'' of a total of '',I11)') &
+                        NumPart_ThisFile(itype), ifile, NumPart_Total(itype)
 
 	ENDIF
 ENDDO

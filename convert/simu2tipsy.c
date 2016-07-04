@@ -80,7 +80,7 @@ char **argv;
   double            dread[7];
   float             fread[7];
   double            m_fac, x_fac, v_fac;
-  double            x2tipsy, v2tipsy, m2tipsy;
+  double            x2tipsy, v2tipsy, m2tipsy, epstipsy;
   char              indata[MAXSTRING], outdata[MAXSTRING];
   FILE              *fpin, *fpout;
   partptr           cur_part;
@@ -120,16 +120,19 @@ char **argv;
    * SET CONVERSION FACTORS
    *====================================================*/
   x_fac = io.header.boxsize;                              // Mpc/h
-  v_fac = io.header.boxsize * H0 / io.header.a_current;   // km/sec
+  v_fac = io.header.boxsize * H0 / io.header.a_current;   // km/sec  -> gives a*\dot{x} as AHF uses a^2*\dot{x} internally
   m_fac = io.header.pmass;                                // Msun/h
   fprintf(stderr,"+ conversion factors (AHF internal -> physical):\n");
   fprintf(stderr,"   positions:   %lf\n",x_fac);
   fprintf(stderr,"   velocities:  %lf\n",v_fac);
   fprintf(stderr,"   masses:      %lf\n",m_fac);
   
-  x2tipsy = 1.0;        // Mpc/h  -> TIPSY internal units
-  v2tipsy = 1.0;        // km/sec -> TIPSY internal units
-  m2tipsy = 1.0;        // Msun/h -> TIPSY internal units
+  // values for GASOLINE-CLUES runs
+  x2tipsy  = 1.0/x_fac;                                                 // Mpc/h  -> TIPSY internal units
+  v2tipsy  = 2.894405/(H0*x_fac)   / io.header.a_current;               // km/sec -> TIPSY internal units (TIPSY wants \dot{x})
+  m2tipsy  = 1./(2.77467e11*pow(x_fac,3));                              // Msun/h -> TIPSY internal units
+  m2tipsy  = 1./(2.77467e11*pow(x_fac,3));                              // Msun/h -> TIPSY internal units
+  
   fprintf(stderr,"+ conversion factors (physical -> TIPSY internal):\n");
   fprintf(stderr,"   positions:   %lf\n",x2tipsy);
   fprintf(stderr,"   velocities:  %lf\n",v2tipsy);
@@ -224,17 +227,19 @@ char **argv;
     if (isgreaterequal(cur_part->u, PGAS)){
       
       // position, velocity & mass
-      gp->pos[0] = cur_part->pos[X] * x_fac;
-      gp->pos[1] = cur_part->pos[Y] * x_fac;
-      gp->pos[2] = cur_part->pos[Z] * x_fac;
+      gp->pos[0] = cur_part->pos[X] * x_fac - 0.5;
+      gp->pos[1] = cur_part->pos[Y] * x_fac - 0.5;
+      gp->pos[2] = cur_part->pos[Z] * x_fac - 0.5;
       gp->vel[0] = cur_part->mom[X] * v_fac;
       gp->vel[1] = cur_part->mom[Y] * v_fac;
       gp->vel[2] = cur_part->mom[Z] * v_fac;
       gp->mass   = cur_part->weight * m_fac;
       
+      epstipsy = pow(cur_part->weight*io.header.pmass/(io.header.omega0*rhoc0), (1./3.)) / 40.;
+
       // additional stuff
       gp->phi    = 0.0;
-      gp->hsmooth= 0.0;
+      gp->hsmooth= epstipsy/io.header.boxsize;
       gp->rho    = 0.0;
       gp->temp   = 0.0;
       gp->metals = 0.0;
@@ -247,9 +252,9 @@ char **argv;
     else if (fabs(cur_part->u - PSTAR) < ZERO) {
       
       // position, velocity & mass
-      sp->pos[0] = cur_part->pos[X] * x_fac;
-      sp->pos[1] = cur_part->pos[Y] * x_fac;
-      sp->pos[2] = cur_part->pos[Z] * x_fac;
+      sp->pos[0] = cur_part->pos[X] * x_fac - 0.5;
+      sp->pos[1] = cur_part->pos[Y] * x_fac - 0.5;
+      sp->pos[2] = cur_part->pos[Z] * x_fac - 0.5;
       sp->vel[0] = cur_part->mom[X] * v_fac;
       sp->vel[1] = cur_part->mom[Y] * v_fac;
       sp->vel[2] = cur_part->mom[Z] * v_fac;
@@ -269,17 +274,20 @@ char **argv;
     else {
       
       // position, velocity & mass
-      dp->pos[0] = cur_part->pos[X] * x_fac;
-      dp->pos[1] = cur_part->pos[Y] * x_fac;
-      dp->pos[2] = cur_part->pos[Z] * x_fac;
+      dp->pos[0] = cur_part->pos[X] * x_fac - 0.5;
+      dp->pos[1] = cur_part->pos[Y] * x_fac - 0.5;
+      dp->pos[2] = cur_part->pos[Z] * x_fac - 0.5;
       dp->vel[0] = cur_part->mom[X] * v_fac;
       dp->vel[1] = cur_part->mom[Y] * v_fac;
       dp->vel[2] = cur_part->mom[Z] * v_fac;
       dp->mass   = cur_part->weight * m_fac;
       
+      epstipsy = pow(cur_part->weight*io.header.pmass/(io.header.omega0*rhoc0), (1./3.)) / 40.;
+
       // additional stuff
       dp->phi    = 0.0;
-      dp->eps    = 0.001;
+      dp->eps    = epstipsy/io.header.boxsize;
+
       
       // next dm particle
       dp++;

@@ -1898,3 +1898,6 @@
 
 12/05/2016   - the DARK_ENERGY file with a, H(z)/H0, and OmegaM(z) was supposed to be ordered ascending
 (BUILD 089)    -> AHF now takes care of that itself and hence no need for an ordered table anymore
+
+08/06/2016   - improved simu2tipsy.c (and accompanying changes in libio_serial/input.c)
+(BUILD 090)

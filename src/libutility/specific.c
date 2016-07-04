@@ -2046,20 +2046,12 @@ uint64_t getSussing2013ID(int isnap, int ihalo)
 /*==============================================================================
  * return the version of the GADGET file format
  *==============================================================================*/
-#ifdef LGADGET
-long long    blklen;
-#define GADGET_SKIP  ReadLongLong (fp,&blklen,FALSE);
-#else
 unsigned int blklen;
 #define GADGET_SKIP  ReadUInt     (fp,&blklen,FALSE);
-#endif
 int check_gadgetversion(FILE *fp)
 {
   char string[MAXSTRING];
   int version;
-#ifdef LGADGET
-#else
-#endif
   
   rewind(fp);
   
@@ -2073,6 +2065,36 @@ int check_gadgetversion(FILE *fp)
   rewind(fp);
   
   return version;
+}
+
+/*==============================================================================
+ * return the swap status of the GADGET file
+ *==============================================================================*/
+int check_gadgetswap(FILE *fp)
+{
+  uint32_t bbound1, bbound2, tmp;
+  int      swap;
+  
+  rewind(fp);
+  
+  GADGET_SKIP;
+  bbound1 = blklen;
+  
+  fseek(fp, (long)bbound1, SEEK_CUR);
+  
+  GADGET_SKIP;
+  bbound2 = blklen;
+  
+  if (bbound1 == bbound2) {
+    swap = 0;
+  }
+  else {
+    swap = 1;
+  }
+  rewind(fp);
+  
+  
+  return swap;
 }
 
 /*==============================================================================

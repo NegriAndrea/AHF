@@ -1,4 +1,5 @@
 # compiler options for cosma4
+MPIROOT		=	/Users/aknebe/bin/openmpi/
 
 # --------------------------- cache size
 CACHE      = 
@@ -17,11 +18,6 @@ DP =  -xtypemap=real:64,integer:32
 SP =  -xtypemap=real:32,integer:32
 # --------------------------- fortran compiler
 
-# random number generator
-RANDOMLIB  =
-RANDOM_LIB =
-RANDOM_MOD =
-
 # --------------------------- C compiler
 CC       =  $(MPIROOT)/bin/mpcc
 # debug
@@ -38,30 +34,14 @@ FFTW_INC  =
 
 
 # ... mpi
-MPI_LIB  =  -lmpi
-MPI_INC  = 
-MPI_RLIB = 
+MPI_LIB  =  -L/Users/aknebe/bin/openmpi/lib -lmpi
+MPI_INC  =  -I/Users/aknebe/bin/openmpi/include
 
 # hdf5
-HDF64           = 
-HDF5            = 
-HDF5INC         = 
-HDF5LIB         = -lhdf5
-HDF5RLIB        = 
-HDF5MOD         = -I$(HDF5)        
+HDF5_INC         = -I/Users/aknebe/bin/hdf5/include -Ihdf5_wrapper/lib
+HDF5_LIB         = -L/Users/aknebe/bin/hdf5/lib -Lhdf5_wrapper/lib -lhdf5_fortran -lhdf5hl_fortran -lhdfwrapper
 
-# sprng (random number generator)
-HDF_WRAPPER     = 
-HDF_WRAPPER_MOD = 
-
-# sprng (random number generator)
-SPRNG_HOME       = 
-SPRNG_LIB        = 
-SPRNG_INC        = 
-OPTIONS_SPRNG    = 
 # --------------------------- libraries and includes
 
-LIB  = $(MPI_LIB) $(HDF5LIB) $(HDF_WRAPPER) -lhdf5 -lhdfwrapper
-RLIB = $(MPI_RLIB) $(HDF5RLIB)
-INC  = $(MPI_INC)
-MOD  = $(HDF_WRAPPER_MOD)
+LIB  = $(MPI_LIB) $(HDF5_LIB) 
+INC  = $(MPI_INC) $(HDF5_INC)

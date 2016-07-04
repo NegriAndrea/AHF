@@ -1,0 +1,5 @@
+Calling HDF5 directly from Fortran is a bit complicated so I've written a module which provides a simple interface for reading HDF5 files. The source code for this module is available as a gzipped tar-file from here. 
+
+If you edit the file src/config to specify the location of your HDF5 installation you should be able to compile it by just running make in the top level directory. You can also edit the config file to set any extra compiler flags you want to use. 
+
+There's an example program in the test subdirectory which shows how to use it to open a HDF5 file and read data from it. There's also a README file which explains how to use the module.

@@ -1,0 +1,45 @@
+#
+# Configuration file for HDF5 wrapper library makefile for
+# gcc/gfortran
+#
+
+# -------- HDF5 information --------
+
+# Path to directory with HDF5 lib/ and include/ subdirectories
+HDF5 = /usr/local/hdf5/1.8.1-gfortran/
+
+
+
+# -------- C Compiler information --------
+
+# Name of the C compiler
+CC = gcc
+
+# C compiler flags
+CFLAGS = -O2 -m64 -fPIC
+
+# Compiler flag to add an include file path
+INCFLAG = -I
+
+# -------- Fortran Compiler information --------
+
+# Name of the Fortran compiler
+FC = gfortran
+
+# Fortran compiler flags
+FFLAGS = -O2 -m64 -fPIC
+
+# Compiler flag to add a library path
+LIBFLAG = -L
+
+# Compiler flag to add search path for F90 module (.mod) files
+MODFLAG = -I
+
+# How to run the Fortran preprocessor
+FPP = gfortran -x f77-cpp-input
+
+# Compiler flag to specify path to run-time libraries
+RFLAG = -Wl,-rpath=
+
+# Compiler flag to make a shared library
+SHARED = -shared
