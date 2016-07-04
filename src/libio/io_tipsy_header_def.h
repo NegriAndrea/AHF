@@ -12,6 +12,7 @@
 /**********************************************************************\
  *    Includes                                                        * 
 \**********************************************************************/
+#include <stdint.h>
 #include <inttypes.h>
 
 
@@ -35,12 +36,12 @@
  */
 struct io_tipsy_header_struct {
   double time;
-  int    nbodies;
-  int    ndim;
-  int    nsph;
-  int    ndark;
-  int    nstar;
-  int    pad;  
+  uint32_t    nbodies;
+  uint32_t    ndim;
+  uint32_t    nsph;
+  uint32_t    ndark;
+  uint32_t    nstar;
+  uint32_t    pad;
   
   /* this is the extra information not found in the actual header */
   double  omega0;

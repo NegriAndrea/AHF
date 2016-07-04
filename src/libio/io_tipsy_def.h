@@ -68,7 +68,7 @@ struct io_tipsy_struct {
 	/** Stores the sum over all particle weights in file units */
 	double sumweight;
 	/** Stores the number of weight types */
-	int32_t no_species;
+	uint32_t no_species;
 	/** Stores the minimal position values in file units */
 	double minpos[3];
 	/** Stores the maximal position values in file units */

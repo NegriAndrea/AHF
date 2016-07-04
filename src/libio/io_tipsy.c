@@ -506,7 +506,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // simply skip over gas particles consisting of TIPSY_GASVAR variables
       partsize = TIPSY_GASVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*pskip, SEEK_CUR);
+      fseeko(f->file, partsize*pskip, SEEK_CUR);
 #else
       fseek(f->file, partsize*pskip, SEEK_CUR);
 #endif
@@ -518,7 +518,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // skip over all gas particles consisting of TIPSY_GASVAR variables
       partsize = TIPSY_GASVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*f->header->nsph, SEEK_CUR);
+      fseeko(f->file, partsize*f->header->nsph, SEEK_CUR);
 #else
       fseek(f->file, partsize*f->header->nsph, SEEK_CUR);
 #endif
@@ -526,7 +526,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // skip over remaining dark particles consisting of TIPSY_DARKVAR variables
       partsize = TIPSY_DARKVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*(pskip-f->header->nsph), SEEK_CUR);
+      fseeko(f->file, partsize*(pskip-f->header->nsph), SEEK_CUR);
 #else
       fseek(f->file, partsize*(pskip - f->header->nsph), SEEK_CUR);
 #endif
@@ -543,7 +543,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // skip over all gas particles consisting of TIPSY_GASVAR variables
       partsize = TIPSY_GASVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*f->header->nsph, SEEK_CUR);
+      fseeko(f->file, partsize*f->header->nsph, SEEK_CUR);
 #else
       fseek(f->file, partsize*f->header->nsph, SEEK_CUR);
 #endif
@@ -551,7 +551,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // skip over all dark particles consisting of TIPSY_DARKVAR variables
       partsize = TIPSY_DARKVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*f->header->ndark, SEEK_CUR);
+      fseeko(f->file, partsize*f->header->ndark, SEEK_CUR);
 #else
       fseek(f->file, partsize*f->header->ndark, SEEK_CUR);
 #endif
@@ -559,7 +559,7 @@ io_tipsy_readpart_raw(io_logging_t log,
       // skip over remaining star particles consisting of TIPSY_STARVAR variables
       partsize = TIPSY_STARVAR * bytes_file;
 #ifdef FSEEKO
-      fseeko64(f->file, partsize*(pskip-f->header->nsph+f->header->ndark), SEEK_CUR);
+      fseeko(f->file, partsize*(pskip-f->header->nsph+f->header->ndark), SEEK_CUR);
 #else
       fseek(f->file, partsize*(pskip - (f->header->nsph+f->header->ndark)), SEEK_CUR);
 #endif

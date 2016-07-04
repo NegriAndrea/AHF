@@ -62,19 +62,19 @@ io_tipsy_header_get(io_logging_t log, io_tipsy_t f)
   
   /* Now start reading the header */
   io_util_readdouble(f->file, &(dummy->time), f->swapped);
-  io_util_readint32(f->file, &(dummy->nbodies), f->swapped);
-  io_util_readint32(f->file, &(dummy->ndim), f->swapped);
-  io_util_readint32(f->file, &(dummy->nsph), f->swapped);
-  io_util_readint32(f->file, &(dummy->ndark), f->swapped);
-  io_util_readint32(f->file, &(dummy->nstar), f->swapped);
-  io_util_readint32(f->file, &(dummy->pad), f->swapped);
+  io_util_readuint32(f->file, &(dummy->nbodies), f->swapped);
+  io_util_readuint32(f->file, &(dummy->ndim), f->swapped);
+  io_util_readuint32(f->file, &(dummy->nsph), f->swapped);
+  io_util_readuint32(f->file, &(dummy->ndark), f->swapped);
+  io_util_readuint32(f->file, &(dummy->nstar), f->swapped);
+  io_util_readuint32(f->file, &(dummy->pad), f->swapped);
 
   fprintf(stderr,"time    = %lf\n",dummy->time);
-  fprintf(stderr,"nbodies = %d\n",dummy->nbodies);
-  fprintf(stderr,"ndim    = %d\n",dummy->ndim);
-  fprintf(stderr,"nsph    = %d\n",dummy->nsph);
-  fprintf(stderr,"ndark   = %d\n",dummy->ndark);
-  fprintf(stderr,"nstar   = %d\n",dummy->nstar);
+  fprintf(stderr,"nbodies = %"PRIu32"\n",dummy->nbodies);
+  fprintf(stderr,"ndim    = %"PRIu32"\n",dummy->ndim);
+  fprintf(stderr,"nsph    = %"PRIu32"\n",dummy->nsph);
+  fprintf(stderr,"ndark   = %"PRIu32"\n",dummy->ndark);
+  fprintf(stderr,"nstar   = %"PRIu32"\n",dummy->nstar);
 //  exit(0);
   
   
@@ -162,27 +162,13 @@ io_tipsy_header_write(io_logging_t log,
 extern void
 io_tipsy_header_log(io_logging_t log, io_tipsy_header_t header)
 {
-  io_logging_msg(log, INT32_C(5),
-                 "   time:                         %e",
-                 header->time);
-  io_logging_msg(log, INT32_C(5),
-                 "  nbodies:                       %" PRIi32,
-                 header->nbodies);
-  io_logging_msg(log, INT32_C(5),
-                 "  ndim:                          %" PRIi32,
-                 header->ndim);
-  io_logging_msg(log, INT32_C(5),
-                 "  nsph:                          %" PRIi32,
-                 header->nsph);
-  io_logging_msg(log, INT32_C(5),
-                 "  ndark:                         %" PRIi32,
-                 header->ndark);
-  io_logging_msg(log, INT32_C(5),
-                 "  nstar:                         %" PRIi32,
-                 header->nstar);  
-  io_logging_msg(log, INT32_C(5),
-                 "  pad:                           %" PRIi32,
-                 header->pad);  
+  io_logging_msg(log, INT32_C(5), "   time:                         %e", header->time);
+  io_logging_msg(log, INT32_C(5), "  nbodies:                       %" PRIu32, header->nbodies);
+  io_logging_msg(log, INT32_C(5), "  ndim:                          %" PRIu32, header->ndim);
+  io_logging_msg(log, INT32_C(5), "  nsph:                          %" PRIu32, header->nsph);
+  io_logging_msg(log, INT32_C(5), "  ndark:                         %" PRIu32, header->ndark);
+  io_logging_msg(log, INT32_C(5), "  nstar:                         %" PRIu32, header->nstar);
+  io_logging_msg(log, INT32_C(5), "  pad:                           %" PRIu32, header->pad);
   return;
 }
 
