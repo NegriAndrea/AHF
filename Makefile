@@ -25,7 +25,7 @@ export MAKE
 AHF:	FORCE dirs
 	cd src;\
 	${MAKE} AHF;\
-	mv -f AHF ../bin/AHF-v1.0-091
+	mv -f AHF ../bin/AHF-v1.0-092
 
 AHF2:	FORCE dirs
 	cd src;\

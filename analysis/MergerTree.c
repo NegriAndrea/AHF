@@ -43,8 +43,8 @@
  *-------------------------------------------------------------------------------------*/
 #define MINCOMMON      10             // we only cross-correlate haloes if they at least share MINCOMMON particles
 #define ONLY_USE_PTYPE 1              // restrict analysis to particles of this type (1 = dark matter)
-//#define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant
-//#define SUSSING2013                   // write _mtree in format used for Sussing Merger Trees 2013
+#define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant
+#define SUSSING2013                   // write _mtree in format used for Sussing Merger Trees 2013
 //#define EXCLUSIVE_PARTICLES           // each particle is only allowed to belong to one object (i.e. the lowest mass one)
 //#define WITH_QSORT                    // uses qsort() instead of indexx() when ordering the progenitors according to merit function
 
@@ -191,12 +191,18 @@ int main()
   for(i=0; i<nFiles-1; i++) {
     
     /* be verbose */
-    fprintf(stderr,"Correlating '%s' to '%s'\n           -> writing to '%s'\n",
-            HaloFile[i],HaloFile[i+1],OutFile[i]);
+    fprintf(stderr,"Correlating '%s' to '%s'\n           -> writing to '%s'\n", HaloFile[i], HaloFile[i+1],OutFile[i]);
     
     /* read the next file into memory */
     read_particles(HaloFile[i+1], 1);
     particle_halo_mapping(1);
+    
+#ifdef MTREE_BOTH_WAYS
+    /* capture the case where PidMax[1] > PidMax[0] */
+    if(PidMax[1] > PidMax[0]) {
+      parts[0] = (PARTptr) realloc(parts[0], (PidMax[1]+1)*sizeof(PARTS)); // +1 because we are accessing an array like [PidMax_global] !
+    }
+#endif
     
     /* cross correlate HaloFile[i] to HaloFile[i+1] */
     cross_correlation(OutFile[i]);
@@ -886,8 +892,6 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
   
   for(jpart=0; jpart<halos[isimu0][ihalo].npart; jpart++) {
     ipart = halos[isimu0][ihalo].Pid[jpart];
-    
-    //fprintf(stderr,"jpart=%"PRIu64" ipart=%"PRIu64"\n",jpart,ipart);
     
     /* ipart belongs to nhalos halos in isimu1 */
     for(jhalo=0; jhalo<parts[isimu1][ipart].nhalos; jhalo++) {  // valgrind says "invalid read of size 4" here!?

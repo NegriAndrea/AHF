@@ -516,8 +516,10 @@ io_gadget_readpart_raw(io_logging_t log,
 	}
 
 #	ifdef METALHACK
-	local_get_block_age(log, f, pskip, pread, strg);
-	local_get_block_z(log, f, pskip, pread, strg);
+  local_get_block_z(log, f, pskip, pread, strg);
+  if(f->header->np[4] > 0) {
+    local_get_block_age(log, f, pskip, pread, strg);
+  }
 #	endif
 
 #ifdef FOPENCLOSE
@@ -2022,7 +2024,17 @@ local_get_block_age(io_logging_t log,
 
 	/* Start with the block */
 	SKIP;
-	bytes_file = blocksize / (f->header->np[4]);
+#ifdef IGNORE_BLACKHOLEAGES
+  bytes_file = blocksize / (f->header->np[4]+f->header->np[5]);
+  CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
+  io_logging_msg(log, INT32_C(1),
+                 "A total of %" PRIu64 " star+BH "
+                 "with %" PRIi32 " bytes per float (%f MB total) "
+                 "are stored.",
+                 f->header->np[4]+f->header->np[5], bytes_file,
+                 (float)(blocksize/1024./1024.));
+#else
+  bytes_file = blocksize / (f->header->np[4]);
 	CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
 	io_logging_msg(log, INT32_C(1),
 	               "A total of %" PRIu64 " star "
@@ -2030,6 +2042,7 @@ local_get_block_age(io_logging_t log,
 	               "are stored.",
 	               f->header->np[4], bytes_file,
 	               (float)(blocksize/1024./1024.));
+#endif
 
 	/* Set the particle size */
 	partsize = bytes_file;
@@ -2048,7 +2061,7 @@ local_get_block_age(io_logging_t log,
 
 	fseek(f->file, partsize*(agesskip), SEEK_CUR);
 
-	/* Set ages of particles type 0-3*/
+	/* Set ages of particles type [0]-[3] to '0.0' */
 	for (i=0; i<pread && i+pskip<starsoffset; i++) {
 		fage = 0.0;
 		if (strg.bytes_float == sizeof(float)) {
@@ -2099,6 +2112,11 @@ local_get_block_age(io_logging_t log,
 	      partsize*(f->header->np[4]-agesread-agesskip),
 	      SEEK_CUR);
 
+#ifdef IGNORE_BLACKHOLEAGES
+  /* ignore BH ages */
+  fseek(f->file, partsize*(f->header->np[5]), SEEK_CUR);
+#endif
+  
 	/* Finish the block */
 	SKIP2;
 	CHECK_BLOCK;

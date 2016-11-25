@@ -5,6 +5,9 @@
  *   - code built upon ahfHaloHistory.c
  *   - add-ons to allow for comparison of certain halo properties through time
  *
+ *
+ *                            !!!! WORKS ONLY WITH NEW HALOIDS !!!!
+ *
  *==================================================================================================*/
 
 #include <stddef.h>
@@ -27,6 +30,7 @@
  *                                      DEFINES
  *-------------------------------------------------------------------------------------*/
 #undef VERBOSE
+//#define DEBUG
 
 /*-------------------------------------------------------------------------------------
  *                                  THE STRUCTURES
@@ -132,7 +136,7 @@ char **argv;
       fprintf(stderr,"ihalo %d  haloid %"PRIu64" hostHalo %"PRIu64"\n",ihalo,halos[ihalo].haloid,halos[ihalo].hostHalo);
   }
 #endif
-  
+
   /*==================================================================*
    *                      CHECK numSubStruct                          *
    *==================================================================*/
@@ -168,9 +172,13 @@ char **argv;
         
         // move to beginning of matches (bsearch() is undefined if there is more than one match)
         while(halos[ipos].hostHalo == haloid && ipos>=0) {
+#ifdef DEBUG
+          fprintf(stderr,"halos[%ld].hostHalo=%ld\n",ipos,halos[ipos].hostHalo);
+#endif
           ipos--;
         }
         ipos++;
+        
         
         // move forward counting pointers to hostHalo
         num_sub = 0;

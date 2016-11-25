@@ -111,9 +111,9 @@
      &              rr,gg,bb,
      &              '   ',
      &              Mvir(i),
-     &              idhalo(i)
+     &              idhalo(i),sqrt(dX**2 + dY**2 + dZ**2)
 
- 111           FORMAT(A,4f16.8,3f12.8,A,g16.8,i22)
+ 111           FORMAT(A,4f16.8,3f12.8,A,g16.8,i22,f16.8)
                
                Nsat = Nsat + 1
                Msat = Msat + Mvir(i)

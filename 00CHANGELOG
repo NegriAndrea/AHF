@@ -1904,3 +1904,6 @@
 
 04/07/2016   - imrovement in io_tipsy.c
 (BUILD 091)    -> number of particles are now read as uint32_t allowing for another factor of two more in particles...
+
+05/10/2016   - added -DIGNORE_BLACKHOLEAGES in io_gadget.c: the ages of BH's are not read, but simply skipped
+(BUILD 092)  - capture the case where io_gadget() tries to read the "AGE " block when there are no stars.
