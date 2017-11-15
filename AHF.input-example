@@ -10,7 +10,7 @@ ic_filetype       = 61
 outfile_prefix    = test-v010.snap_C02_400_1023
 
 # number of grid cells for the domain grid (1D)
-LgridDomain       = 128
+LgridDomain       = 64
 
 # number of grid cells for the domain grid (1D) (limits spatial resolution to BoxSize/LgridMax)
 LgridMax          = 16777216 

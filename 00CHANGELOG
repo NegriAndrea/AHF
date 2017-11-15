@@ -1907,3 +1907,8 @@
 
 05/10/2016   - added -DIGNORE_BLACKHOLEAGES in io_gadget.c: the ages of BH's are not read, but simply skipped
 (BUILD 092)  - capture the case where io_gadget() tries to read the "AGE " block when there are no stars.
+
+07/03/2017   - standard version of io_gadget.c now searches for the "U" block instead of assuming to find it right after the "MASS" block
+(BUILD 093)    (-DOLD_READ_U_VERSION falls back to old code; feature only available for a limited time...)
+             - 'Z   ' block in GADGET2 is also allowed to be called 'ZTOT' (cf. io_gadget.c)
+             - ahfHaloHistory now accepts one additional command line argument that will be used as a prefix for the resulting output files

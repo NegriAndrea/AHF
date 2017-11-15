@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   92
+#define BUILD   93
 
 #ifdef AHF2
   #undef  VERSION
@@ -303,12 +303,6 @@
 #	ifndef GAS_PARTICLES
 #		define GAS_PARTICLES;
 #	endif
-#	define METALDIE \
-	fprintf(stderr,\
-	        "There's metal in the air tonight, can you hear it call\n"\
-	        "If you ain't got the balls, to take it you can\n"\
-	        "Leave the hall\n");\
-	exit(-666);
 #endif
 
 /*--------------------------------------------------

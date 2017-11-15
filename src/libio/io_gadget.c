@@ -140,9 +140,13 @@ local_get_block_u(io_logging_t log,
                   uint64_t pread,
                   io_file_strg_struct_t strg);
 
-void local_find_block(io_gadget_t, char *);
+static uint64_t
+local_get_block_u_search(io_logging_t log,
+                  io_gadget_t f,
+                  uint64_t pskip,
+                  uint64_t pread,
+                  io_file_strg_struct_t strg);
 
-#ifdef METALHACK
 static uint64_t
 local_get_block_z(io_logging_t log,
                   io_gadget_t f,
@@ -159,6 +163,9 @@ local_get_block_age(io_logging_t log,
 
 static void
 local_skip_GADGET1_blocks(FILE *, int, int);
+
+#ifdef GADGET_MAGNETICUM
+void local_find_block(io_gadget_t, char *);
 #endif
 
 
@@ -502,23 +509,51 @@ io_gadget_readpart_raw(io_logging_t log,
 		return UINT64_C(0);
 	}
 
+#ifdef OLD_READ_U_VERSION
 	/* Gas energies */
-	if (f->header->np[0] > 0) {
-		VERIFY_BLOCK("U   ");
-	}
-	funcrtn = local_get_block_u(log, f, pskip, pread, strg);
-	if (funcrtn != pread) {
-		io_logging_fatal(log, 
-		                 "Expected to read %"PRIu64
-		                 " particle identities, but only got %"PRIu64
-		                 ".  Aborting.");
-		return UINT64_C(0);
-	}
-
+  if (f->header->np[0] > 0) {
+    VERIFY_BLOCK("U   ");
+    funcrtn = local_get_block_u(log, f, pskip, pread, strg);
+    if (funcrtn != pread) {
+      io_logging_fatal(log,
+                       "Expected to read %"PRIu64
+                       " gas particles, but only got %"PRIu64
+                       ".  Aborting.");
+      return UINT64_C(0);
+    }
+  }
+#else // OLD_READ_U_VERSION
+  if(f->header->np[0] > 0) {
+    funcrtn = local_get_block_u_search(log, f, pskip, pread, strg);
+    if (funcrtn != pread) {
+      io_logging_fatal(log,
+                       "Expected to read %"PRIu64
+                       " gas particles, but only got %"PRIu64
+                       ".  Aborting.");
+      return UINT64_C(0);
+    }
+  }
+#endif // OLD_READ_U_VERSION
+	
 #	ifdef METALHACK
-  local_get_block_z(log, f, pskip, pread, strg);
+  funcrtn = local_get_block_z(log, f, pskip, pread, strg);
+  if (funcrtn != pread) {
+    io_logging_fatal(log,
+                     "Expected to read %"PRIu64
+                     " gas metalicities, but only got %"PRIu64
+                     ".  Aborting.");
+    return UINT64_C(0);
+  }
   if(f->header->np[4] > 0) {
-    local_get_block_age(log, f, pskip, pread, strg);
+    //fprintf(stderr,"trying to read %d (np[4]=%d)stellar ages now...\n",pread,f->header->np[4]);
+    funcrtn = local_get_block_age(log, f, pskip, pread, strg);
+    if (funcrtn != pread) {
+      io_logging_fatal(log,
+                       "Expected to read %"PRIu64
+                       " stellar ages, but only got %"PRIu64
+                       ".  Aborting.");
+      return UINT64_C(0);
+    }
   }
 #	endif
 
@@ -1780,9 +1815,152 @@ local_get_block_u(io_logging_t log,
 	return pread;
 }
 
+#define GET_BLOCK {\
+SKIP;\
+io_util_readstring(f->file, str, (size_t)4);\
+io_util_readuint32(f->file, &nextblocksize, f->swapped);\
+io_logging_msg(log, INT32_C(1),\
+"Arrived at block %s, size of it will be %" \
+PRIi32, str, nextblocksize);\
+SKIP2;\
+CHECK_BLOCK;\
+}
+
+static uint64_t
+local_get_block_u_search(io_logging_t log,
+                  io_gadget_t f,
+                  uint64_t pskip,
+                  uint64_t pread,
+                  io_file_strg_struct_t strg)
+{
+  uint32_t blocksize, blocksize2, nextblocksize;
+	int32_t partsize;
+	uint32_t bytes_file;
+	double fweight, oldfweight;
+	uint32_t curprtt;
+	uint64_t i, psum;
+	float dummy;
+	double fu;
+	int ptype;
+	char str[5];
+	int tries;
+
+	/* if this is not a Gadget 2 file, skip until METAL block */
+  /* (assuming the orderting POS,VEL,ID,MASS,UGAS,RHO,NE,NH,HSML,SFR,AGE,Z) */
+	if (f->ver != 2) {
+    local_skip_GADGET1_blocks(f->file, f->swapped, 4); // we skip the first 4 blocks
+	}
+
+  /* we have a Gadget 2 file and hence use the HEAD to find Z */
+  else {
+    /* Go to the gas block */
+    str[0] = 'A';
+    tries = 0;
+    nextblocksize = 0;
+    while ( (strncmp(str, "U   ", 4) != 0) && (tries < 100)) {
+#ifdef GADGET_MAGNETICUM
+      fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
+      fseek(f->file, nextblocksize, SEEK_CUR);
+      GET_BLOCK;
+      tries++;
+    }
+#ifdef GADGET_MAGNETICUM
+    fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
+#endif
+  }
+
+  
+  
+	/* Start with the block */
+	SKIP;
+	bytes_file = blocksize / (f->header->np[0]);
+	CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
+	io_logging_msg(log, INT32_C(1),
+	               "A total of %" PRIu64 " gas energies "
+	               "with %" PRIi32 " bytes per float (%f MB total) "
+	               "are stored.",
+	               f->header->np[0], bytes_file,
+	               (float)(blocksize/1024./1024.));
+
+	/* Set the particle size */
+	partsize = bytes_file;
+
+	/* Only go to the gas block if required and if it is actually there */
+	if (f->header->np[0] > 0 && pskip <= (uint64_t)(f->header->np[0]) && strg.u.val != NULL) {
+		/* Go to the first particle we want to read */
+		fseek(f->file, partsize*pskip, SEEK_CUR);
+
+		/* Loop over gas particles */
+		for (i=0; i<f->header->np[0]-pskip && i<pread; i++) {
+			/* STEP 1:  Read the energy from the file */
+			if (bytes_file == sizeof(float)) {
+				io_util_readfloat(f->file, &dummy, f->swapped);
+				fu = (double)dummy;
+			} else  {
+				io_util_readdouble(f->file, &fu, f->swapped);
+			}
+			/* STEP 2:  Store the energy in the array */
+			if (strg.bytes_float == sizeof(float)) {
+				*((float *)strg.u.val) = (float)fu;
+			} else {
+				*((double *)strg.u.val) = fu;
+			}
+			/* STEP 3:  Increment the pointers to the next particle */
+			strg.u.val = (void *)(((char *)strg.u.val) + strg.u.stride);
+		}
+
+		/* Skip to the end of the energy block */
+		fseek(f->file, partsize*(f->header->np[0]-pskip-i), SEEK_CUR);
+	} else {
+		/* i carries the information of how many energies got read,
+		 * since we read none, set it to 0 */
+		i = 0;
+		/* Skip to the end of the energy block */
+		fseek(f->file, partsize*(f->header->np[0]), SEEK_CUR);
+	}
+
+	/* If there was an energy block, finish reading it. */
+	if (f->header->np[0] > 0) {
+		SKIP2;
+		CHECK_BLOCK;
+	}
+
+	/* Set the energy to the (negative) particle type for the rest*/
+	/* Set the sum of all particles already looped over (either skipped,
+	 * or actually read) */
+	psum = f->header->np[0];
+	/* The sum incorporates all particles up to and including this type */
+	ptype = 0;
+	/* Now we do something ugly and use the energy to store the type of
+	 * the particles.  However, we will not do that, if there is no
+	 * energy storage provided in the particle structure. */
+	if (strg.u.val != NULL) {
+		for (; i<pread; i++) {
+			/* Figure out if we are still at the right particle type */
+			while (i+pskip>=psum && ptype<5) {
+				ptype++;
+				psum += f->header->np[ptype];
+			}
+			fu = (double)(-ptype);   // check PGAS, PDM, PSTAR
+			/* STEP 1:  Store the energy in the array */
+			if (strg.bytes_float == sizeof(float)) {
+				*((float *)strg.u.val) = (float)fu;
+			} else {
+					*((double *)strg.u.val) = fu;
+			}
+			/* STEP 2:  Increment the pointers to the next particle */
+			strg.u.val = (void *)(((char *)strg.u.val) + strg.u.stride);
+		}
+	}
+
+	/* And return the number of read particles for error checking */
+	return pread;
+}
+
 #ifdef GADGET_MAGNETICUM
 #include "../define.h"
-#define GET_BLOCK {\
+#define GET_BLOCK2 {\
 SKIP;\
 io_util_readstring(f->file, str, (size_t)4);\
 io_util_readuint32(f->file, &nextblocksize, f->swapped);\
@@ -1805,26 +1983,15 @@ void local_find_block(io_gadget_t f, char *blockname)
   while ( (strncmp(str, blockname, 4) != 0) && (tries < 10)) {
     fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
     fseek(f->file, nextblocksize, SEEK_CUR);
-    GET_BLOCK;
+    GET_BLOCK2;
     tries++;
   }
   fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
 }
-#endif
-
+#endif // GADGET_MAGNETICUM
 
 #ifdef METALHACK
 #include "../define.h"
-#define GET_BLOCK {\
-	SKIP;\
-	io_util_readstring(f->file, str, (size_t)4);\
-	io_util_readuint32(f->file, &nextblocksize, f->swapped);\
-	io_logging_msg(log, INT32_C(1),\
-	               "Arrived at block %s, size of it will be %" \
-	               PRIi32, str, nextblocksize);\
-	SKIP2;\
-	CHECK_BLOCK;\
-}
 
 static uint64_t
 local_get_block_z(io_logging_t log,
@@ -1853,7 +2020,7 @@ local_get_block_z(io_logging_t log,
     str[0] = 'A';
     tries = 0;
     nextblocksize = 0;
-    while ( (strncmp(str, "Z   ", 4) != 0) && (tries < 100)) {
+    while ( (strncmp(str, "Z   ", 4) != 0 && strncmp(str, "ZTOT", 4) != 0 ) && (tries < 100)) {
 #ifdef GADGET_MAGNETICUM
       fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
 #endif
@@ -1864,9 +2031,6 @@ local_get_block_z(io_logging_t log,
 #ifdef GADGET_MAGNETICUM
     fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
 #endif
-    if (tries >= 150) {
-      METALDIE;
-    }
   }
 
 	/* Start with the block */
@@ -2002,6 +2166,9 @@ local_get_block_age(io_logging_t log,
 
   /* we have a Gadget 2 file and hence use the HEAD to find AGE */
   else {
+#ifdef GIZMO
+    rewind(f->file);
+#endif
     /* Go to the AGE block */
     str[0] = 'X';
     tries = 0;
@@ -2017,31 +2184,28 @@ local_get_block_age(io_logging_t log,
 #ifdef GADGET_MAGNETICUM
     fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
 #endif
-    if (tries >= 150) {
-      METALDIE;
-    }
   }
 
 	/* Start with the block */
 	SKIP;
 #ifdef IGNORE_BLACKHOLEAGES
   bytes_file = blocksize / (f->header->np[4]+f->header->np[5]);
-  CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
   io_logging_msg(log, INT32_C(1),
-                 "A total of %" PRIu64 " star+BH "
+                 "A total of %" PRIu64 " star+BH ages "
                  "with %" PRIi32 " bytes per float (%f MB total) "
                  "are stored.",
                  f->header->np[4]+f->header->np[5], bytes_file,
                  (float)(blocksize/1024./1024.));
+  CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
 #else
   bytes_file = blocksize / (f->header->np[4]);
+  io_logging_msg(log, INT32_C(1),
+                 "A total of %" PRIu64 " star ages "
+                 "with %" PRIi32 " bytes per float (%f MB total) "
+                 "are stored.",
+                 f->header->np[4], bytes_file,
+                 (float)(blocksize/1024./1024.));
 	CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
-	io_logging_msg(log, INT32_C(1),
-	               "A total of %" PRIu64 " star "
-	               "with %" PRIi32 " bytes per float (%f MB total) "
-	               "are stored.",
-	               f->header->np[4], bytes_file,
-	               (float)(blocksize/1024./1024.));
 #endif
 
 	/* Set the particle size */
@@ -2132,7 +2296,6 @@ local_get_block_age(io_logging_t log,
 #undef SKIP2
 #undef CHECK_BLOCK
 
-#ifdef METALHACK
 void local_skip_GADGET1_blocks(FILE *fpgadget, int swapped, int nblocks)
 {
   double       ddummy;
@@ -2217,4 +2380,3 @@ void local_skip_GADGET1_blocks(FILE *fpgadget, int swapped, int nblocks)
      }
    }
 }
-#endif

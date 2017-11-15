@@ -592,7 +592,7 @@ long read_halos(char *infile, double BoxSize)
   for(ihalo=0; ihalo<nhalos; ihalo++)
    {
     fgets(instream,MAXSTRING,fpin);
-    sscanf(instream,"%ld %ld %ld %lf %ld %lf %lf %lf", &idummy, &idumy, &idummy, &nvpart, &npart, &xpos, &ypos, &zpos);
+    sscanf(instream,"%ld %ld %ld %lf %ld %lf %lf %lf", &idummy, &idummy, &idummy, &nvpart, &npart, &xpos, &ypos, &zpos);
     
     (io.fst_part+ihalo)->pos[X] = xpos/BoxSize;
     (io.fst_part+ihalo)->pos[Y] = ypos/BoxSize;

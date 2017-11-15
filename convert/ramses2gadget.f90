@@ -166,8 +166,8 @@ program ramses2gadget
   ! we need to open the info_...txt file in order to gather some important parameters.
 
   ! construct filename, inquire existence and assign I/O unit number
-  ! dir_number=dir_name( index(dir_name,'output_')+7 : index(dir_name,'output_')+13 ) 
-  dir_number='00036' 
+  dir_number=dir_name( index(dir_name,'output_')+7 : index(dir_name,'output_')+13 )
+  ! dir_number='00036'
   info_filename   = trim(dir_name) // '/info_'   // trim(dir_number) // '.txt'
   call inquire_file (info_filename)
   info_file   = 988

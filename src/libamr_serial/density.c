@@ -382,9 +382,9 @@ boolean assign_npart(gridls *cur_grid)
                             /* calculate correct particle to density conversion factor according to AMIGA setup */
 #if (defined REFINE_BARYONIC_MASS && defined GAS_PARTICLES)
                             if(cur_part->u >= PGAS || cur_part->u == PSTAR)
-                            mass2dens = (double)cur_part->weight * cur_grid->masstodens;
+                              mass2dens = (double)cur_part->weight * cur_grid->masstodens;
                             else
-                            mass2dens = cur_grid->masstopartdens;
+                              mass2dens = cur_grid->masstopartdens;
 #else /* REFINE_BARYONIC_MASS && GAS_PARTICLES */
                             mass2dens = cur_grid->masstopartdens;
 #endif /* REFINE_BARYONIC_MASS && GAS_PARTICLES */
