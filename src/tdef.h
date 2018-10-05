@@ -825,28 +825,20 @@ typedef struct info_timing
   time_t      sfckey;
   time_t      distribution;
   
-  // AHF1 only timings
+  // AHF only timings
   time_t    gendomgrids;
   time_t    ll;
   time_t    genrefgrids;
   time_t    densrecovery;
   time_t    potcentre;
   time_t    ahf_gridinfo;
-  time_t      RefCentre;
-  time_t      analyseRef;
-  time_t      spatialRef2halos;
-
-  // AHF2 only timings
-  time_t      patchtree2halos;
-  
-  // AHF1 and AHF2
-  time_t      ahf_halos;
-  time_t      ahf_halos_sfc_constructHalo;
-  time_t      ahf_io;
-  time_t      generate_tree;
-#ifdef AHF2
-  double     generate_tree_v2;
-#endif
+  time_t    RefCentre;
+  time_t    analyseRef;
+  time_t    spatialRef2halos;
+  time_t    ahf_halos;
+  time_t    ahf_halos_sfc_constructHalo;
+  time_t    ahf_io;
+  time_t    generate_tree;
   
 } info_timing;
 

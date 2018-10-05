@@ -614,6 +614,28 @@ double init_header_masses()
    
    fprintf(stderr,"     init_header_masses():\n");
 
+#ifdef MOST_COMMOM_WEIGHT_MANUAL
+  fprintf(stderr,"               -> your are setting all values by hand!\n");
+  no_species = 6;
+  pmass      = io.fst_part->weight;
+
+  no_vpart = 1.0;
+  C        = 0.0;
+  for(cur_part=io.fst_part; cur_part<io.fst_part+io.no_part; cur_part++) {
+    cur_weight  = cur_part->weight/pmass;
+    K = cur_weight-C;
+    T = no_vpart + K;
+    C = (T-no_vpart) - K;
+    no_vpart = T;
+  }
+  cur_part = io.fst_part;
+  most_common_weight = cur_part->weight;
+  min_weight         = most_common_weight;
+  max_weight         = most_common_weight;
+  med_weight         = most_common_weight;
+
+#else // MOST_COMMOM_WEIGHT_MANUAL
+  
 #ifdef MULTIMASS
    no_species             = 1;
    wspecies               = (double*)calloc(no_species, sizeof(double));
@@ -723,7 +745,8 @@ double init_header_masses()
 #endif /* MULTIMASS */
    
    
-   
+#endif // MOST_COMMOM_WEIGHT_MANUAL
+  
    
    
    /* dump no_vpart, no_species, min_weight, and max_weight */
@@ -1130,8 +1153,6 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   grid_timing.grid      = 0;
   grid_timing.hydro     = 0;
   
-  
-#ifndef AHF2
   /* get number of particles attached to domain grid */
   if(global.fin_l1dim > global.dom_grid->l1dim)
    {
@@ -1208,8 +1229,6 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   for_grid->time.hydro     = 0;  
   fprintf(io.logfile, "                                                                                   %6ld      %6ld    %6ld\n", grid_timing.potential, grid_timing.density, grid_timing.grid);
   
-#endif //#ifndef AHF2
-
   /* write detailed breakdown of timing */
   /*------------------------------------*/
   fprintf(io.logfile,"detailed timing information (in sec.)\n");
@@ -1239,11 +1258,7 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"ahf_halos    = %ld\n",timing.ahf_halos);
   fprintf(io.logfile,"      - RefCentre                   = %ld\n",timing.RefCentre);
   fprintf(io.logfile,"      - analyseRef                  = %ld\n",timing.analyseRef);
-#ifdef AHF2
-  fprintf(io.logfile,"      - generate_tree_v2            = %f\n",timing.generate_tree_v2);
-#else
   fprintf(io.logfile,"      - generate_tree               = %ld\n",timing.generate_tree);
-#endif
   fprintf(io.logfile,"      - spatialRef2halos            = %ld\n",timing.spatialRef2halos);
   fprintf(io.logfile,"      - ahf_halos_sfc_constructHalo = %ld\n",timing.ahf_halos_sfc_constructHalo);
   fprintf(io.logfile,"      - I/O                         = %ld\n",timing.ahf_io);
@@ -1274,9 +1289,6 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"\n");
   fprintf(io.logfile,"summary information\n");
   fprintf(io.logfile,"-------------------\n");
-#ifndef AHF2
-  fprintf(io.logfile, "force resolution    ~ %8.2g kpc/h\n", 3000.*simu.boxsize/(double)for_grid->l1dim);
-#endif
 
   if(ahf.time > 0)
     fprintf(io.logfile, "time for AHF        = %8ld seconds (%8.3g hours)\n",ahf.time,ahf.time/3600.);
@@ -1545,6 +1557,11 @@ void write_parameterfile()
 #else
         fprintf(fpparam,"AHFmaxdenscentre           \t\t0\n");
 #endif
+#ifdef AHFhiresfocus
+         fprintf(fpparam,"AHFhiresfocus=            \t\t1\n");
+#else
+         fprintf(fpparam,"AHFhiresfocus=            \t\t0\n");
+#endif
 #ifdef AHFptfocus
         fprintf(fpparam,"AHFptfocus=                 \t\t%d\n",AHFptfocus);
 #else
@@ -1675,6 +1692,11 @@ void write_parameterfile()
 #else
         fprintf(fpparam,"AHFsubstructure            \t\t0\n");
 #endif
+#ifdef AHFdmonlypeaks
+         fprintf(fpparam,"AHFdmonlypeaks            \t\t1\n");
+#else
+         fprintf(fpparam,"AHFdmonlypeaks            \t\t0\n");
+#endif
 #ifdef AHFdmonly_Rmax_r2
         fprintf(fpparam,"AHFdmonly_Rmax_r2          \t\t1\n");
 #else
@@ -1704,6 +1726,16 @@ void write_parameterfile()
         fprintf(fpparam,"AHFmaxGatherRadTest        \t\t1\n");
 #else
         fprintf(fpparam,"AHFmaxGatherRadTest        \t\t0\n");
+#endif
+#ifdef SUSSING2013
+         fprintf(fpparam,"SUSSING2013               \t\t1\n");
+#else
+         fprintf(fpparam,"SUSSING2013               \t\t0\n");
+#endif
+#ifdef SUSSING2013_particles
+         fprintf(fpparam,"SUSSING2013_particles     \t\t1\n");
+#else
+         fprintf(fpparam,"SUSSING2013_particles     \t\t0\n");
 #endif
 #ifdef AHF_LRSI
         fprintf(fpparam,"AHF_LRSI                   \t\t1\n");

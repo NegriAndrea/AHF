@@ -1970,12 +1970,15 @@ void read_gadget(FILE *icfile)
       
       if(IDmax-IDmin+1 != gadget.header.nall[1])
         {
-         fprintf(stderr,"\nPROBLEM:  halo partice ID's are not consecutive from IDmin (%ld) to IDmax (%ld) [%d]\n\n",IDmin,IDmax,gadget.header.nall[1]);
-         exit(0);
+         fprintf(stderr,"\nPROBLEM:  halo partice ID's are not consecutive from IDmin (%ld) to IDmax (%ld) [%d]\n\nTrying to fix the sitution...\n",IDmin,IDmax,gadget.header.nall[1]);
+          gadget.IDmin = 0;
+          gadget.IDmax = gadget.header.nall[1]-1;
         }
+      else {
+        gadget.IDmin = IDmin;
+        gadget.IDmax = IDmax;
+      }
       
-      gadget.IDmin = IDmin;
-      gadget.IDmax = IDmax;
 
        fprintf(stderr,"\nGADGET file: mmin=%g, IDmin=%ld, IDmax=%ld\n", gadget.mmin, gadget.IDmin, gadget.IDmax);
      }

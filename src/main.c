@@ -15,11 +15,6 @@
 #include "libahf/ahf.h"
 #endif
 
-#ifdef AHF2
-#include "libahf2/ahf.h"
-#include <omp.h>
-#endif
-
 #include "libsfc/sfc.h"
 #include "startrun.h"
 #include "libutility/utility.h"
@@ -30,11 +25,7 @@
 #include <extrae_user_events.h>
 #endif
 
-#ifdef NEWAMR
-#include "libtree/tree.h"
-#else
 #include "libamr_serial/amr_serial.h"
-#endif
 
 
 #ifdef WITH_MPI
@@ -68,12 +59,6 @@ int main(int argc, char **argv)
 #ifdef WITH_MPI
   uint64_t newparts;
 #endif
-
-
-#ifdef NEWAMR
-  ahf2_patches_t *patches=NULL;
-#endif
-  
 
 #ifdef EXTRAE_API_USAGE
   Extrae_user_function(1);
@@ -197,7 +182,7 @@ int main(int argc, char **argv)
    * only use a certain type of particles ("pt") and focus ("focus") the AHF analysis on them
    *
    *==========================================================================================*/
-#if (defined AHFptfocus && defined MULTIMASS && defined GAS_PARTICLES)
+#if ((defined AHFptfocus || defined AHFhiresfocus) && defined MULTIMASS && defined GAS_PARTICLES)
   /* global_info.no_part
    * global_info.fst_part
    *                       => the no. of particles and relevant pointer for this CPU */
@@ -215,13 +200,22 @@ int main(int argc, char **argv)
   fprintf(stderr,"                          AHFptfocus\n");
   fprintf(stderr,"               ? ARE YOU SURE ABOUT THIS FLAG ?\n");
   fprintf(stderr,"==================================================================\n");
+#ifdef AHFhiresfocus
+   fprintf(stderr,"AHF will now remove all particles whose type is not [0], [1], or [4]\n");
+#else
   fprintf(stderr,"AHF will now remove all particles whose type is not %d\n",AHFptfocus);
+#endif
   fprintf(stderr,"starting with %ld particles -> ",global_info.no_part);
   
   /* 1. count number of particles to keep */
   no_part  = 0;
   for(cur_part=global_info.fst_part; cur_part<(global_info.fst_part+global_info.no_part); cur_part++)
    {
+#ifdef AHFhiresfocus
+     if(cur_part->u>=0.0 || fabs(cur_part->u-PDM) < ZERO || fabs(cur_part->u-PSTAR) < ZERO) {
+       no_part++;
+     }
+#else
     /* we only want ot keep those particles with type AHFptfocus */
     if(AHFptfocus == 0)
      {
@@ -233,11 +227,7 @@ int main(int argc, char **argv)
       if(fabs(cur_part->u+AHFptfocus) < ZERO)
         no_part++;
      }
-    
-    /* only keep the high-resolution particles */
-    // if(cur_part->u >= 0 || cur_part->u == PDM || cur_part->u == PSTAR)
-    //   no_part++;
-    
+#endif    
    }
   
   /* allocate memory for new particles */
@@ -248,7 +238,11 @@ int main(int argc, char **argv)
   for(cur_part=global_info.fst_part; cur_part<(global_info.fst_part+global_info.no_part); cur_part++)
    {
     ikeep = 0;
-    
+#ifdef AHFhiresfocus
+     if(cur_part->u>=0.0 || fabs(cur_part->u-PDM) < ZERO || fabs(cur_part->u-PSTAR) < ZERO) {
+       ikeep = 1;
+     }
+#else
     /* we only want ot keep those particles with type AHFptfocus */
     if(AHFptfocus == 0)
      {
@@ -260,10 +254,7 @@ int main(int argc, char **argv)
       if(fabs(cur_part->u+AHFptfocus) < ZERO)
         ikeep = 1;
      }
-    
-    /* only keep the high-resolution particles */
-    // if(cur_part->u >= 0 || cur_part->u == PDM || cur_part->u == PSTAR)
-    //   ikeep = 1;
+#endif
     
     if(ikeep)
      {
@@ -603,47 +594,7 @@ int main(int argc, char **argv)
    *  GENERATE THE FULL BLOWN AMR HIERARCHY AND ORGANIZE IT INTO A TREE
    *====================================================================*/
   
-#ifdef NEWAMR
-{
-  io_logging_msg(global_io.log, INT32_C(0), "### Executing with NEWAMR ###\n");
-  
-  /* 1. organize the particles into a tree */
-  fprintf(stderr,"[main] Calling generate_tree...\n");
-#ifndef AHF2_read_gridtree
-  timing.generate_tree_v2 = omp_get_wtime();
-  patches=generate_tree(global_info.no_part, global_info.fst_part, simu.Nth_dom, simu.AHF_MINPART);
-  timing.generate_tree_v2 = omp_get_wtime() - timing.generate_tree_v2;
-#else
-  patches = (ahf2_patches_t *) calloc(1, sizeof(ahf2_patches_t));
-#endif
-  fprintf(stderr,"[main] Exit from generate_tree\n");
-
-  //Generate patchtree.out
-  //patch_connection_review(patches);
-  
-  /* 2. moving things around */
-	global.fst_part     = global_info.fst_part;
-  global.no_part      = global_info.no_part;
-  global.total_time   = 0.;
-  global.output_count = 0;
-  global.no_timestep  = no_first_timestep;
-
-  /* 3. perform halo analysis */
-  fprintf(stderr,"\n[main]: calling ahf_halos():\n");
-  ahf.time -= time(NULL);
-  timing.ahf_halos -= time(NULL);
-  ahf_halos(patches);
-  timing.ahf_halos += time(NULL);
-  ahf.time += time(NULL);
-
-  /*=========================================================================================
-   * update logfile and say bye-bye
-   *=========================================================================================*/
-  write_logfile(timecounter, timestep, no_timestep);
-}
-#else /* NEWAMR */
-  
-  /*===================================================================== 
+  /*=====================================================================
    * generate the domain grids: simu.NGRID_MIN^3, ...., simu.NGRID_DOM^3 
    *=====================================================================*/
   timing.generate_tree -= time(NULL);
@@ -707,7 +658,6 @@ int main(int argc, char **argv)
   
   /* free all allocated memory... */
   free(grid_list);
-#endif /* NEWAMR */  
   
   
   /*============================================================================
@@ -862,6 +812,22 @@ local_focusSphere(void)
 	global_info.fst_part = newParts;
 	global_info.no_part  = newNumPart;
 	fprintf(stderr,"ended with %ld particles\n\n",global_info.no_part);
+  
+  
+  {
+    FILE *fp;
+    
+    fp = fopen("AHFrsphere.txt","w");
+    for(i=0; i<global_info.no_part; i++) {
+      fprintf(fp,"%g %g %g %g\n",
+              global_info.fst_part[i].pos[X]*simu.boxsize,
+              global_info.fst_part[i].pos[Y]*simu.boxsize,
+              global_info.fst_part[i].pos[Z]*simu.boxsize,
+              global_info.fst_part[i].u);
+    }
+    fclose(fp);
+    exit(0);
+  }
 }
 #endif
 

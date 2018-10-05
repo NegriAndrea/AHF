@@ -536,21 +536,21 @@ io_gadget_readpart_raw(io_logging_t log,
 #endif // OLD_READ_U_VERSION
 	
 #	ifdef METALHACK
-  funcrtn = local_get_block_z(log, f, pskip, pread, strg);
-  if (funcrtn != pread) {
-    io_logging_fatal(log,
-                     "Expected to read %"PRIu64
-                     " gas metalicities, but only got %"PRIu64
-                     ".  Aborting.");
-    return UINT64_C(0);
-  }
-  if(f->header->np[4] > 0) {
+  if(f->header->np[4] > 0) {  // only makes sense to read stellar ages and metalicities, if there are actually any stars
     //fprintf(stderr,"trying to read %d (np[4]=%d)stellar ages now...\n",pread,f->header->np[4]);
     funcrtn = local_get_block_age(log, f, pskip, pread, strg);
     if (funcrtn != pread) {
       io_logging_fatal(log,
                        "Expected to read %"PRIu64
                        " stellar ages, but only got %"PRIu64
+                       ".  Aborting.");
+      return UINT64_C(0);
+    }
+    funcrtn = local_get_block_z(log, f, pskip, pread, strg);
+    if (funcrtn != pread) {
+      io_logging_fatal(log,
+                       "Expected to read %"PRIu64
+                       " gas metalicities, but only got %"PRIu64
                        ".  Aborting.");
       return UINT64_C(0);
     }
@@ -1356,18 +1356,13 @@ local_get_block_pos(io_logging_t log,
 			io_util_readdouble(f->file, &fposz, f->swapped);
 		}
 		/* STEP 2:  Detect extreme positions */
-		if (isless(fposx, f->minpos[0]))
-			f->minpos[0] = fposx;
-		if (isless(fposy, f->minpos[1]))
-			f->minpos[1] = fposy;
-		if (isless(fposz, f->minpos[2]))
-			f->minpos[2] = fposz;
-		if (isgreater(fposx, f->maxpos[0]))
-			f->maxpos[0] = fposx;
-		if (isgreater(fposy, f->maxpos[1]))
-			f->maxpos[1] = fposy;
-		if (isgreater(fposz, f->maxpos[2]))
-			f->maxpos[2] = fposz;
+		if (isless(fposx, f->minpos[0]))			f->minpos[0] = fposx;
+		if (isless(fposy, f->minpos[1]))			f->minpos[1] = fposy;
+		if (isless(fposz, f->minpos[2]))			f->minpos[2] = fposz;
+		if (isgreater(fposx, f->maxpos[0]))		f->maxpos[0] = fposx;
+		if (isgreater(fposy, f->maxpos[1]))		f->maxpos[1] = fposy;
+		if (isgreater(fposz, f->maxpos[2]))		f->maxpos[2] = fposz;
+    
 		/* STEP 3:  Store the particle in the array */
 		if (strg.bytes_float == sizeof(float)) {
 			*((float *)strg.posx.val) = (float)fposx;
@@ -1379,14 +1374,19 @@ local_get_block_pos(io_logging_t log,
 			*((double *)strg.posz.val) = fposz;
 		}
 		/* STEP 4:  Increment the pointers to the next particle */
-		strg.posx.val = (void *)(((char *)strg.posx.val)
-		                          + strg.posx.stride);
-		strg.posy.val = (void *)(((char *)strg.posy.val)
-		                          + strg.posy.stride);
-		strg.posz.val = (void *)(((char *)strg.posz.val)
-		                          + strg.posz.stride);
+		strg.posx.val = (void *)(((char *)strg.posx.val) + strg.posx.stride);
+		strg.posy.val = (void *)(((char *)strg.posy.val) + strg.posy.stride);
+		strg.posz.val = (void *)(((char *)strg.posz.val) + strg.posz.stride);
+    
+//    if(i<10)
+//      fprintf(stderr,"%lf %lf %lf\n",fposx*1e-3,fposy*1e-3,fposz*1e-3);
+//    if(i>*pread-11)
+//      fprintf(stderr,"%lf %lf %lf\n",fposx*1e-3,fposy*1e-3,fposz*1e-3);
+    
 	} /* End of particle position loop */
 
+  
+  
 	/* Go to the end of the particle position block */
 	fseek(f->file, partsize*(f->no_part - (*pread + *pskip)), SEEK_CUR);
 	SKIP2;
@@ -1853,6 +1853,10 @@ local_get_block_u_search(io_logging_t log,
 
   /* we have a Gadget 2 file and hence use the HEAD to find Z */
   else {
+#ifdef REWIND_FILE
+    rewind(f->file);
+#endif
+
     /* Go to the gas block */
     str[0] = 'A';
     tries = 0;
@@ -2016,6 +2020,10 @@ local_get_block_z(io_logging_t log,
 
   /* we have a Gadget 2 file and hence use the HEAD to find Z */
   else {
+#ifdef REWIND_FILE
+    rewind(f->file);
+#endif
+
     /* Go to the metal block */
     str[0] = 'A';
     tries = 0;
@@ -2166,7 +2174,7 @@ local_get_block_age(io_logging_t log,
 
   /* we have a Gadget 2 file and hence use the HEAD to find AGE */
   else {
-#ifdef GIZMO
+#ifdef REWIND_FILE
     rewind(f->file);
 #endif
     /* Go to the AGE block */

@@ -5,14 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   93
-
-#ifdef AHF2
-  #undef  VERSION
-  #define VERSION 2.0
-  #undef  BUILD
-  #define BUILD   0
-#endif
+#define BUILD   94
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)
@@ -45,53 +38,6 @@
 
 //#define EXTRAE_API_USAGE              // activate the Extrae API calls to trace user functions with Extrae_user_function()
 
-/*--------------------------------------------------
- *                     AHF2
- *--------------------------------------------------*/
-#ifdef AHF2
-
-#undef AHF
-#define NEWAMR
-
-#define AHF2_MERGER_NPART_FRAC    0.75   // overlap in number of particles for patches to be considered a merger
-#define AHF2_MERGER_VOL_FRAC      0.75   // overlap in volume for patches to be considered a merger
-#define AHF2_MIN_NCUBES_PER_PATCH 125
-
-//#define AHF2_overwrite_logfiles  // define.h is *not* included in io_logging.c and hence this define has to happen in there!
-
-#define CUBEKEY_128              // Use 128bits per cubekey allowing up to 42 refinement levels. Only supported for GCC right now
-
-// how to obtain the prospective halo centre (only one is allowed to be defined)
-#define AHF2_centre_part_com
-//#define AHF2_centre_part_Nmax
-//#define AHF2_centre_cube_wgeom
-//#define AHF2_centre_cube_geom
-
-// mimic AHF1 behaviour
-//#define AHF2_set_gatherRad_like_AHF1
-//#define AHF2_read_gridtree
-//#define AHF2_read_preliminary_halos
-
-// highly technical parameters
-//#define AHF2_libtree_18neighbours
-#define AHF2_libtree_26neighbours    // ONLY one of 18 or 26 neighbours is allowed to be defined
-//#define AHF2_hostradius_is_patchdiagonal
-
-// write debug data
-//#define AHF2_write_preliminary_halos
-//#define AHF2_write_patchtreefile
-//#define AHF2_write_patches_geom
-//#define AHF2_write_particles_geom
-//#define GENERATE_TREE_LOG        // dump generate_tree log messages to file generate_tree.log
-//#define PATCH_THREADS_LOG        // accounting to patch_threads.log for threading in patch.c
-#endif
-
-//PATCH_THREADS_LOG without WITH_OPENMP makes no sense
-//#ifdef PATCH_THREADS_LOG
-//  #ifndef WITH_OPENMP
-//    #error "No sense to ask for patch_threads.log with -DPATCH_THREADS_LOG without -DWITH_OPENMP. Review Makefile, Makefile.config and define.h files"
-//  #endif
-//#endif
 
 /*--------------------------------------------------
  *                     AHF
@@ -112,6 +58,9 @@
 /* write catalogues in binary format (AHF_substructure and AHF_particlesSTARDUST not implemented yet)  */
 /* (use AHFbinary2ascii.c to convert and merge MPI files!)                                             */
 //#define AHFbinary
+
+// only use DM particles to define density peaks
+//#define AHFdmonlypeaks
 
 /* miscellaneous flags */
 #define AHFdmonly_Rmax_r2          /* base determination of Rmax and r2 upon DM only                 */
@@ -134,6 +83,7 @@
 //#define AHFnewHaloIDs             /* assigns a unique ID to each halo even across MPI tasks         */
 
 /* restrict analysis to certain particles only */
+//#define AHFhiresfocus             /* only keep particles of type [0], [1], and [4]                  */
 //#define AHFptfocus  1             /* only keep particles of type 1                                  */
 //#define AHFrfocus                 /* restrict analysis to a spherical region (specified in param.h) */
 
@@ -211,6 +161,12 @@
 #ifdef AHFbinary
 #undef AHFsubstructure // no binary format supported yet
 #undef AHFdisks        // no binary format supported yet
+#endif
+
+#ifdef SUSSING2013_particles
+#ifndef SUSSING2013
+#define SUSSING2013
+#endif
 #endif
 
 /*--------------------------------------------------

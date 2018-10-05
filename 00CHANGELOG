@@ -1912,3 +1912,12 @@
 (BUILD 093)    (-DOLD_READ_U_VERSION falls back to old code; feature only available for a limited time...)
              - 'Z   ' block in GADGET2 is also allowed to be called 'ZTOT' (cf. io_gadget.c)
              - ahfHaloHistory now accepts one additional command line argument that will be used as a prefix for the resulting output files
+
+22/11/2017   - some fixes in libio_serial/
+(BUILD 094)  - some fixes in tools/simuExtractHalos.c
+             - fixed the issue that for AHFexciseSubhaloStars the last 3 columns in _halos had no header information
+             - added -DAHFhiresfocus -> only particles of type [0], [1], and [4] are kept for the analysis
+             - some fine-tuning in io_gadget.c related to reading AGE and Z (introduced -DREWIND_FILE now as a safety option)
+             - removed AHF2: it was never finished and likely never will... :-(
+             - changed one of the -DSUSSING2013 instances to -DSUSSING2013_particles to avoid file format conflicts,
+               i.e. SUSSING2013 now generates the usual haloids ('snapid00000000haloid'), but write the standard _particles file

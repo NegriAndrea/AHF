@@ -29,10 +29,10 @@
 #define PDMbndry           -5.0   /* identifier for bndry particles; whatever negative value                                     */
 
 /* spherical region used with -DAHFrfocus (cf. define.h), units in Mpc/h */
-#define AHFrfocusX 57.06044914
-#define AHFrfocusY 52.61864923
-#define AHFrfocusZ 48.70489744
-#define AHFrfocusR 0.5
+#define AHFrfocusX 22.90611457825
+#define AHFrfocusY 32.81218401591
+#define AHFrfocusZ 26.63557698992
+#define AHFrfocusR 0.73e-3
 
 
 /*=============================================================================

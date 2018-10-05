@@ -1,3 +1,6 @@
+# Last Changelog
+# AKh 18.04.18 all units are converted to kpc/h
+# read data, x1000,convert to float, this works only for Hestia-Hydro-double snapshots
 import h5py
 import numpy as np
 import sys
@@ -19,7 +22,7 @@ def write_header(fl, attr):
     fl.write(np.array([1, 1], dtype=np.int32))
     fl.write(np.array(attr['NumPart_Total'][:6], dtype=np.int32))
     fl.write(np.array([1, attr['NumFilesPerSnapshot']], dtype=np.int32))
-    fl.write(np.asarray([attr['BoxSize'], attr['Omega0'], attr['OmegaLambda'], attr['HubbleParam']], dtype=np.float64))
+    fl.write(np.asarray([attr['BoxSize']*1000.0, attr['Omega0'], attr['OmegaLambda'], attr['HubbleParam']], dtype=np.float64))
     fl.write(np.zeros(np.int32(256/4)-6-12-4-2-6-2-8, dtype=np.int32))
     fl.write(np.int32(256))
 
@@ -50,14 +53,14 @@ for i in h5files:
         # POS
         write_head(of, "POS ", np.uint32(TNs*4*3))
         of.write(np.uint32(TNs*4*3))
-        of.write(np.float32(f['/PartType0/Coordinates'].value))
-        of.write(np.float32(f['/PartType1/Coordinates'].value))
-        of.write(np.float32(f['/PartType2/Coordinates'].value))
-        of.write(np.float32(f['/PartType3/Coordinates'].value))
+        of.write(np.float32(f['/PartType0/Coordinates'].value*1000.0))
+        of.write(np.float32(f['/PartType1/Coordinates'].value*1000.0))
+        of.write(np.float32(f['/PartType2/Coordinates'].value*1000.0))
+        of.write(np.float32(f['/PartType3/Coordinates'].value*1000.0))
         if 'PartType4' in f.keys():
-            of.write(np.float32(f['/PartType4/Coordinates'].value))
+            of.write(np.float32(f['/PartType4/Coordinates'].value*1000.0))
         if 'PartType5' in f.keys():
-            of.write(np.float32(f['/PartType5/Coordinates'].value))
+            of.write(np.float32(f['/PartType5/Coordinates'].value*1000.0))
         of.write(np.uint32(TNs*4*3))
 
         # VEL
@@ -157,7 +160,7 @@ for i in h5files:
         write_head(of, "HSML", np.uint32(TNp[0]*4))
         of.write(np.uint32(TNp[0]*4))
         #of.write(np.float32(f['/PartType0/AllowRefinement'].value))
-        of.write(hsml)
+        of.write(hsml*1000.0)
         of.write(np.uint32(TNp[0]*4))
 
         # SFR <only gas>

@@ -606,7 +606,7 @@ void free_grid(gridls *cur_grid, int *no_grids)
 
 
 
-#if (defined AHF || defined AHF2)
+#if (defined AHF)
 /*----------------------------------------------------------------------------
 * c_profile:
 * allocate memory for halo profile

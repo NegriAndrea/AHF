@@ -52,6 +52,10 @@ int main()
   printf(" extract halo particles from simulation binary using AHF_particles\n");
   printf("====================================================================\n");
   
+  fprintf(stderr,"       IT IS NOT RECOMENDED TO USE THIS CODE ANYMORE\n");
+  fprintf(stderr," please use extract_particles/ found in ahf.tools/ instead!\n");
+  exit(0);
+  
   printf("Please give name of input file:                ");
   scanf("%s",infile);
   printf("%s\n",infile);
@@ -65,10 +69,10 @@ int main()
   /* a negative nhalo means that we want to extract all consecutive halos from halo #i -> halo #j */
   if(nhalo < 0)
     {
-      printf("Please give id of first halo to extract:       ", j);
+      printf("Please give number ([0,nhalos-1]) of first halo to extract:       ", j);
       scanf("%ld",&ifirst);
       printf("%ld\n",ifirst);
-      printf("Please give id of last  halo to extract:       ", j);
+      printf("Please give number ([0,nhalos-1]) of last  halo to extract:       ", j);
       scanf("%ld",&ilast);
       printf("%ld\n",ilast);
       nhalo = ilast-ifirst+1;

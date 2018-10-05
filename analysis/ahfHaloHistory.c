@@ -216,6 +216,7 @@ char **argv;
 #ifdef PROVIDE_LINENUMBER_AS_HALOID
         if(ihalo >= Nhalos) {
           fprintf(stderr,"hmmmm: ihalo=%"PRIu64" vs Nhalos=%"PRIu64"\n",ihalo,Nhalos);
+          exit(0);
         }
         strcpy(haloline,(halobuffer+ihalo)->line);
 #else

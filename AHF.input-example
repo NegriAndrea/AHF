@@ -16,10 +16,10 @@ LgridDomain       = 64
 LgridMax          = 16777216 
 
 # refinement criterion on domain grid (#particles/cell)
-NperDomCell       = 5.0
+NperDomCell       = 2.0
 
 # refinement criterion on all higher resolution grids (#particles/cells)
-NperRefCell       = 5.0
+NperRefCell       = 2.5
 
 # particles with velocity v > VescTune x Vesc are considered unbound 
 VescTune          = 1.5 

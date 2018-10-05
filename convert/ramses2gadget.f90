@@ -309,7 +309,8 @@ program ramses2gadget
      info_filename =   trim(dir_name) // '/info_'  // trim(dir_number) // '.txt'
      amr_filename =    trim(dir_name) // '/amr_'   // trim(dir_number) // '.out' // trim(suffix)
      hydro_filename =  trim(dir_name) // '/hydro_' // trim(dir_number) // '.out' // trim(suffix)
-     output_filename = trim(dir_name) // '/ramses2gadget_' // dir_number(3:5) // &
+     !output_filename = trim(dir_name) // '/ramses2gadget_' // dir_number(3:5) // &
+     output_filename = 'ramses2gadget_' // dir_number(3:5) // &
           & '.' // trim(adjustl(output_file_suffix))
 
      ! check if all the input files are there
@@ -930,7 +931,8 @@ program ramses2gadget
 
         ! open the written files again, but this time in direct access mode
         write(output_file_suffix,'(i5.1)') ifile - 1
-        output_filename = trim(dir_name) // '/ramses2gadget_' // dir_number(3:5) // &
+        ! output_filename = trim(dir_name) // '/ramses2gadget_' // dir_number(3:5) // &
+        output_filename = '/ramses2gadget_' // dir_number(3:5) // &
              & '.' // trim(adjustl(output_file_suffix))
         output_file  = 10*ifile + 7 ! again a unique I/O unit id
         open(unit=output_file,file=output_filename,status='old',form='unformatted', &
@@ -1000,7 +1002,7 @@ subroutine read_args(icpu, dir_name, gas, interpolate)
         gas = .false.
         interpolate = .false.
      else
-        call wrongcall
+        call wrongcall(icpu)
      end if
 
      ! second argument tells us the input directory path

@@ -535,11 +535,6 @@ io_tipsy_readpart_raw(io_logging_t log,
   //===================================
   else if(pskip > f->header->nsph+f->header->ndark && pskip <= f->header->nsph+f->header->ndark+f->header->nstar)
     {
-#ifdef DEBUG_TIPSY
-     io_logging_msg(log, INT32_C(3),
-                    "First particle lies in STAR block");
-#endif
-     
       // skip over all gas particles consisting of TIPSY_GASVAR variables
       partsize = TIPSY_GASVAR * bytes_file;
 #ifdef FSEEKO
@@ -576,6 +571,11 @@ io_tipsy_readpart_raw(io_logging_t log,
   
   for (i=pskip; i<pskip+pread; i++)
     {
+#ifdef DEBUG_TIPSY
+      fprintf(stderr,"reading particle no. %"PRIu64" of %"PRIu64"\n",i,pskip+pread);
+#endif
+      
+      
       /* Read mass */
       io_util_readfloat(f->file, &dummy, f->swapped);
       fweight = (double)dummy;

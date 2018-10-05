@@ -64,11 +64,11 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
 
   nptr   		tsc_nodes[3][3][3]; /* nodes to assign to */
 
-  int              firstCOLOUR;
+  int       firstCOLOUR;
 
-  SPATIALREF      *spatialRefHead;
-  SPATIALREF		*tmpSpatialRef;
-  SPATIALREF 		*current;
+  SPATIALREF  *spatialRefHead;
+  SPATIALREF  *tmpSpatialRef;
+  SPATIALREF 	*current;
 
 #ifdef AHFgridinfofile
   FILE          *gridinfofile;
@@ -192,439 +192,396 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
 
 #ifdef WITH_OPENMP
   //
+  // TODO:
   // this loop over all grids and all refinements generates a linked-list starting
   // with spatialRefHead that contains the spatially connected refinements independent
   // of the actual grid (that information is contained in spatialRefHead->refLevel)
   //
   // to parallelize one could do this generation independently on each grid,
   // but would need to merge all linked-lists afterwards
-  // 
+  //
+  // IDEA:
+  // a) create array of shared(!) level_spatialRefHead[], level_spatialRefTail[], and level_spatialRef[] to be used on each thread:
+  //     -> level_spatialRefHead[refinecounter],
+  //        level_spatialRefTail[refinecounter],
+  //        level_spatialRef[refinecounter]
+  //
+  // b) copy level_spatialRef*[] over to spatialRef:
+  //
+  //  spatialRef = (SPATIALREF *) realloc(spatialRef, sizeof(SPATIALREF));
+  //  spatialRef = level_spatialRef[0];
+  //  for( refinecounter=0; refinecounter<ahf.no_grids; refinecounter++ ) {
+  //        current_spatialRef = level_spatialRef[refinecounter];
+  //        while(current_spatialRef->next != NULL) {
+  //            current_spatialRef = current_spatialRef->next;
+  //            spatialRef->next   = (SPATIALREF *) realloc(spatialRef, sizeof(SPATIALREF));
+  //            spatialRef->next   = current_spatialRef;
+  //        }
+  //        spatialRef->next = NULL;
+  //   } // for(refinecounter)
+  //
+  //
   //#pragma omp parallel private(cur_grid, ipquad, cur_pquad, cur_cquad, icur_cquad, cur_nquad, icur_nquad, firstCOLOUR, spatialRefHead, spatialRefTail, cur_node) shared(refinecounter)
   //#pragma omp for schedule(static)
 #endif
-  for( refinecounter=0; refinecounter<ahf.no_grids; refinecounter++ ) 
-    {
-      cur_grid = global.dom_grid+ahf.min_ref+refinecounter;
-      
+  for( refinecounter=0; refinecounter<ahf.no_grids; refinecounter++ ) {
+    cur_grid = global.dom_grid+ahf.min_ref+refinecounter;
+    
 #ifdef VERBOSE
-     /* fprintf() to double-check that we set min_ref and ahf.no_grids correctly! */
-     fprintf(stderr,"%12d || l1dim = %12ld\n", refinecounter, cur_grid->l1dim);
+    /* fprintf() to double-check that we set min_ref and ahf.no_grids correctly! */
+    fprintf(stderr,"%12d || l1dim = %12ld\n", refinecounter, cur_grid->l1dim);
 #endif
-					
-     /************************************************************
-     * Initialising all the colour tages in preperation for the 
+    
+    /************************************************************
+     * Initialising all the colour tages in preperation for the
      * Spatial refinement identification.
      * Therefore, we are zeroing all the colour tags on the current refinement
      ************************************************************/
-     for(cur_pquad=cur_grid->pquad; cur_pquad != NULL; cur_pquad=cur_pquad->next)
-      {
-        for(cur_cquad = cur_pquad->loc;
-            cur_cquad < cur_pquad->loc + cur_pquad->length; 
-            cur_cquad++)  
-          {  
-           for(icur_cquad  = cur_cquad; 
-               icur_cquad != NULL; 
-               icur_cquad  = icur_cquad->next)
-             {
-              for(cur_nquad = icur_cquad->loc;  
-                  cur_nquad < icur_cquad->loc + icur_cquad->length; 
-                  cur_nquad++) 
-                { 
-                 for(icur_nquad  = cur_nquad; 
-                     icur_nquad != NULL; 
-                     icur_nquad  = icur_nquad->next)
-                   {
-                    for(cur_node = icur_nquad->loc; 
-                        cur_node < icur_nquad->loc + icur_nquad->length; 
-                        cur_node++)
-                      {
-                       /* zeroing the colour */
-                       cur_node->force.colour = 0;
-                      }
-                   }
-                }
-             }
+    for(cur_pquad=cur_grid->pquad; cur_pquad != NULL; cur_pquad=cur_pquad->next) {
+      for(cur_cquad = cur_pquad->loc; cur_cquad < cur_pquad->loc + cur_pquad->length; cur_cquad++) {
+        for(icur_cquad  = cur_cquad; icur_cquad != NULL; icur_cquad  = icur_cquad->next) {
+          for(cur_nquad = icur_cquad->loc; cur_nquad < icur_cquad->loc + icur_cquad->length; cur_nquad++) {
+            for(icur_nquad  = cur_nquad; icur_nquad != NULL; icur_nquad  = icur_nquad->next) {
+              for(cur_node = icur_nquad->loc; cur_node < icur_nquad->loc + icur_nquad->length; cur_node++) {
+                /* zeroing the colour */
+                cur_node->force.colour = 0;
+              }
+            }
           }
-       } 
-     
-     /************************************************************
+        }
+      }
+    }
+    
+    /************************************************************
      * Start looping through the refinement identifying the spatial refinements
      ************************************************************/
-     for(cur_pquad=cur_grid->pquad; cur_pquad != NULL; cur_pquad=cur_pquad->next)
-       {
-        z = cur_pquad->z;
-        for(cur_cquad = cur_pquad->loc;
-            cur_cquad < cur_pquad->loc + cur_pquad->length; 
-            cur_cquad++, z++)  
-          {  
-           for(icur_cquad  = cur_cquad; 
-               icur_cquad != NULL; 
-               icur_cquad  = icur_cquad->next)
-             {
-              y = icur_cquad->y;
-              for(cur_nquad = icur_cquad->loc;  
-                  cur_nquad < icur_cquad->loc + icur_cquad->length; 
-                  cur_nquad++, y++) 
-                { 
-                 for(icur_nquad  = cur_nquad; 
-                     icur_nquad != NULL; 
-                     icur_nquad  = icur_nquad->next)
-                   {
-                    x = icur_nquad->x;
-                    for(cur_node = icur_nquad->loc; 
-                        cur_node < icur_nquad->loc + icur_nquad->length; 
-                        cur_node++, x++)
-                      {
-                       
-                       
-                       /* The current colour of the node */
-                       currentCol = cur_node->force.colour;
-                       
-                       /* We have finished updating the colours */
-                       if ( (colREPLACE==TRUE) && (currentCol==0) )
-                          colREPLACE=FALSE;
-                       
-                       /* Replacing the colours */
-                       if ( colREPLACE ) 
-                         { 		
-                          
-                          if ( col.numReplace == 2 ) 
-                            {
-                             
-                             if (currentCol==col.holder[2])
-                                cur_node->force.colour=col.holder[1];
-                             
-                            } 
-                          else if ( col.numReplace == 3 ) 
-                            {
-                             
-                             if (currentCol==col.holder[2])
-                                cur_node->force.colour=col.holder[0];
-                             
-                            } 
-                          else if ( col.numReplace == 4 ) 
-                            {
-                             
-                             if (currentCol==col.holder[2])
-                                cur_node->force.colour=col.holder[0];
-                             
-                             if (currentCol==col.holder[1])
-                                cur_node->force.colour=col.holder[0];
-                             
-                            } 
-                          else 
-                            {
-                             fprintf(stderr,"Something is wrong with colREPLACE");
-                            }
-                          
-                         } 
-                       /* New Node to check */
-                       else 
-                         { 					 
-                          
-                          /* Getting the relevant nodes and filling colHolder 	*/
-                          /* search for pointers if any are null return NULL 	*/
-                          tsc_nodes[1][1][1] = cur_node;
-                          get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
-                          
-                          /* Gathering the colour information for this node 		*/
-                          colourInfo(tsc_nodes);
-                          
-                          /************************************************/
-                          /* all nodes are zero, numReplace=0 */
-                          if ( col.numReplace == 0 )
-                            {
-                             /* Start a new colour and keep going */
-                             if ( (tmpSpatialRef = malloc(sizeof(SPATIALREF))) == NULL ) 
-                               {
-                                fprintf(stderr,"No memory for SPATIALREF\n");
-                                exit(1);
-                               }
-                             
-                             /* Colour the node with a unique name */
-                             colCounter++;
-                             
-                             cur_node->force.colour = colCounter;
-                             
-                             /* Point SPATIALREF to the right information */
-                             tmpSpatialRef->name 			  = colCounter;
-                             tmpSpatialRef->periodic.x	= 0;
-                             tmpSpatialRef->periodic.y	= 0;
-                             tmpSpatialRef->periodic.z	= 0;
-                             tmpSpatialRef->refLevel		= refinecounter;
-                             tmpSpatialRef->cur_pquad	  = cur_pquad;
-                             tmpSpatialRef->cur_cquad	  = cur_cquad;
-                             tmpSpatialRef->icur_cquad	= icur_cquad;
-                             tmpSpatialRef->cur_nquad	  = cur_nquad;
-                             tmpSpatialRef->icur_nquad	= icur_nquad;
-                             tmpSpatialRef->cur_node		= cur_node;
-                             tmpSpatialRef->x				    = x;
-                             tmpSpatialRef->y				    = y;
-                             tmpSpatialRef->z				    = z;
-                             
-                             /* Join the new  SPATIALREF to the link list */
-                             spatialRefTail = insertColour(tmpSpatialRef, firstCOLOUR);
-                             
-                             /* Now just for the first time we need to make head also point to this newColour */
-                             if ( firstCOLOUR==1 ) {
-                                spatialRefHead = spatialRefTail; 
-                                firstCOLOUR=0;
-                             }
-                             
-                            }
-                          
-                          /************************************************/
-                          /* One node is non-zero, numReplace=1 */
-                          if ( col.numReplace == 1 ) 
-                            {
-                             
-                             /* set using the current colour and keep going */
-                             cur_node->force.colour = col.holder[2];
-                             
-                            }
-                          /************************************************/
-                          /* Two nodes are non-zero and are not equal, numReplace=2 */
-                          if ( col.numReplace == 2 ) 
-                            {
-                             
-                             /* Replace the previous colours with the lowest colour */
-                             /* set colour using the lowest value : in this case 1 */
-                             cur_node->force.colour = col.holder[1];
-                             
-                             if (!colREPLACE) 
-                               { 
-                                /* Find and destroy the redundant SPATIALREF */
-                                tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
-                                
-                                /* STU :: This is where you start looking for the deleted colours */
-                                cur_pquad	   = tmpSpatialRef->cur_pquad;
-                                cur_cquad	   = tmpSpatialRef->cur_cquad;
-                                icur_cquad	 = tmpSpatialRef->icur_cquad;
-                                cur_nquad	   = tmpSpatialRef->cur_nquad;
-                                icur_nquad	 = tmpSpatialRef->icur_nquad;
-                                cur_node 	   = tmpSpatialRef->cur_node;
-                                x            = tmpSpatialRef-> x;
-                                y 				   = tmpSpatialRef-> y;
-                                z 				   = tmpSpatialRef-> z;
-                                
-                                free(tmpSpatialRef);
-                                tmpSpatialRef = NULL;
-                                 
-                                colREPLACE=TRUE;
-                                
-                                /* When going back to replace the colour the for loop progress
-                                   the node by one - which we don't want to happen 
-                                   Hence, we have to do an inital sweep on the first node with  
-                                   the colour that is going to be deleted*/
-                                /* Getting the relevant nodes and filling colHolder 	*/
-                                /* search for pointers if any are null return NULL 	*/
-                                currentCol         = cur_node->force.colour;
-                                tsc_nodes[1][1][1] = cur_node;
-                                get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
-                                /* When going back to replace the colour the for loop progress
-                                   the node by one - which we don't want to happen */
-                                if ( col.numReplace == 2 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[1];
-                                   
-                                  } 
-                                else if ( col.numReplace == 3 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                  } 
-                                else if ( col.numReplace == 4 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                   if (currentCol==col.holder[1])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                  } 
-                                else 
-                                  {
-                                   fprintf(stderr,"Something is wrong with colREPLACE");
-                                  }
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                
-                               }
-                             
-                            }
-                          
-                          /************************************************/
-                          /* Two nodes are non-zero and are not equal, numReplace=2 */
-                          /* With the last two colour elements equal */
-                          if ( col.numReplace == 3 ) 
-                            {
-                             
-                             /* Replace the previous colours with the lowest colour */
-                             /* set colour using the lowest value : in this case 1 */
-                             cur_node->force.colour = col.holder[0];
-                             
-                             if (!colREPLACE) 
-                               { 
-                                /* Find and destroy the redendent SPATIALREF */
-                                tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
-                                
-                                cur_pquad	   = tmpSpatialRef->cur_pquad;
-                                cur_cquad	   = tmpSpatialRef->cur_cquad;
-                                icur_cquad	 = tmpSpatialRef->icur_cquad;
-                                cur_nquad	   = tmpSpatialRef->cur_nquad;
-                                icur_nquad	 = tmpSpatialRef->icur_nquad;
-                                cur_node 	   = tmpSpatialRef->cur_node;
-                                x 				   = tmpSpatialRef-> x;
-                                y 				   = tmpSpatialRef-> y;
-                                z 				   = tmpSpatialRef-> z;
-                                
-                                free(tmpSpatialRef);
-                                tmpSpatialRef = NULL;
-                                colREPLACE=TRUE;
-                                
-                                
-                                /*****************************************************************/
-                                /* Getting the relevant nodes and filling colHolder 	*/
-                                /* search for pointers if any are null return NULL 	*/
-                                currentCol         = cur_node->force.colour;
-                                tsc_nodes[1][1][1] = cur_node;
-                                get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
-                                /* When going back to replace the colour the for loop progress
-                                   the node by one - which we don't want to happen */
-                                if ( col.numReplace == 2 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[1];
-                                   
-                                  } 
-                                else if ( col.numReplace == 3 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                  } 
-                                else if ( col.numReplace == 4 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                   if (currentCol==col.holder[1])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                  } 
-                                else 
-                                  {
-                                   fprintf(stderr,"Something is wrong with colREPLACE");
-                                  }
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                
-                               }
-                             
-                            }
-                          
-                          /************************************************/
-                          /* Three node are non-zero and are not equal, numReplace=3*/
-                          if ( col.numReplace == 4 ) 
-                            {
-                             
-                             /* Loop back and replace the dupulacates */
-                             /* set colour using the lowest value : in this case 0 */
-                             cur_node->force.colour = col.holder[0];
-                             
-                             if (!colREPLACE) 
-                               {
-                                /* Find and destroy the redendent SPATIALREF's */
-                                tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
-                                free(tmpSpatialRef);
-                                tmpSpatialRef=deleteColour(spatialRefHead, col.holder[1]);
-                                
-                                cur_pquad	   = tmpSpatialRef->cur_pquad;
-                                cur_cquad	   = tmpSpatialRef->cur_cquad;
-                                icur_cquad	 = tmpSpatialRef->icur_cquad;
-                                cur_nquad	   = tmpSpatialRef->cur_nquad;
-                                icur_nquad	 = tmpSpatialRef->icur_nquad;
-                                cur_node 	   = tmpSpatialRef->cur_node;
-                                x 				   = tmpSpatialRef-> x;
-                                y 				   = tmpSpatialRef-> y;
-                                z 				   = tmpSpatialRef-> z;
-                                
-                                free(tmpSpatialRef);
-                                colREPLACE=TRUE;
-                                
-                                
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                /* Getting the relevant nodes and filling colHolder 	*/
-                                /* search for pointers if any are null return NULL 	*/
-                                currentCol         = cur_node->force.colour;
-                                tsc_nodes[1][1][1] = cur_node;
-                                get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
-                                /* When going back to replace the colour the for loop progress
-                                   the node by one - which we don't want to happen */
-                                if ( col.numReplace == 2 )
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[1];
-                                   
-                                  } 
-                                else if ( col.numReplace == 4 ) 
-                                  {
-                                   
-                                   if (currentCol==col.holder[2])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                   if (currentCol==col.holder[1])
-                                      cur_node->force.colour=col.holder[0];
-                                   
-                                  } 
-                                else 
-                                  {
-                                   fprintf(stderr,"Something is wrong with colREPLACE");
-                                  }
-                                /*****************************************************************/
-                                /*****************************************************************/
-                                
-                               }	
-                             
-                            }
-                          
-                          /* ERROR */
-                          if ( col.numReplace > 4 )
-                             fprintf(stderr,"ERROR with counting col.numReplace");
-                          
-                         }
-                       
+    for(cur_pquad=cur_grid->pquad; cur_pquad != NULL; cur_pquad=cur_pquad->next) {
+      z = cur_pquad->z;
+      for(cur_cquad = cur_pquad->loc; cur_cquad < cur_pquad->loc + cur_pquad->length; cur_cquad++, z++) {
+        for(icur_cquad  = cur_cquad; icur_cquad != NULL; icur_cquad  = icur_cquad->next) {
+          y = icur_cquad->y;
+          for(cur_nquad = icur_cquad->loc; cur_nquad < icur_cquad->loc + icur_cquad->length; cur_nquad++, y++) {
+            for(icur_nquad  = cur_nquad; icur_nquad != NULL; icur_nquad  = icur_nquad->next) {
+              x = icur_nquad->x;
+              for(cur_node = icur_nquad->loc; cur_node < icur_nquad->loc + icur_nquad->length; cur_node++, x++) {
+                
+                /* The current colour of the node */
+                currentCol = cur_node->force.colour;
+                
+                /* We have finished updating the colours */
+                if ( (colREPLACE==TRUE) && (currentCol==0) )
+                  colREPLACE=FALSE;
+                
+                /* Replacing the colours */
+                if ( colREPLACE ) {
+                  if ( col.numReplace == 2 ) {
+                    if (currentCol==col.holder[2])
+                      cur_node->force.colour=col.holder[1];
+                  }
+                  else if ( col.numReplace == 3 ) {
+                    if (currentCol==col.holder[2])
+                      cur_node->force.colour=col.holder[0];
+                  }
+                  else if ( col.numReplace == 4 ) {
+                    if (currentCol==col.holder[2])
+                      cur_node->force.colour=col.holder[0];
+                    
+                    if (currentCol==col.holder[1])
+                      cur_node->force.colour=col.holder[0];
+                  }
+                  else {
+                    fprintf(stderr,"Something is wrong with colREPLACE");
+                  }
+                  
+                } // if(colREPLACE)
+                
+                /* New Node to check */
+                else
+                {
+                  
+                  /* Getting the relevant nodes and filling colHolder 	*/
+                  /* search for pointers if any are null return NULL 	*/
+                  tsc_nodes[1][1][1] = cur_node;
+                  get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
+                  
+                  /* Gathering the colour information for this node 		*/
+                  colourInfo(tsc_nodes); // this routine writes information into the global "col" structure!!!
+                  
+                  /************************************************/
+                  /* all nodes are zero, numReplace=0 */
+                  if ( col.numReplace == 0 ) {
+                    /* Start a new colour and keep going */
+                    if ( (tmpSpatialRef = malloc(sizeof(SPATIALREF))) == NULL ) {
+                      fprintf(stderr,"No memory for SPATIALREF\n");
+                      exit(1);
+                    }
+                    
+                    /* Colour the node with a unique name */
+                    colCounter++;
+                    
+                    cur_node->force.colour = colCounter;
+                    
+                    /* Point SPATIALREF to the right information */
+                    tmpSpatialRef->name 			 = colCounter; // when run in parallel, this will not be unique anymore! but it is needed and checked below!!!!
+                    tmpSpatialRef->periodic.x	 = 0;
+                    tmpSpatialRef->periodic.y	 = 0;
+                    tmpSpatialRef->periodic.z	 = 0;
+                    tmpSpatialRef->refLevel		 = refinecounter;
+                    tmpSpatialRef->cur_pquad	 = cur_pquad;
+                    tmpSpatialRef->cur_cquad	 = cur_cquad;
+                    tmpSpatialRef->icur_cquad	 = icur_cquad;
+                    tmpSpatialRef->cur_nquad	 = cur_nquad;
+                    tmpSpatialRef->icur_nquad	 = icur_nquad;
+                    tmpSpatialRef->cur_node		 = cur_node;
+                    tmpSpatialRef->x				   = x;
+                    tmpSpatialRef->y				   = y;
+                    tmpSpatialRef->z				   = z;
+                    
+                    /* Join the new SPATIALREF to the link list */
+                    spatialRefTail = insertColour(tmpSpatialRef, firstCOLOUR);
+                    // the call ti insertColout() is equivalent to:
+//                    tmpSpatialRef->next = NULL;
+//                    if ( firstCOLOUR==0 )
+//                      spatialRefTail->next = newColour;
+//                    spatialRefTail = tmpSpatialRef;
+
+                    
+                    
+                    /* Now just for the first time we need to make head also point to this newColour */
+                    if ( firstCOLOUR==1 ) {
+                      spatialRefHead = spatialRefTail;
+                      firstCOLOUR=0;
+                    }
+                    
+                  } // if(col.numReplace == 0)
+                  
+                  /************************************************/
+                  /* One node is non-zero, numReplace=1 */
+                  if ( col.numReplace == 1 ) {
+                    
+                    /* set using the current colour and keep going */
+                    cur_node->force.colour = col.holder[2];
+                  }
+                  
+                  /************************************************/
+                  /* Two nodes are non-zero and are not equal, numReplace=2 */
+                  if ( col.numReplace == 2 ) {
+                    
+                    /* Replace the previous colours with the lowest colour */
+                    /* set colour using the lowest value : in this case 1 */
+                    cur_node->force.colour = col.holder[1];
+                    
+                    if (!colREPLACE) {
+                      /* Find and destroy the redundant SPATIALREF */
+                      tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
+                      
+                      /* STU :: This is where you start looking for the deleted colours */
+                      cur_pquad	 = tmpSpatialRef->cur_pquad;
+                      cur_cquad	 = tmpSpatialRef->cur_cquad;
+                      icur_cquad = tmpSpatialRef->icur_cquad;
+                      cur_nquad	 = tmpSpatialRef->cur_nquad;
+                      icur_nquad = tmpSpatialRef->icur_nquad;
+                      cur_node 	 = tmpSpatialRef->cur_node;
+                      x          = tmpSpatialRef-> x;
+                      y 				 = tmpSpatialRef-> y;
+                      z 				 = tmpSpatialRef-> z;
+                      
+                      free(tmpSpatialRef);
+                      tmpSpatialRef = NULL;
+                      
+                      colREPLACE=TRUE;
+                      
+                      /* When going back to replace the colour the for loop progress
+                       the node by one - which we don't want to happen
+                       Hence, we have to do an inital sweep on the first node with
+                       the colour that is going to be deleted*/
+                      
+                      /* Getting the relevant nodes and filling colHolder 	*/
+                      /* search for pointers if any are null return NULL 	*/
+                      currentCol         = cur_node->force.colour;
+                      tsc_nodes[1][1][1] = cur_node;
+                      get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
+                      
+                      /* When going back to replace the colour the for loop progress
+                       the node by one - which we don't want to happen */
+                      if ( col.numReplace == 2 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[1];
                       }
-                   }
-                }
-             }
-          }
-       } 
-     
-     
-    }
+                      else if ( col.numReplace == 3 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[0];
+                      }
+                      else if ( col.numReplace == 4 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[0];
+                        
+                        if (currentCol==col.holder[1])
+                          cur_node->force.colour=col.holder[0];
+                      }
+                      else {
+                        fprintf(stderr,"Something is wrong with colREPLACE");
+                      }
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      
+                    } // if(!colREPLACE)
+                    
+                  } // if(col.numReplace == 2)
+                  
+                  /************************************************/
+                  /* Two nodes are non-zero and are not equal, numReplace=2 */
+                  /* With the last two colour elements equal */
+                  if ( col.numReplace == 3 ) {
+                    
+                    /* Replace the previous colours with the lowest colour */
+                    /* set colour using the lowest value : in this case 1 */
+                    cur_node->force.colour = col.holder[0];
+                    
+                    if (!colREPLACE) {
+                      /* Find and destroy the redendent SPATIALREF */
+                      tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
+                      
+                      cur_pquad	   = tmpSpatialRef->cur_pquad;
+                      cur_cquad	   = tmpSpatialRef->cur_cquad;
+                      icur_cquad	 = tmpSpatialRef->icur_cquad;
+                      cur_nquad	   = tmpSpatialRef->cur_nquad;
+                      icur_nquad	 = tmpSpatialRef->icur_nquad;
+                      cur_node 	   = tmpSpatialRef->cur_node;
+                      x 				   = tmpSpatialRef-> x;
+                      y 				   = tmpSpatialRef-> y;
+                      z 				   = tmpSpatialRef-> z;
+                      
+                      free(tmpSpatialRef);
+                      tmpSpatialRef = NULL;
+                      colREPLACE=TRUE;
+                      
+                      
+                      /*****************************************************************/
+                      /* Getting the relevant nodes and filling colHolder 	*/
+                      /* search for pointers if any are null return NULL 	*/
+                      currentCol         = cur_node->force.colour;
+                      tsc_nodes[1][1][1] = cur_node;
+                      get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
+                      /* When going back to replace the colour the for loop progress
+                       the node by one - which we don't want to happen */
+                      if ( col.numReplace == 2 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[1];
+                      }
+                      else if ( col.numReplace == 3 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[0];
+                      }
+                      else if ( col.numReplace == 4 ) {
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[0];
+                        
+                        if (currentCol==col.holder[1])
+                          cur_node->force.colour=col.holder[0];
+                      }
+                      else {
+                        fprintf(stderr,"Something is wrong with colREPLACE");
+                      }
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      
+                    } // if (!colREPLACE)
+                    
+                  } // if ( col.numReplace == 3 )
+                  
+                  /************************************************/
+                  /* Three node are non-zero and are not equal, numReplace=3*/
+                  if ( col.numReplace == 4 ) {
+                    
+                    /* Loop back and replace the dupulacates */
+                    /* set colour using the lowest value : in this case 0 */
+                    cur_node->force.colour = col.holder[0];
+                    
+                    if (!colREPLACE) {
+                      /* Find and destroy the redendent SPATIALREF's */
+                      tmpSpatialRef=deleteColour(spatialRefHead, col.holder[2]);
+                      free(tmpSpatialRef);
+                      tmpSpatialRef=deleteColour(spatialRefHead, col.holder[1]);
+                      
+                      cur_pquad	   = tmpSpatialRef->cur_pquad;
+                      cur_cquad	   = tmpSpatialRef->cur_cquad;
+                      icur_cquad	 = tmpSpatialRef->icur_cquad;
+                      cur_nquad	   = tmpSpatialRef->cur_nquad;
+                      icur_nquad	 = tmpSpatialRef->icur_nquad;
+                      cur_node 	   = tmpSpatialRef->cur_node;
+                      x 				   = tmpSpatialRef-> x;
+                      y 				   = tmpSpatialRef-> y;
+                      z 				   = tmpSpatialRef-> z;
+                      
+                      free(tmpSpatialRef);
+                      colREPLACE=TRUE;
+                      
+                      
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      /* Getting the relevant nodes and filling colHolder 	*/
+                      /* search for pointers if any are null return NULL 	*/
+                      currentCol         = cur_node->force.colour;
+                      tsc_nodes[1][1][1] = cur_node;
+                      get_TSCnodes(cur_grid, cur_pquad, icur_cquad, icur_nquad, tsc_nodes, &z, &y, &x);
+                      /* When going back to replace the colour the for loop progress
+                       the node by one - which we don't want to happen */
+                      if ( col.numReplace == 2 )
+                      {
+                        
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[1];
+                        
+                      }
+                      else if ( col.numReplace == 4 )
+                      {
+                        
+                        if (currentCol==col.holder[2])
+                          cur_node->force.colour=col.holder[0];
+                        
+                        if (currentCol==col.holder[1])
+                          cur_node->force.colour=col.holder[0];
+                        
+                      }
+                      else
+                      {
+                        fprintf(stderr,"Something is wrong with colREPLACE");
+                      }
+                      /*****************************************************************/
+                      /*****************************************************************/
+                      
+                    }	// if (!colREPLACE)
+                    
+                  } // if ( col.numReplace == 4 )
+                  
+                  /* ERROR */
+                  if ( col.numReplace > 4 )
+                    fprintf(stderr,"ERROR with counting col.numReplace");
+                  
+                } // else (colREPLACE)
+                
+              } // for(node)
+            } // ...
+          } // ...
+        } // ...
+      } // ...
+    } // for(cur_pquad)
+    
+    
+  } // for(refinecounter) => loop over all grid levels
 	
 	
   /*******************************************************************************************************/
   /* Checking that the grid is coloured correctly */
   /*******************************************************************************************************/
 #ifdef AHFDEBUG2
-  /* Printing the PVIEW file */	
+  /* Printing the PVIEW file */
   sprintf(filename2,"%shalo_pview3",global_io.params->outfile_prefix);
   fprintf(stderr,"%s\n",filename2);
-  if((fout = fopen(filename2,"w")) == NULL) 
+  if((fout = fopen(filename2,"w")) == NULL)
     {
      fprintf(stderr,"could not open %s\n", filename2);
      exit(1);
@@ -633,7 +590,7 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
 
 
   refinecounter=0;
-  for( 	iterate=0, cur_grid=global.dom_grid+ahf.min_ref;  iterate<ahf.no_grids; iterate++, cur_grid++) 
+  for( 	iterate=0, cur_grid=global.dom_grid+ahf.min_ref;  iterate<ahf.no_grids; iterate++, cur_grid++)
     {
      /* shift of cell centre as compared to edge of box [grid units] */
      cur_shift = 0.5/(double)cur_grid->l1dim;
@@ -647,25 +604,25 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
        {
         z = cur_pquad->z;
         for(cur_cquad = cur_pquad->loc;
-            cur_cquad < cur_pquad->loc + cur_pquad->length; 
-            cur_cquad++, z++)  
-          {  
-           for(icur_cquad  = cur_cquad; 
-               icur_cquad != NULL; 
+            cur_cquad < cur_pquad->loc + cur_pquad->length;
+            cur_cquad++, z++)
+          {
+           for(icur_cquad  = cur_cquad;
+               icur_cquad != NULL;
                icur_cquad  = icur_cquad->next)
              {
               y = icur_cquad->y;
-              for(cur_nquad = icur_cquad->loc;  
-                  cur_nquad < icur_cquad->loc + icur_cquad->length; 
-                  cur_nquad++, y++) 
-                { 
-                 for(icur_nquad  = cur_nquad; 
-                     icur_nquad != NULL; 
+              for(cur_nquad = icur_cquad->loc;
+                  cur_nquad < icur_cquad->loc + icur_cquad->length;
+                  cur_nquad++, y++)
+                {
+                 for(icur_nquad  = cur_nquad;
+                     icur_nquad != NULL;
                      icur_nquad  = icur_nquad->next)
                    {
                     x = icur_nquad->x;
-                    for(cur_node = icur_nquad->loc; 
-                        cur_node < icur_nquad->loc + icur_nquad->length; 
+                    for(cur_node = icur_nquad->loc;
+                        cur_node < icur_nquad->loc + icur_nquad->length;
                         cur_node++, x++)
                       { /* current node */
                        

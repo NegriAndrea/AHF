@@ -13,7 +13,6 @@
 
 #*******************************************************************#
 AHF:			DEFINEFLAGS = ${MASTER_DEFINEFLAGS} -DAHF
-AHF2:			DEFINEFLAGS = ${MASTER_DEFINEFLAGS} -DAHF2
 
 export DEFINEFLAGS
 
@@ -41,21 +40,16 @@ LIBS =	\
 			libgravity/libgravity.a \
 			libio/libio.a \
 			libsfc/libsfc.a \
-			libtree/libtree.a \
 			libio_serial/libio_serial.a \
 			libutility/libutility.a
 
 LIBAHF  = libahf/libahf.a
-LIBAHF2 = libahf2/libahf2.a
 
 
 # what's to make ?
 # ----------------
 AHF:	main.o ${OBJS} ${LIBS} ${LIBAHF}
 	$(CC) $(CFLAGS) ${PROFILE} -o AHF  main.o ${OBJS} ${LIBAHF}  ${LIBS} -l${LIB_MATH} ${LFLAGS}
-
-AHF2:	main.o ${OBJS} ${LIBS} ${LIBAHF2}
-	$(CC) $(CFLAGS) ${PROFILE} -o AHF2 main.o ${OBJS} ${LIBAHF2} ${LIBS} -l${LIB_MATH} ${LFLAGS}
 
 
 clean:
@@ -64,9 +58,7 @@ clean:
 	cd libio ; ${MAKE} clean
 	cd libio_serial ; ${MAKE} clean
 	cd libahf ; ${MAKE} clean
-	cd libahf2 ; ${MAKE} clean
 	cd libgravity ; ${MAKE} clean
-	cd libtree ; ${MAKE} clean
 	cd libamr_serial ; ${MAKE} clean
 	cd libutility ; ${MAKE} clean
 
@@ -76,9 +68,7 @@ veryclean:
 	cd libio ; ${MAKE} clean
 	cd libio_serial ; ${MAKE} clean
 	cd libahf ; ${MAKE} clean
-	cd libahf2 ; ${MAKE} clean
 	cd libgravity ; ${MAKE} clean
-	cd libtree ; ${MAKE} clean
 	cd libamr_serial ; ${MAKE} clean
 	cd libutility ; ${MAKE} clean
 
@@ -105,14 +95,8 @@ libio_serial/libio_serial.a:
 libahf/libahf.a:
 	cd libahf ; ${MAKE} libahf.a
 
-libahf2/libahf2.a:
-	cd libahf2 ; ${MAKE} libahf2.a
-
 libgravity/libgravity.a:
 	cd libgravity ; ${MAKE} libgravity.a
-
-libtree/libtree.a:
-	cd libtree ; ${MAKE} libtree.a
 
 libamr_serial/libamr_serial.a:
 	cd libamr_serial ; ${MAKE} libamr_serial.a

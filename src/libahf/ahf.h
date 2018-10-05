@@ -32,14 +32,14 @@ typedef struct {
 typedef struct spatialRef {
    int   name;           /* Name of the colour                                      */
    int   refLevel;       /* The refinement level                                    */
-	intXYZ periodic;	    /* tells the periodic nature of this refinement            */
-   pqptr	cur_pquad;      /* Pointer to the pquad holding the cquad                  */
+   intXYZ periodic;	     /* tells the periodic nature of this refinement            */
+   pqptr cur_pquad;       /* Pointer to the pquad holding the cquad                  */
    cqptr cur_cquad;      /* Pointer to the cquad holding the nquad                  */ 
    cqptr icur_cquad;
    nqptr cur_nquad;      /* Pointer to the nquad holding the node                   */
    nqptr icur_nquad;
    nptr  cur_node;       /* Pointer to the starting node for this colour            */
-   float	x,y,z;
+   float x,y,z;
    struct spatialRef *next;  /* Pointer to the next SPATIALREF                      */
 } SPATIALREF;
 
@@ -51,8 +51,8 @@ COLOURHOLDER	col;
 
 /* internally used functions */
 int	      checkColourInfo  (nptr tsc_box[3][3][3]);
-void	      colourInfo       (nptr tsc_box[3][3][3]);
-intXYZ	   testBound        (nptr tsc_box[3][3][3], int x, int y, int z);
+void	    colourInfo       (nptr tsc_box[3][3][3]);
+intXYZ    testBound        (nptr tsc_box[3][3][3], int x, int y, int z);
 int	      colourCompare    (const void *, const void *);
 SPATIALREF* insertColour     ( SPATIALREF* newColour, int firstCOLOUR );
 SPATIALREF* deleteColour     ( SPATIALREF* spatialRefHead, int name);
