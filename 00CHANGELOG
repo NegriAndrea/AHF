@@ -1921,3 +1921,6 @@
              - removed AHF2: it was never finished and likely never will... :-(
              - changed one of the -DSUSSING2013 instances to -DSUSSING2013_particles to avoid file format conflicts,
                i.e. SUSSING2013 now generates the usual haloids ('snapid00000000haloid'), but write the standard _particles file
+
+30/10/2018   - fixed haloid issue in _substructure and _particlesSTARDUST* files for -DSUSSING2013
+(BUILD 095)  - changed Power et al. (2003) convergence criterion to only use DM particles

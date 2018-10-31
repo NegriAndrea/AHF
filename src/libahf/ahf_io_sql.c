@@ -287,17 +287,27 @@ ahf_io_sql_writeProfiles(ahf_io_sql_t  sql,
 		for (int i = 0; i < numHalos; i++) {
 			int     j = idx[i];
 			int64_t haloID;
-			double  rad;
+			double  rad, ngas,nstars,nDM;
 			int     radiiConverged = 0;
 			haloID = local_getHaloIDFromIdx(j, sql->haloIDOffset);
 
 			for (int k = 0; k < halos[j].prof.nbins; k++) {
-				double t_relax, age;
+				double t_relax, t0;
 				/* check for converged radius (Power et al. 2003) */
-				rad     = halos[j].prof.r[k];
-				t_relax = halos[j].prof.npart[k]
-				          / log(rad / halos[j].spaRes)
-				          * rad / sqrt(halos[j].prof.v2_circ[k]);
+#ifdef GAS_PARTICLES
+        ngas   = halos[j].prof.M_gas[k]/simu.pmass;
+        nstars = halos[j].prof.M_star[k]/simu.pmass;
+        nDM    = halos[j].prof.npart[k]-ngas-nstars;
+#else
+        nDM    = halos[j].prof.npart[k];
+#endif
+        
+        //t_relax = nDM / log(rad / halos[i].spaRes) * rad / sqrt(halos[i].prof.v2_circ[ibin]);           // Eq.(4)
+        //t0      = 0.9*calc_t(global.a) * simu.t_unit * Mpc / Gyr; /* age of the Universe in Gyr/h */
+        
+        t_relax = nDM / log(nDM) / 8. * rad / sqrt(halos[j].prof.v2_circ[k]);  // Eq.(20)
+        t0      = 0.6*halos[j].prof.r[halos[j].prof.k-1] / sqrt(halos[j].prof.v2_circ[halos[j].prof.k-1]) * r_fac/sqrt(phi_fac) * 1E3;
+
 
 				/* convert to (Mpc/h) / (km/sec) ~ (Mpc/h) / (kpc/Gyr) */
 				t_relax *= r_fac / sqrt(phi_fac);
@@ -305,12 +315,9 @@ ahf_io_sql_writeProfiles(ahf_io_sql_t  sql,
 				/* convert to Gyr/h */
 				t_relax *= 1E3;
 
-				/* age of the Universe in Gyr/h */
-				age = calc_t(global.a) * simu.t_unit * Mpc / Gyr;
-
 				/* if not converged, write negative radius into
 				 *.AHF_profiles */
-				if (t_relax < 0.9 * age)
+				if (t_relax < t0)
 					/* The +1 is merely to keep the name consistent:
 					 * r_conv_i should give the smallest converged radius,
 					 * not the bin before it. Hence to check for converged

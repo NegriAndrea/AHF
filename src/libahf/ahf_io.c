@@ -471,9 +471,15 @@ ahf_io_WriteSubstructure(const char    *fprefix,
         for (k = 0; k < halos[i].numSubStruct; k++)
           fprintf(fout, "\t%"PRIu64, halos[halos[i].subStruct[k]].haloID);
 #else
+#ifdef SUSSING2013
+         fprintf(fout, "%10"PRIu64" %12d\n", getSussing2013ID(simu.isnap,j), halos[i].numSubStruct);
+         for (k = 0; k < halos[i].numSubStruct; k++)
+           fprintf(fout, "%10"PRIu64" ", getSussing2013ID(simu.isnap, idx_inv(idx, numHalos, halos[i].subStruct[k])));
+#else
         fprintf(fout, "%10d %12d\n", j, halos[i].numSubStruct);
         for (k = 0; k < halos[i].numSubStruct; k++)
           fprintf(fout, "%10d ", idx_inv(idx, numHalos, halos[i].subStruct[k]));
+#endif
 #endif
         
         fprintf(fout, "\n");
@@ -637,7 +643,7 @@ WriteProfilesLegacy(FILE          *fout,
 	int           column = 1;
 	unsigned long i, j;
 	int           r_conv_i, ibin;
-	double        rad, t_relax, t0;
+	double        rad, t_relax, t0, ngas, nstars, nDM;
   
 #  if (defined WITH_MPI || defined AHFrestart)
 #    ifdef WITH_MPI
@@ -717,10 +723,18 @@ WriteProfilesLegacy(FILE          *fout,
           rad     = halos[i].prof.r[ibin];
           
           /* check for converged radius (Power et al. 2003) */
-          //t_relax = halos[i].prof.npart[ibin] / log(rad / halos[i].spaRes) * rad / sqrt(halos[i].prof.v2_circ[ibin]);           // Eq.(4)
+#ifdef GAS_PARTICLES
+          ngas   = halos[i].prof.M_gas[ibin]/simu.pmass;
+          nstars = halos[i].prof.M_star[ibin]/simu.pmass;
+          nDM    = halos[i].prof.npart[ibin]-ngas-nstars;
+#else
+          nDM    = halos[i].prof.npart[ibin];
+#endif
+          
+          //t_relax = nDM / log(rad / halos[i].spaRes) * rad / sqrt(halos[i].prof.v2_circ[ibin]);           // Eq.(4)
           //t0      = 0.9*calc_t(global.a) * simu.t_unit * Mpc / Gyr; /* age of the Universe in Gyr/h */
           
-          t_relax = halos[i].prof.npart[ibin] / log(halos[i].prof.npart[ibin]) / 8. * rad / sqrt(halos[i].prof.v2_circ[ibin]);  // Eq.(20)
+          t_relax = nDM / log(nDM) / 8. * rad / sqrt(halos[i].prof.v2_circ[ibin]);  // Eq.(20)
           t0      = 0.6*halos[i].prof.r[halos[i].prof.nbins-1] / sqrt(halos[i].prof.v2_circ[halos[i].prof.nbins-1]) * r_fac/sqrt(phi_fac) * 1E3;
           
           
@@ -1186,7 +1200,11 @@ WriteSTARDUSTParticlesLegacy(FILE          *fout,
 #ifdef AHFnewHaloIDs
         fprintf(fout, "%22"PRIu64, halos[i].haloID);
 #else
+#ifdef SUSSING2013
+        fprintf(fout, "%10"PRIu64"\n", getSussing2013ID(simu.isnap,j));
+#else
         fprintf(fout, "%10ld\n",	 (long)j);
+#endif
 #endif
 
         /* double checking the number of stars */
@@ -1264,7 +1282,11 @@ WriteSTARDUSTexcisedParticlesLegacy(FILE          *fout,
 #ifdef AHFnewHaloIDs
         fprintf(fout, "%22"PRIu64, halos[i].haloID);
 #else
+#ifdef SUSSING2013
+        fprintf(fout, "%10"PRIu64"\n", getSussing2013ID(simu.isnap,j));
+#else
         fprintf(fout, "%10ld\n",	 (long)j);
+#endif
 #endif
 
         /* double checking the number of stars */
@@ -1385,7 +1407,7 @@ ahf_binwrite_profiles(char          *prefix,
 	bin_int_t   tmp_int;
 	bin_float_t tmp_float;
 	int         r_conv_i, ibin;
-	double      age, rad, t_relax, t0;
+	double      age, rad, t_relax, t0, ngas, nstars, nDM;
 	uint64_t    real_num_halos;
 	uint64_t    total_num_lines;
 	uint64_t    tmp;
@@ -1502,10 +1524,18 @@ ahf_binwrite_profiles(char          *prefix,
           rad     = halos[i].prof.r[ibin];
           
           /* check for converged radius (Power et al. 2003) */
-          //t_relax = halos[i].prof.npart[ibin] / log(rad / halos[i].spaRes) * rad / sqrt(halos[i].prof.v2_circ[ibin]);           // Eq.(4)
+#ifdef GAS_PARTICLES
+          ngas   = halos[i].prof.M_gas[ibin]/simu.pmass;
+          nstars = halos[i].prof.M_star[ibin]/simu.pmass;
+          nDM    = halos[i].prof.npart[ibin]-ngas-nstars;
+#else
+          nDM    = halos[i].prof.npart[ibin];
+#endif
+          
+          //t_relax = nDM / log(rad / halos[i].spaRes) * rad / sqrt(halos[i].prof.v2_circ[ibin]);           // Eq.(4)
           //t0      = 0.9*calc_t(global.a) * simu.t_unit * Mpc / Gyr; /* age of the Universe in Gyr/h */
           
-          t_relax = halos[i].prof.npart[ibin] / log(halos[i].prof.npart[ibin]) / 8. * rad / sqrt(halos[i].prof.v2_circ[ibin]);  // Eq.(20)
+          t_relax = nDM / log(nDM) / 8. * rad / sqrt(halos[i].prof.v2_circ[ibin]);  // Eq.(20)
           t0      = 0.6*halos[i].prof.r[halos[i].prof.nbins-1] / sqrt(halos[i].prof.v2_circ[halos[i].prof.nbins-1]) * r_fac/sqrt(phi_fac) * 1E3;
           
           
