@@ -36,12 +36,12 @@ OBJS	=	\
 	startrun.o
   
 LIBS =	\
-      libamr_serial/libamr_serial.a \
-			libgravity/libgravity.a \
-			libio/libio.a \
-			libsfc/libsfc.a \
-			libio_serial/libio_serial.a \
-			libutility/libutility.a
+	libamr_serial/libamr_serial.a \
+	libgravity/libgravity.a \
+	libio/libio.a \
+	libsfc/libsfc.a \
+	libio_serial/libio_serial.a \
+	libutility/libutility.a
 
 LIBAHF  = libahf/libahf.a
 

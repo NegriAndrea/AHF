@@ -19,6 +19,9 @@
 #ifdef WITH_MPI
 #	include <mpi.h>
 #endif
+#ifdef WITH_HDF5
+#include <hdf5.h>
+#endif
 #include "io_file_aux.h"
 #include "io_logging.h"
 
@@ -57,8 +60,12 @@
 /** Descriptive string of the Gadget file type */
 #define IO_FILE_GADGET_STR "Gadget binary"
 
+#define IO_FILE_GIZMO_STR "GIZMO HDF5"
+
 /** Descriptive string of the Multiple Gadget file type */
 #define IO_FILE_MGADGET_STR "Multiple Gadget binary"
+
+#define IO_FILE_MGIZMO_STR "Multiple GIZMO HDF5"
 
 /** Descriptive string of the DEVA file type */
 #define IO_FILE_DEVA_STR "DEVA binary fixed-length records"
@@ -116,6 +123,10 @@ typedef enum {
 	IO_FILE_GADGET = 60,
 	/** For Gadget format in multiple files */
 	IO_FILE_MGADGET = 61,
+        /** For GIZMO format */
+        IO_FILE_GIZMO = 50,
+        /** For GIZMO format in multiple files */
+        IO_FILE_MGIZMO = 51,
 	/** For ART format */
 	IO_FILE_ART = 70,
 	/** For ART format, with new reader. */

@@ -8,11 +8,18 @@
  *   1993-2001      Andrew Green, James Binney
  *   2001-2005      Stuart Gill
  *   2006-2012      Steffen Knollmann
+ *   2018           Doug Rennehan (GIZMO I/O)
  *
- * --------------
- * | Hdf2GADGET |
- * --------------
- *   2012           Ofer Metuki
+ * -------------------------
+ * | HDF5toGADGET_WCui*.py |
+ * -------------------------
+ *   2018           Weiguang Cui
+ *
+ * ---------------------
+ * | ramses2gadget.f90 |
+ * ---------------------
+ *  2009            Timur Doumler
+ *  2010            Robert Feldmann
  *
  * ---------
  * | tostd |

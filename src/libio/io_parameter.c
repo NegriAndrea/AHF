@@ -254,6 +254,30 @@ local_readRequired(io_parameter_t params, parse_ini_t ini)
     // nothing to write here as GADGET_stuff will be passed on ;-)
     
    }
+
+#ifdef WITH_HDF5
+  /*-----------------
+   *     GIZMO
+   *-----------------*/
+  if(params->ic_filetype == IO_FILE_GIZMO || params->ic_filetype == IO_FILE_MGIZMO)
+  {
+    /* Get GIZMO_MUNIT */
+    getFromIni(&(params->GIZMO_m2Msunh), parse_ini_get_double,
+               ini, "GIZMO_MUNIT", "GIZMO");
+    /* Get GADGET_LUNIT */
+    getFromIni(&(params->GIZMO_l2Mpch), parse_ini_get_double,
+               ini, "GIZMO_LUNIT", "GIZMO");
+    
+#ifdef VERBOSE2
+    fprintf(stderr,"GIZMO_LUNIT       = %g\n",params->GIZMO_l2Mpch);
+    fprintf(stderr,"GIZMO_MUNIT       = %g\n",params->GIZMO_m2Msunh);
+    fprintf(stderr,"\n");
+#endif
+    
+    // nothing to write here as GIZMO_stuff will be passed on ;-)
+    
+  }
+#endif // WITH_HDF5
   
   /*-----------------
    *       ART

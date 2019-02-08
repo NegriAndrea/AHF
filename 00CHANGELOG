@@ -1924,3 +1924,14 @@
 
 30/10/2018   - fixed haloid issue in _substructure and _particlesSTARDUST* files for -DSUSSING2013
 (BUILD 095)  - changed Power et al. (2003) convergence criterion to only use DM particles
+
+03/12/2018   - implemented bug fix to parallel tipsy io (courtesy Michael Tremmel!)
+(BUILD 096) 
+
+15/01/2019   - updated MergerTree.c and ahfHaloHistory.c (no new BUILD number)
+(---)          -> they both now allow for skipping snapshots in the construction/usage of merger trees 
+
+07/02/2019   - implemented native GIZMO reader (ic_filetype = 50/51)
+(BUILD 097)    -> this requires a working HDF5 installation (and hence when intended to be used, also use -DWITH_HDF5)
+               -> and as HDF5 is required, we also require to compile this with mpicc (and hence only work for "Standard MPI" and "Standard MPI+OpenMP")
+               -> Note: this reader was developed by Doug Rennehan!

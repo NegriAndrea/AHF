@@ -246,7 +246,19 @@ local_startrunFopen(void)
 		                      global_io.params->GADGET_l2Mpch,
 		                      global_io.params->GADGET_m2Msunh);
   
-
+#ifdef WITH_HDF5
+  if (global_io.file->ftype == IO_FILE_GIZMO)
+    io_gizmo_resetscale(global_io.log,
+                        (io_gizmo_t)global_io.file,
+                        global_io.params->GIZMO_l2Mpch,
+                        global_io.params->GIZMO_m2Msunh);
+  if (global_io.file->ftype == IO_FILE_MGIZMO)
+    io_mgizmo_resetscale(global_io.log,
+                         (io_mgizmo_t)global_io.file,
+                         global_io.params->GIZMO_l2Mpch,
+                         global_io.params->GIZMO_m2Msunh);
+#endif // WITH_HDF5
+  
 	/* Init the file */
 	io_file_init(global_io.log, global_io.file);
   
@@ -498,9 +510,13 @@ local_startrunSimparams()
 		simu.NGRID_MAX     = global_io.params->NGRID_MAX;
 		simu.AHF_MINPART   = global_io.params->AHF_MINPART;
 		simu.AHF_VTUNE     = global_io.params->AHF_VTUNE;
-    
     simu.GADGET_m2Msunh= global_io.params->GADGET_m2Msunh;
     simu.GADGET_l2Mpch = global_io.params->GADGET_l2Mpch;
+     
+#ifdef WITH_HDF5
+    simu.GIZMO_m2Msunh= global_io.params->GIZMO_m2Msunh;
+    simu.GIZMO_l2Mpch = global_io.params->GIZMO_l2Mpch;
+#endif
 
 #		ifdef AHF_LRSI
 		simu.lrsi_beta     = global_io.params->lrsi_beta;

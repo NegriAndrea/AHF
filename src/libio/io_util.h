@@ -18,7 +18,9 @@
 
 #include "io_file.h"
 
-
+#ifdef WITH_HDF5
+#include "io_gizmo_def.h"
+#endif
 /**********************************************************************\
  *    Global defines, structure definitions and typedefs              * 
 \**********************************************************************/
@@ -327,5 +329,17 @@ io_util_findfiles(const char *path,
                   const char *suffix,
                   char ***fnames);
 
+
+#ifdef WITH_HDF5
+extern void
+io_util_readhdf5(io_logging_t log,
+                    io_gizmo_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer);
+#endif // WITH_HDF5
 
 #endif /* IO_UTIL_H */

@@ -30,7 +30,7 @@
  * splitted into.  The total number of bytes that can be send is thus
  * LOCAL_MAX_SUBSENDRECVS * LOCAL_MAX_MSGSIZE.
  */
-#define LOCAL_MAX_SUBSENDRECVS 10
+#define LOCAL_MAX_SUBSENDRECVS 40
 
 /**
  * This is the size of the largest MPI chunk to be send around (given in
@@ -343,6 +343,14 @@ comm_dist_part_ahf(io_logging_t log,
 		io_logging_memfatal(log, "communication array");
 		common_terminate(EXIT_FAILURE);
 	}
+	/* Initialize the requests (required later for usage checking) */
+        for (i=0; i<lb->ncpu; i++) {
+                int j;
+                for (j=0; j<LOCAL_MAX_SUBSENDRECVS; j++) {
+                        comm[i].recv_req[j] = MPI_REQUEST_NULL;
+                        comm[i].send_req[j] = MPI_REQUEST_NULL;
+                }
+        }
 
 	/* Figure out how many particles are in the boundaries and
 	 * hence need to be send */
@@ -428,34 +436,77 @@ comm_dist_part_ahf(io_logging_t log,
 	
 	/* Fire up the recieving and sending */
 	for (i=0; i<lb->ncpu; i++) {
+		int j = 0;
 		if (comm[i].recv > UINT64_C(0)) {
-			if (comm[i].send*sizeof(struct particle) > LOCAL_MAX_MSGSIZE) {
-				io_logging_fatal(log,
-				                 "Trying to receive too many particles "
-				                 "from process %i",
-				                 i);
-				common_terminate(EXIT_FAILURE);
-			}
-			MPI_Irecv((void *)(*fst_part+*no_part+comm[i].recv_displ),
-			          comm[i].recv*sizeof(struct particle),
-			          MPI_BYTE,
-			          i, 0, MPI_COMM_WORLD, &(comm[i].recv_req[0]));
+			uint64_t numPartRecvTodo = comm[i].recv;
+                        uint64_t numPartRecvDone = 0;
+                        uint64_t numPartRecvNow = 0;
+                        j=0;
+                        do {
+				if (numPartRecvTodo * sizeof(struct particle) > LOCAL_MAX_MSGSIZE) {
+                                        numPartRecvNow = LOCAL_MAX_MSGSIZE / (sizeof(struct particle));
+                                } else {
+                                        numPartRecvNow = numPartRecvTodo;
+                                }
+                                MPI_Irecv((void *)(*fst_part+*no_part+comm[i].recv_displ+numPartRecvDone),
+                                          numPartRecvNow * sizeof(struct particle), MPI_BYTE,
+                                          i, j, MPI_COMM_WORLD, &(comm[i].recv_req[j]));
+                                j++;
+                                numPartRecvTodo -= numPartRecvNow;
+                                numPartRecvDone += numPartRecvNow;
+                        } while (j < LOCAL_MAX_SUBSENDRECVS && numPartRecvTodo > 0);
+			/* Kill the program if not all particles could be received */
+                        if (j == LOCAL_MAX_SUBSENDRECVS && numPartRecvTodo > 0) {
+                                int rank;
+                                MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+                                io_logging_fatal(log,
+                                                 "Process %i could not receive %"PRIu64
+                                                 " particles from process %i in at most "
+                                                 "%i chunks. Increase LOCAL_MAX_MSGSIZE "
+                                                 "or LOCAL_MAX_SUBSENDRECVS in %s",
+                                                 rank, comm[i].recv, i,
+                                                 LOCAL_MAX_SUBSENDRECVS, __FILE__);
+                                common_terminate(EXIT_FAILURE);
+                        }
 		}
 		if (comm[i].send > UINT64_C(0)) {
-			MPI_Isend((void *)(newpart+comm[i].send_displ),
-			          comm[i].send*sizeof(struct particle),
-			          MPI_BYTE,
-			          i, 0, MPI_COMM_WORLD, &(comm[i].send_req[0]));
+			uint64_t numPartSendTodo = comm[i].send;
+                        uint64_t numPartSendDone = 0;
+                        uint64_t numPartSendNow = 0;
+                        j = 0;
+			do {
+                                if (numPartSendTodo * sizeof(struct particle) > LOCAL_MAX_MSGSIZE) {
+                                        numPartSendNow = LOCAL_MAX_MSGSIZE / (sizeof(struct particle));
+                                } else {
+                                        numPartSendNow = numPartSendTodo;
+                                }
+                                MPI_Isend((void *)(newpart+comm[i].send_displ+numPartSendDone),
+                                          numPartSendNow * sizeof(struct particle), MPI_BYTE,
+                                          i, j, MPI_COMM_WORLD, &(comm[i].send_req[j]));
+                                j++;
+                                numPartSendTodo -= numPartSendNow;
+                                numPartSendDone += numPartSendNow;
+                        } while (j < LOCAL_MAX_SUBSENDRECVS && numPartSendTodo > 0);
 		}
 	}
 
 	/* Now sit there and wait for everything to finish */
-	for (i=0; i<lb->ncpu; i++) {
-		if (comm[i].recv > UINT64_C(0))
-			MPI_Wait(&(comm[i].recv_req[0]), &status);
-		if (comm[i].send > UINT64_C(0))
-			MPI_Wait(&(comm[i].send_req[0]), &status);
-	}
+        for (i=0; i<lb->ncpu; i++) {
+                int j =0;
+                if (comm[i].recv > UINT64_C(0)) {
+                        do {
+                                MPI_Wait(&(comm[i].recv_req[j]), &status);
+                                j++;
+                        } while (j<LOCAL_MAX_SUBSENDRECVS && comm[i].recv_req[j] != MPI_REQUEST_NULL);
+                }
+                j = 0;
+                if (comm[i].send > UINT64_C(0)) {
+                        do {
+                                MPI_Wait(&(comm[i].send_req[j]), &status);
+                                j++;
+                        } while (j<LOCAL_MAX_SUBSENDRECVS && comm[i].send_req[j] != MPI_REQUEST_NULL);
+                }
+        }
 
 	/* Clean up */
 	free(newpart);

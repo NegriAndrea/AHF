@@ -6,7 +6,7 @@
 
 
 /**********************************************************************\
- *    Includes                                                        * 
+ *    Includes                   * 
 \**********************************************************************/
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +15,9 @@
 #endif
 
 #include "io_util.h"
-
+#ifdef WITH_HDF
+#include <hdf5.h>
+#endif
 
 /**********************************************************************\
  *    Local defines, structure definitions and typedefs               * 
@@ -264,6 +266,48 @@ io_util_getminearr(int32_t numfiles)
 	return dummy;
 }
 
+#ifdef WITH_HDF5
+void io_util_readhdf5(io_logging_t log,
+                    io_gizmo_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer)
+{
+    int rank;
+    hid_t hdf5_dataset, hdf5_dataspace_in_memory, hdf5_dataspace_in_file;
+    hsize_t dims[2], count[2], start[2];
+
+    /* Read dataset from particle group */
+    hdf5_dataset = H5Dopen(hdf5_grp[type], dataset_name);
+
+    dims[0] = f->header->np[type];
+    dims[1] = dataset_num_values;
+    if (dims[1] == 1)
+    {
+        rank = 1;
+    } else {
+        rank = 2;
+    }
+
+    hdf5_dataspace_in_file = H5Screate_simple(rank, dims, NULL);
+    hdf5_dataspace_in_memory = H5Screate_simple(rank, dims, NULL);
+
+    start[0] = 0; // was pcsum;
+    start[1] = 0;
+
+    H5Sselect_hyperslab(hdf5_dataspace_in_file, H5S_SELECT_SET, start, NULL, dims, NULL);
+
+    H5Dread(hdf5_dataset, hdf5_datatype, hdf5_dataspace_in_memory, hdf5_dataspace_in_file, H5P_DEFAULT, CommBuffer);
+
+    H5Tclose(hdf5_datatype);
+    H5Sclose(hdf5_dataspace_in_memory);
+    H5Sclose(hdf5_dataspace_in_file);
+    H5Dclose(hdf5_dataset);
+}
+#endif // WITH_HDF5
 
 /**********************************************************************\
  *    Implementation of local functions                               * 

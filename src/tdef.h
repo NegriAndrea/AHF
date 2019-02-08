@@ -329,6 +329,10 @@ typedef struct param_simu
   double        GADGET_m2Msunh;
   double        GADGET_l2Mpch;  // the GADGET units
 
+#ifdef WITH_HDF5
+  double         GIZMO_m2Msunh;
+  double         GIZMO_l2Mpch;  // the GIZMO units
+#endif
   
   /* cosmological information */
   double        omega0;

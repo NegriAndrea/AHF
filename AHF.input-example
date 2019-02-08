@@ -58,6 +58,10 @@ de_filename       = my_dark_energy_table.txt
 GADGET_LUNIT      = 1.
 GADGET_MUNIT      = 1e10
 
+[GIZMO]
+GIMZO_LUNIT       = 1.
+GIZMO_MUNIT       = 1e10
+
 [TIPSY]
 TIPSY_BOXSIZE       = 50.0
 TIPSY_MUNIT         = 4.75e16

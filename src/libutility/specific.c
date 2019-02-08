@@ -1401,6 +1401,16 @@ void write_parameterfile()
           fprintf(fpparam,"GADGET_MUNIT               \t\t%g\n",       simu.GADGET_m2Msunh);
           fprintf(fpparam,"GADGET_LUNIT               \t\t%g\n",        simu.GADGET_l2Mpch);
          }
+#ifdef WITH_HDF5
+         if(fabs(simu.GIZMO_m2Msunh) > ZERO)
+         {
+           fprintf(fpparam,"\n");
+           fprintf(fpparam,"GIZMO related parameter:\n");
+           fprintf(fpparam,"-------------------------\n");
+           fprintf(fpparam,"GIZMO_MUNIT                \t\t%g\n",       simu.GIZMO_m2Msunh);
+           fprintf(fpparam,"GIZMO_LUNIT                \t\t%g\n",        simu.GIZMO_l2Mpch);
+         }
+#endif
         if((codeinfo = fopen("tipsy.info","r")))
          {
           fprintf(fpparam,"\n");

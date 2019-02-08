@@ -76,7 +76,7 @@ char **argv;
   char prefix_list[MAXSTRING], haloid_list[MAXSTRING], prefix_outfile[MAXSTRING], outfile[MAXSTRING], haloline[MAXSTRING], zred_list[MAXSTRING];
   double *zred;
   int i, n, k;
-  int64_t ihalo, id;
+  int64_t ihalo, ihalo_prog, id;
   double z;
   halofile_t  *halobuffer;
   mtreefile_t **mtreebuffer;
@@ -155,7 +155,7 @@ char **argv;
   
   // read all mtree_idx files
   mtreebuffer = (mtreefile_t **) calloc(num_files-1, sizeof(mtreefile_t *));
-  Nmtree      = (uint64_t *) calloc(num_files-1, sizeof(uint64_t));
+  Nmtree      = (uint64_t *)     calloc(num_files-1, sizeof(uint64_t));
   for(n=0; n<num_files-1; n++) {
     Nmtree[n] = read_mtree_idx(mtree_idx[n], &(mtreebuffer[n]));
   }
@@ -172,8 +172,10 @@ char **argv;
     Nhalos = read_halos(AHF_halos[n], &halobuffer);
     
     // which redshift does this correspond to?
-    if(zred == NULL)  z = get_redshift(AHF_halos[n]);
-    else              z = zred[n];
+    if(zred == NULL)
+      z = get_redshift(AHF_halos[n]);
+    else
+      z = zred[n];
 
     fprintf(stderr,"(Nhalos=%"PRIu64"): ",Nhalos);
 
@@ -182,12 +184,12 @@ char **argv;
     // loop over all haloes to be traced
     //-----------------------------------------
 #ifdef WITH_OPENMP
-#pragma omp parallel for private(i,ihalo,outfile,fpout,k,haloline,id) shared(prefix_outfile,argc,stderr,z,num_haloid,haloid,n,halobuffer,mtreebuffer,Nmtree,Nhalos) schedule(dynamic) default(none)
+#pragma omp parallel for private(i,ihalo,ihalo_prog,outfile,fpout,k,haloline,id) shared(prefix_outfile,argc,stderr,z,num_haloid,haloid,n,halobuffer,mtreebuffer,Nmtree,Nhalos) schedule(dynamic) default(none)
 #endif
     for(i=0; i<num_haloid; i++) {
       
       // id of halo to be traced
-      ihalo = haloid[i];
+      ihalo          = haloid[i];
       
       // (re-)open outfile for this halo
       if(argc==5)
@@ -200,15 +202,14 @@ char **argv;
         exit(0);
       }
 
-      // find haloid corresponding to present AHF_halos file
+      // find progenitor haloid in file 'n'
+      ihalo_prog = ihalo;
       for(k=0; k<n; k++) {
-        ihalo = get_haloidx(mtreebuffer[k], Nmtree[k], ihalo);
-        
-        // halo cannot be tracked further
-        if(ihalo < 0) {
-          break;
-        }
+        ihalo_prog = get_haloidx(mtreebuffer[k], Nmtree[k], ihalo);
+        if(ihalo_prog != -1)
+          ihalo = ihalo_prog;
       }
+      ihalo = ihalo_prog;
       fprintf(stderr,"%016"PRIi64" ",ihalo);
 
       if(ihalo >= 0) {
@@ -601,6 +602,7 @@ int64_t get_haloidx(mtreefile_t *mtreebuffer, uint64_t Nmtree, uint64_t ihalo)
 {
   uint64_t i, idx;
   
+  // brute force search (would be faster to use bsearch()...)
   i = 0;
   while(ihalo != mtreebuffer[i].ida && i < Nmtree) {
     i++;

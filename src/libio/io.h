@@ -23,6 +23,10 @@
 #include "io_art.h"
 #include "io_gadget.h"
 #include "io_mgadget.h"
+#ifdef WITH_HDF5
+#include "io_gizmo.h"
+#include "io_mgizmo.h"
+#endif
 #include "io_deva.h"
 #include "io_tipsy.h"
 #include "io_parameter.h"

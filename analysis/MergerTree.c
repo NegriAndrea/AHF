@@ -44,9 +44,14 @@
 #define MINCOMMON      10             // we only cross-correlate haloes if they at least share MINCOMMON particles
 #define ONLY_USE_PTYPE 1              // restrict analysis to particles of this type (1 = dark matter)
 #define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant
-//#define SUSSING2013                   // write _mtree in format used for Sussing Merger Trees 2013
+#define SUSSING2013                   // write _mtree in format used for Sussing Merger Trees 2013
 //#define EXCLUSIVE_PARTICLES           // each particle is only allowed to belong to one object (i.e. the lowest mass one)
 //#define WITH_QSORT                    // uses qsort() instead of indexx() when ordering the progenitors according to merit function
+
+#define SNAPSKIPPING                  // whenever a connection [0]->[1] is not considered credible, the halo wll be copied and considered in the connection [1]->[2] (recursively)
+#define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2.0
+//#define DEBUG_SNAPSKIPPING
+
 
 // support for AHF's MPI output
 //#define READ_MPARTICLES               // support to read multiple _particle files, they must be of the latest AHF _particles file format!
@@ -86,7 +91,7 @@ typedef struct HALOS *HALOptr;
 typedef struct HALOS
 {
   uint64_t  haloid;
-  uint64_t  npart;
+  uint64_t  npart;       // CAREFUL: we restrict the tree building to ONLY_USE_PTYPE and hence this npart is not necessarily what is given in _halos!
   uint64_t *Pid;
   
   uint64_t  ncroco;
@@ -107,7 +112,7 @@ HALOptr     halos[2];
 PARTptr     parts[2];
 uint64_t    nHalos[2];
 uint64_t    PidMax[2]={0,0};
-uint64_t    PidMin=(1<<62);
+uint64_t    PidMin=((uint64_t)1<<62);
 
 /*-------------------------------------------------------------------------------------
  *                                 ALL THOSE FUNCTIONS
@@ -125,6 +130,9 @@ void     construct_filename     (char filename[MAXSTRING], int32_t, char infile[
 uint64_t count_halos            (char filename[MAXSTRING], int32_t);
 int32_t  count_particles_files  (char filename[MAXSTRING]);
 int      merit_sort             (const void *m1, const void *m2);
+#ifdef SNAPSKIPPING
+void     check_connections      ();
+#endif
 
 /*==================================================================================================
  * main:
@@ -289,7 +297,7 @@ int read_particles_bin(char filename[MAXSTRING], int isimu)
   char      line[MAXSTRING], infile[MAXSTRING], hidsname[MAXSTRING];
   int64_t   ihalo, jhalo;
   uint64_t  nPartInHalo, nPartInUse, ipart, jpart, Pid, Ptype, haloid, haloid_from_file;
-  uint64_t  PidMin_local=(1<<62);
+  uint64_t  PidMin_local=((uint64_t)1<<62);
   uint64_t  PidMax_local=0;
   clock_t   elapsed;
   
@@ -409,7 +417,7 @@ int read_particles(char filename[MAXSTRING], int isimu)
   char      line[MAXSTRING], infile[MAXSTRING], hidsname[MAXSTRING];
   int64_t   ihalo, jhalo;
   uint64_t  nPartInHalo, nPartInUse, ipart, jpart, Pid, Ptype, haloid, haloid_from_file;
-  uint64_t  PidMin_local=(1<<62);
+  uint64_t  PidMin_local=((uint64_t)1<<62);
   uint64_t  PidMax_local=0;
   clock_t   elapsed;
   
@@ -772,7 +780,14 @@ int cross_correlation(char OutFile[MAXSTRING])
   fprintf(stderr," done in %4.2f sec.\n", (double)elapsed/CLOCKS_PER_SEC);
   
 #endif // MTREE_BOTH_WAYS
+ 
   
+#ifdef SNAPSKIPPING
+  elapsed = clock();
+  fprintf(stderr,"  o removing missing/uncredible connections ...");
+  check_connections();
+  fprintf(stderr," done in %4.2f sec.\n", (double)elapsed/CLOCKS_PER_SEC);
+#endif
   
   
   write_mtree(OutFile);
@@ -928,6 +943,8 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
         mtree[icroco].id[1]     = khalo;
         mtree[icroco].haloid[1] = halos[isimu1][khalo].haloid;
         mtree[icroco].npart[1]  = halos[isimu1][khalo].npart;
+        
+        // this is the applied merit function
         mtree[icroco].merit     = pow2((double)common[khalo])/((double)halos[isimu0][ihalo].npart*(double)halos[isimu1][khalo].npart);
         
         merit[icroco] = mtree[icroco].merit;
@@ -1057,14 +1074,13 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
  *==================================================================================================*/
 int write_mtree(char OutFile[MAXSTRING])
 {
-  uint64_t  ihalo;
+  uint64_t  ihalo, nHalos0_good;
   int64_t   icroco;
   FILE *fpout, *fpout_idx;
   char outname[MAXSTRING], outname_idx[MAXSTRING];
   clock_t   elapsed;
   
   elapsed = clock();
-  fprintf(stderr,"  o writing cross-correlation for %"PRIu64" haloes ...",nHalos[0]);
   
   sprintf(outname,"%s_mtree",OutFile);
   strcpy(outname_idx, outname);
@@ -1083,12 +1099,22 @@ int write_mtree(char OutFile[MAXSTRING])
   }
   
   
+  
 #ifdef SUSSING2013
-  fprintf(fpout,"%"PRIu64"\n",nHalos[0]);
+  // count the number of halos with a progenitor
+  nHalos0_good = (uint64_t)0;
+  for(ihalo=0; ihalo<nHalos[0]; ihalo++) {
+    if(halos[0][ihalo].ncroco > 0) {
+      nHalos0_good++;
+    }
+  }
+  fprintf(fpout,"%"PRIu64"\n",nHalos0_good);
+  fprintf(stderr,"  o writing cross-correlation for %"PRIu64" haloes (out of %"PRIu64" in total) ...",nHalos0_good,nHalos[0]);
 #else // SUSSING2013
   fprintf(fpout,"#   HaloID(1)   HaloPart(2)  NumProgenitors(3)\n");
   fprintf(fpout,"#      SharedPart(1)    HaloID(2)   HaloPart(3)\n");
   fprintf(fpout_idx,"# HaloID(1) HaloID(2)\n");
+  fprintf(stderr,"  o writing cross-correlation for %"PRIu64" haloes ...",nHalos[0]);
 #endif // SUSSING2013
   fflush(fpout);
   fflush(fpout_idx);
@@ -1129,13 +1155,15 @@ int write_mtree(char OutFile[MAXSTRING])
         fflush(fpout);
       }
     }
-#ifdef SUSSING2013
-    else {
-      fprintf(fpout,"%"PRIu64"  %"PRIu64"\n",
-              halos[0][ihalo].haloid,
-              halos[0][ihalo].ncroco);
-    }
-#endif // SUSSING2013
+//#ifdef SUSSING2013
+//#ifndef SNAPSKIPPING
+//    else {
+//      fprintf(fpout,"%"PRIu64"  %"PRIu64"\n",
+//              halos[0][ihalo].haloid,
+//              halos[0][ihalo].ncroco);
+//    }
+//#endif //SNAPSKIPPING
+//#endif // SUSSING2013
   }
   
   /* close files */
@@ -1254,4 +1282,118 @@ int merit_sort(const void *mtree1, const void *mtree2)
   
   
 }
+
+#ifdef SNAPSKIPPING
+/*==================================================================================================
+ * check for uncredible progenitors:
+ *
+ *   if a halo at [0] does not have a credible progenitor at [1] it will be added to the
+ *   list of halos at [1] and considered when checking the connection [1]->[2]
+ *==================================================================================================*/
+int connectionrejection(HALOS halo)
+{
+  double Mratio;
+  
+  Mratio = (double)halo.npart/(double)halo.mtree[0].npart[1];
+  if(Mratio<1) Mratio=1.0/Mratio;
+  
+  
+  if(Mratio > SNAPSKIPPING_UNCREDIBLEMASSRATIO)
+    return(1);
+  else
+    return(0);
+}
+
+void check_connections()
+{
+  uint64_t ihalo, ipart, PidMax_global, nHalos1;
+  int      rejected, missing;
+  
+  PidMax_global = MAX(PidMax[0],PidMax[1]);
+  nHalos1       = nHalos[1];
+  
+  // loop over all halos at [0]
+  for(ihalo=0; ihalo<nHalos[0]; ihalo++) {
+    
+    // we assume that this halo is *not* yet missing/rejected
+    rejected = 0;
+    missing  = 0;
+    
+    // if a progenitor exists check for credibility...
+    if(halos[0][ihalo].ncroco > 0) {
+      
+      if(connectionrejection(halos[0][ihalo]) == TRUE) {
+#ifdef DEBUG_SNAPSKIPPING
+        fprintf(stderr,"   rejected connection:\n");
+        fprintf(stderr,"      [0]: haloid=%12"PRIu64" npart=%12"PRIu64" ncroco=%12"PRIu64" mtree.haloid=%12"PRIu64" mtree.id=%12"PRIu64" mtree.npart=%12"PRIu64" mtree.common=%12"PRIu64"\n", halos[0][ihalo].haloid, halos[0][ihalo].npart, halos[0][ihalo].ncroco, halos[0][ihalo].mtree[0].haloid[0], halos[0][ihalo].mtree[0].id[0], halos[0][ihalo].mtree[0].npart[0], halos[0][ihalo].mtree[0].common);
+        fprintf(stderr,"      [1]:                                                               mtree.haloid=%12"PRIu64" mtree.id=%12"PRIu64" mtree.npart=%12"PRIu64"\n", halos[0][ihalo].mtree[0].haloid[1], halos[0][ihalo].mtree[0].id[1], halos[0][ihalo].mtree[0].npart[1]);
+#endif
+        rejected = 1;
+
+        // flag halos[0][ihalo] to not be written (only halos with ncroco>0 will be written to file...)
+        halos[0][ihalo].ncroco = 0;
+      }
+      
+    }
+    // if a progenitor has not been found, treat as rejected and keep searching...
+    else {
+#ifdef DEBUG_SNAPSKIPPING
+      fprintf(stderr,"   missing connection:\n");
+      fprintf(stderr,"      [0]: haloid=%12"PRIu64" npart=%12"PRIu64" ncroco=%12"PRIu64" mtree=%12"PRIu64"\n", halos[0][ihalo].haloid, halos[0][ihalo].npart, halos[0][ihalo].ncroco, halos[0][ihalo].mtree);
+#endif
+      missing = 1;
+    }
+    
+    
+    // now deal with the missing/rejected conncetion...
+    if(missing || rejected) {
+      
+      // only try to follow the missing/rejected halo, if it has enough particles
+      if(halos[0][ihalo].npart > MINCOMMON) {
+        
+        // copy halos[0][ihalo] over to halos[1] (we copy as halos[0][ihalo] memory will be free'd!)
+#ifdef DEBUG_SNAPSKIPPING
+        fprintf(stderr,"           copying information:\n");
+        fprintf(stderr,"             [0]:  haloid=%"PRIu64" npart=%"PRIu64" ncroco=%"PRIu64"\n",halos[0][ihalo].haloid,halos[0][ihalo].npart,halos[0][ihalo].ncroco);
+        fprintf(stderr,"             [1]:  nHalos=%"PRIu64" -> ",nHalos[1]);
+#endif
+        halos[1] = (HALOptr) realloc(halos[1], (nHalos[1]+1)*sizeof(HALOS));
+        halos[1][nHalos[1]].haloid = halos[0][ihalo].haloid;
+        halos[1][nHalos[1]].npart  = halos[0][ihalo].npart;
+        halos[1][nHalos[1]].ncroco = halos[0][ihalo].ncroco;
+        halos[1][nHalos[1]].mtree  = NULL;  // we do not have any merger tree information for this one (yet)
+        halos[1][nHalos[1]].Pid    = (uint64_t *) calloc(halos[0][ihalo].npart, sizeof(uint64_t));
+        for(ipart=0; ipart<halos[1][nHalos[1]].npart; ipart++) {
+          halos[1][nHalos[1]].Pid[ipart] = halos[0][ihalo].Pid[ipart];
+          //if(halos[1][nHalos[1]].Pid[ipart] > PidMax[1]) PidMax[1] = halos[1][nHalos[1]].Pid[ipart]; // not needed as particle_halo_mapping takes MAX(PidMax[0],PidMax[1])
+        }
+        
+        // increment number of halos at [1]
+        nHalos[1]++;
+#ifdef DEBUG_SNAPSKIPPING
+        fprintf(stderr,"%"PRIu64"\n",nHalos[1]);
+#endif
+        
+      }// if(MINCOMMON)
+    } // if (missing || rejected)
+  } // for(ihalo)
+  
+  if(nHalos[1] > nHalos1) {
+    // we need to update the particle_halo_maping for [1]
+    for(ipart=0; ipart<PidMax_global+1; ipart++) {   // free() old memory first
+      if(parts[1][ipart].Hid != NULL){
+        free(parts[1][ipart].Hid);
+        parts[1][ipart].Hid = NULL;
+      }
+    }
+    free(parts[1]);
+    parts[1] = NULL;
+    
+    fprintf(stderr,"\n");
+    particle_halo_mapping(1);                       // now call for re-creation of that mapping
+  }
+  
+  return;
+}
+#endif
 

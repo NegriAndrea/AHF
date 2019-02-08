@@ -35,6 +35,9 @@ OBJS = io_logging.o \
        io_gadget.o \
        io_gadget_header.o \
        io_mgadget.o \
+       io_gizmo.o \
+       io_gizmo_header.o \
+       io_mgizmo.o \
        io_deva.o\
        io_deva_header.o\
        io_read_fortran.o\
@@ -85,6 +88,9 @@ io_file.o: io_file.h io_file_aux.h \
            io_gadget.h io_gadget_def.h \
            io_gadget_header.h io_gadget_header_def.h \
            io_mgadget.h io_mgadget_def.h \
+           io_gizmo.h io_gizmo_def.h \
+           io_gizmo_header.h io_gizmo_header_def.h \
+           io_mgizmo.h io_mgizmo_def.h \
            io_deva.h io_deva_def.h \
            io_deva_header.h io_deva_header_def.h \
            io_tipsy.h io_tipsy_def.h \
@@ -179,6 +185,25 @@ io_mgadget.o: io_mgadget.h \
               io_mgadget.c
 	$(CC) $(CFLAGS) -c -o io_mgadget.o io_mgadget.c
 
+io_gizmo.o: io_gizmo.h \
+            io_gizmo_header_def.h io_gizmo_def.h io_file.h io_file_aux.h \
+            io_logging.h io_util.h \
+            io_gizmo.c
+	$(CC) $(CFLAGS) -c -o io_gizmo.o io_gizmo.c
+
+io_gizmo_header.o: io_gizmo_header.h \
+                    io_gizmo_header_def.h io_gizmo_def.h io_logging.h \
+                    io_util.h \
+                    io_gizmo_header.c
+	$(CC) $(CFLAGS) -c -o io_gizmo_header.o io_gizmo_header.c
+
+io_mgizmo.o: io_mgizmo.h \
+              io_mgizmo_def.h \
+              io_gizmo_def.h io_gizmo_header_def.h io_gizmo.h \
+              io_file.h io_file_aux.h io_logging.h io_util.h \
+              io_mgizmo.c
+	$(CC) $(CFLAGS) -c -o io_mgizmo.o io_mgizmo.c
+
 io_deva.o: io_deva.h \
            io_deva_header_def.h io_deva_def.h io_file.h io_file_aux.h \
            io_logging.h io_util.h \
@@ -210,7 +235,7 @@ io_read_fortran.o:		io_read_fortran.c\
 	$(CC) $(CFLAGS) -c -o io_read_fortran.o io_read_fortran.c										
 
 io_util.o: io_util.h io_file.h io_util.c
-	$(CC) $(CFLAGS) -c -o io_util.o io_util.c
+	$(CC) $(CFLAGS) -c -o io_util.o io_util.c -L${LIB_HDF5} -I${INC_HDF5}
 
 io_paramter.o: io_parameter.h \
                io_parameter_def.h io_util.h \

@@ -394,12 +394,17 @@ local_equalpart(io_logging_t log, loadbalance_t loadbal)
 		no_part += loadbal->bf[i];
 	}
 
+	io_logging_msg(log, INT32_C(2),
+                      "first global bucket = %07" PRIu64 "\n",
+                               loadbal->bf[0]);
 	/* Setup the loop */
 	cpu = INT32_C(0);
 	loadbal->no_parts[0] = UINT64_C(0);
 	totnum = UINT64_C(0);
 	loadbal->fstkey[0] = (sfc_key_t)0;
 	partpercpu = (uint64_t)round((double)no_part / (double)loadbal->ncpu);
+	io_logging_msg(log, INT32_C(2),
+                      "ppcpu = %07" PRIu64 "npart: %07" PRIu64 "\n",partpercpu,loadbal->ncpu);
 
 	/* Loop over all loadbalance domain cells */
 	for (i=0; i<loadbal->totkeys; i++) {

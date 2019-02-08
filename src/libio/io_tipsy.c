@@ -427,7 +427,7 @@ io_tipsy_readpart_raw(io_logging_t log,
 #ifdef FSEEKO
 	int64_t blocksize, blocksize2, partsize;
 #else
-	int32_t blocksize, blocksize2, partsize;
+	long blocksize, blocksize2, partsize;
 #endif
 	int32_t nextblocksize;
 	long skipsize;
@@ -535,6 +535,11 @@ io_tipsy_readpart_raw(io_logging_t log,
   //===================================
   else if(pskip > f->header->nsph+f->header->ndark && pskip <= f->header->nsph+f->header->ndark+f->header->nstar)
     {
+#ifdef DEBUG_TIPSY
+     io_logging_msg(log, INT32_C(3),
+                    "First particle lies in STAR block");
+#endif
+     
       // skip over all gas particles consisting of TIPSY_GASVAR variables
       partsize = TIPSY_GASVAR * bytes_file;
 #ifdef FSEEKO
@@ -571,11 +576,6 @@ io_tipsy_readpart_raw(io_logging_t log,
   
   for (i=pskip; i<pskip+pread; i++)
     {
-#ifdef DEBUG_TIPSY
-      fprintf(stderr,"reading particle no. %"PRIu64" of %"PRIu64"\n",i,pskip+pread);
-#endif
-      
-      
       /* Read mass */
       io_util_readfloat(f->file, &dummy, f->swapped);
       fweight = (double)dummy;
@@ -1104,13 +1104,14 @@ io_tipsy_scale_global(io_logging_t log,
   
   io_logging_msg(log, INT32_C(5),
                  "Updating local scale values to global values.");
-  MPI_Allreduce((void *)maxpos, (void *)buffer, 3,
-                MPI_DOUBLE, MPI_MAX, comm);
+
   io_logging_msg(log, INT32_C(5),
                  "local : maxpos[0] = %g \t"
                  "maxpos[1] = %g \t"
                  "maxpos[2] = %g",
                  maxpos[0], maxpos[1], maxpos[2]);
+  MPI_Allreduce((void *)maxpos, (void *)buffer, 3,
+                MPI_DOUBLE, MPI_MAX, comm);
   maxpos[0] = buffer[0];
   maxpos[1] = buffer[1];
   maxpos[2] = buffer[2];
@@ -1120,13 +1121,14 @@ io_tipsy_scale_global(io_logging_t log,
                  "maxpos[2] = %g",
                  maxpos[0], maxpos[1], maxpos[2]);
   
-  MPI_Allreduce((void *)minpos, (void *)buffer, 3,
-                MPI_DOUBLE, MPI_MIN, comm);
+
   io_logging_msg(log, INT32_C(5),
                  "local : minpos[0] = %g \t"
                  "minpos[1] = %g \t"
                  "minpos[2] = %g",
                  minpos[0], minpos[1], minpos[2]);
+  MPI_Allreduce((void *)minpos, (void *)buffer, 3,
+                MPI_DOUBLE, MPI_MIN, comm);
   minpos[0] = buffer[0];
   minpos[1] = buffer[1];
   minpos[2] = buffer[2];
@@ -1136,27 +1138,28 @@ io_tipsy_scale_global(io_logging_t log,
                  "minpos[2] = %g",
                  minpos[0], minpos[1], minpos[2]);
   
+
+  io_logging_msg(log, INT32_C(5), "local : sumweight = %g", *sumweight);
   MPI_Allreduce((void *)sumweight, (void *)buffer, 1,
                 MPI_DOUBLE, MPI_SUM, comm);
-  io_logging_msg(log, INT32_C(5), "local : sumweight = %g", *sumweight);
   *sumweight = buffer[0];
   io_logging_msg(log, INT32_C(5), "global: sumweight = %g", *sumweight);
-  
+
+  io_logging_msg(log, INT32_C(5), "local : minweight = %g", *minweight);
   MPI_Allreduce((void *)minweight, (void *)buffer, 1,
                 MPI_DOUBLE, MPI_MIN, comm);
-  io_logging_msg(log, INT32_C(5), "local : minweight = %g", *minweight);
   *minweight = buffer[0];
   io_logging_msg(log, INT32_C(5), "global: minweight = %g", *minweight);
   
+  io_logging_msg(log, INT32_C(5), "local : maxweight = %g", *maxweight);
   MPI_Allreduce((void *)maxweight, (void *)buffer, 1,
                 MPI_DOUBLE, MPI_MAX, comm);
-  io_logging_msg(log, INT32_C(5), "local : maxweight = %g", *maxweight);
   *maxweight = buffer[0];
   io_logging_msg(log, INT32_C(5), "global: maxweight = %g", *maxweight);
   
+  io_logging_msg(log, INT32_C(5), "local : mmass = %g", *mmass);
   MPI_Allreduce((void *)mmass, (void *)buffer, 1,
                 MPI_DOUBLE, MPI_MIN, comm);
-  io_logging_msg(log, INT32_C(5), "local : mmass = %g", *mmass);
   *mmass = buffer[0];
   io_logging_msg(log, INT32_C(5), "global: mmass = %g", *mmass);
   

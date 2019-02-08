@@ -42,6 +42,11 @@ struct io_parameter_struct {
   double         GADGET_m2Msunh;
   double         GADGET_l2Mpch;  // the GADGET units
 
+#ifdef WITH_HDF5
+  double         GIZMO_m2Msunh;
+  double         GIZMO_l2Mpch;  // the GIZMO units
+#endif
+  
 #ifdef AHF_LRSI
 	double         lrsi_beta;
 	double         lrsi_r_s;
