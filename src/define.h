@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   96
+#define BUILD   97
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)
@@ -163,12 +163,6 @@
 #undef AHFdisks        // no binary format supported yet
 #endif
 
-#ifdef SUSSING2013_particles
-#ifndef SUSSING2013
-#define SUSSING2013
-#endif
-#endif
-
 /*--------------------------------------------------
  *            -DAHFfast
  *--------------------------------------------------*/
@@ -206,6 +200,22 @@
 #endif
 #endif
 
+/*--------------------------------------------------
+ *                    -DSUSSING2013
+ *--------------------------------------------------*/
+// this flag simply leads to haloids of the type
+//       haloid = snapid*1e12+ihalo
+#ifdef SUSSING2013
+#undef AHFnewHaloIDs  // SUSSING2013 overwrites AHFnewHaloIDs
+#endif
+
+// using SUSSING2013_particles will write a different _particles file
+//  now also including information about the total energy and distance to the host
+#ifdef SUSSING2013_particles
+#ifndef SUSSING2013
+#define SUSSING2013
+#endif
+#endif
 
 /*--------------------------------------------------
  *                    -DGADGET

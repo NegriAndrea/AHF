@@ -123,10 +123,10 @@ typedef enum {
 	IO_FILE_GADGET = 60,
 	/** For Gadget format in multiple files */
 	IO_FILE_MGADGET = 61,
-        /** For GIZMO format */
-        IO_FILE_GIZMO = 50,
-        /** For GIZMO format in multiple files */
-        IO_FILE_MGIZMO = 51,
+  /** For GIZMO format */
+  IO_FILE_GIZMO = 50,
+  /** For GIZMO format in multiple files */
+  IO_FILE_MGIZMO = 51,
 	/** For ART format */
 	IO_FILE_ART = 70,
 	/** For ART format, with new reader. */

@@ -48,8 +48,8 @@
 //#define EXCLUSIVE_PARTICLES           // each particle is only allowed to belong to one object (i.e. the lowest mass one)
 //#define WITH_QSORT                    // uses qsort() instead of indexx() when ordering the progenitors according to merit function
 
-#define SNAPSKIPPING                  // whenever a connection [0]->[1] is not considered credible, the halo wll be copied and considered in the connection [1]->[2] (recursively)
-#define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2.0
+//#define SNAPSKIPPING                  // whenever a connection [0]->[1] is not considered credible, the halo wll be copied and considered in the connection [1]->[2] (recursively)
+#define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2
 //#define DEBUG_SNAPSKIPPING
 
 
@@ -111,7 +111,7 @@ typedef struct PARTS
 HALOptr     halos[2];
 PARTptr     parts[2];
 uint64_t    nHalos[2];
-uint64_t    PidMax[2]={0,0};
+uint64_t    PidMax[2]={0,0}, PidMax_global;
 uint64_t    PidMin=((uint64_t)1<<62);
 
 /*-------------------------------------------------------------------------------------
@@ -670,12 +670,13 @@ int read_particles(char filename[MAXSTRING], int isimu)
 int particle_halo_mapping(int isimu)
 {
   int64_t  ihalo;         // the downwards for-loop is running until ihalo=-1
-  uint64_t ipart, jpart, PidMax_global;
+  uint64_t ipart, jpart;
   clock_t  elapsed;
   
   elapsed = clock();
   
-  PidMax_global = MAX(PidMax[0],PidMax[1]);
+  PidMax_global = MAX(PidMax[0],PidMax_global);
+  PidMax_global = MAX(PidMax[1],PidMax_global);
   fprintf(stderr,"  o creating particle<->halo mapping for file %d (PidMax=%"PRIu64", PidMax_global=%"PRIu64") ... ",isimu,PidMax[isimu],PidMax_global);
 
   parts[isimu] = (PARTptr) calloc((PidMax_global+1), sizeof(PARTS)); // +1 because we are accessing an array like [PidMax_global] !
@@ -907,6 +908,11 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
   
   for(jpart=0; jpart<halos[isimu0][ihalo].npart; jpart++) {
     ipart = halos[isimu0][ihalo].Pid[jpart];
+    
+//    if(halos[isimu0][ihalo].haloid == 127000000000204) {
+//      fprintf(stderr,"jpart=%ld/%ld Pid=%ld\n",jpart,halos[isimu0][ihalo].npart,ipart);
+//      fprintf(stderr,"Pid is in nhalos=%ld\n",parts[isimu1][ipart].nhalos);
+//    }
     
     /* ipart belongs to nhalos halos in isimu1 */
     for(jhalo=0; jhalo<parts[isimu1][ipart].nhalos; jhalo++) {  // valgrind says "invalid read of size 4" here!?
@@ -1155,15 +1161,16 @@ int write_mtree(char OutFile[MAXSTRING])
         fflush(fpout);
       }
     }
-//#ifdef SUSSING2013
-//#ifndef SNAPSKIPPING
+#ifdef SUSSING2013
+#ifndef SNAPSKIPPING
+// the code has been changed to *not* write halos with no progenitor
 //    else {
 //      fprintf(fpout,"%"PRIu64"  %"PRIu64"\n",
 //              halos[0][ihalo].haloid,
 //              halos[0][ihalo].ncroco);
 //    }
-//#endif //SNAPSKIPPING
-//#endif // SUSSING2013
+#endif //SNAPSKIPPING
+#endif // SUSSING2013
   }
   
   /* close files */
@@ -1306,11 +1313,14 @@ int connectionrejection(HALOS halo)
 
 void check_connections()
 {
-  uint64_t ihalo, ipart, PidMax_global, nHalos1;
+  uint64_t ihalo, ipart, nHalos1;
   int      rejected, missing;
   
-  PidMax_global = MAX(PidMax[0],PidMax[1]);
+  PidMax_global = MAX(PidMax[0],PidMax_global);
+  PidMax_global = MAX(PidMax[1],PidMax_global);
   nHalos1       = nHalos[1];
+  
+  fprintf(stderr,"(PidMax_global=%"PRIu64")",PidMax_global);
   
   // loop over all halos at [0]
   for(ihalo=0; ihalo<nHalos[0]; ihalo++) {

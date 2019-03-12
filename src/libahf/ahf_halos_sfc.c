@@ -199,8 +199,7 @@ ahf_halos_sfc_gatherParts(HALO *halo)
 	/* Now calculate the most suitable coarseness of the search grid */
 	bits = local_getSuitableBits(halo, halo->gatherRad);
 	/* Get the key of the cell containing the center */
-	centreKey = sfc_curve_calcKey(ctype ,centre[0], centre[1],
-	                              centre[2], bits);
+	centreKey = sfc_curve_calcKey(ctype ,centre[0], centre[1], centre[2], bits);
 	/* Get the shell around this cell */
 	sfc_curve_getShell(ctype, centreKey, shell, bits);
 

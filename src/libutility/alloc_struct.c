@@ -128,8 +128,8 @@ gasptr c_gas(long block_size)
 /*-----------------------------------------------------------------------------
 * c_node:
 * Create block_size nodes and initialize structure members to zero. This
-* function is essentially a cover function for calloc(block_size,
-                                                      * sizeof(node)). The position and momentum members of all particle structures
+* function is essentially a cover function for calloc(block_size, sizeof(node)).
+* The position and momentum members of all particle structures
 * are set equal to 0.0 and the linked list pointer is set to NULL.
 *-----------------------------------------------------------------------------*/
 nptr c_node(long block_size)
