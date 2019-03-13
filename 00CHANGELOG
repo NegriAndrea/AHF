@@ -1935,3 +1935,7 @@
 (BUILD 097)    -> this requires a working HDF5 installation (and hence when intended to be used, also use -DWITH_HDF5)
                -> and as HDF5 is required, we also require to compile this with mpicc (and hence only work for "Standard MPI" and "Standard MPI+OpenMP")
                -> Note: this reader was developed by Doug Rennehan!
+
+12/03/2019   - tweaked for GIZMO support (minor things, but an update to this version is recommended for smooth functioning...)
+(BUILD 098)    -> io_mgizmo.c: the filename format should be "path+stem+fileid+".hdf5"
+             - -DSUSSING2013 now overwrites -DAHFnewHaloIDs

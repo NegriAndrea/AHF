@@ -400,7 +400,7 @@ io_mgizmo_open(io_logging_t log,
 #endif
    {
     /* Get the filenames */
-    f->numfiles = io_util_findfiles(f->path, f->stem, "%i", "", &fnames);
+    f->numfiles = io_util_findfiles(f->path, f->stem, "%i", ".hdf5", &fnames);
     
     if (f->numfiles <= 0) {
       io_logging_fatal(log, "io_mgdaget_open(): Could not open anything starting with %s in %s.", f->stem, f->path);
