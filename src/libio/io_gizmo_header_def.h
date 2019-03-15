@@ -28,10 +28,10 @@
 #define GIZMO_HEADER_SIZE 256
 
 /** Defines the total used size (in bytes) of the header */
-//#define GIZMO_HEADER_HEADERSIZE ( 26*sizeof(int) +12*sizeof(uint32_t) +12*sizeof(double))
+#define GIZMO_HEADER_HEADERSIZE ( 26*sizeof(int) +12*sizeof(uint32_t) +12*sizeof(double))
 
 /** Defines the number of unused bytes in the header */
-//#define GIZMO_HEADER_FILLHEADER (  GIZMO_HEADER_SIZE - GIZMO_HEADER_HEADERSIZE)
+#define GIZMO_HEADER_FILLHEADER (  GIZMO_HEADER_SIZE - GIZMO_HEADER_HEADERSIZE)
 
 /**
  * The header structure itself

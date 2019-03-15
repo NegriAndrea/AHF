@@ -289,7 +289,7 @@ io_mgizmo_open_withoutNCPUREADING_EQ_NFILES(io_logging_t log,
       
 #ifdef FOPENCLOSE
       //fprintf(stderr,"FOPENCLOSE: opened %s ... ",((f->files)[i])->fname);
-      fclose(((f->files)[i])->file);
+      H5Fclose(((f->files)[i])->file);
       // DO NOT SET THE POINTER TO NULL AS file!=NULL INDICATES FOR FOLLOWING ROUTINES THAT FILE COULD BE OPENED
       //fprintf(stderr,"and closed file (temporarily)\n");
 #endif
@@ -617,7 +617,7 @@ io_mgizmo_open(io_logging_t log,
       
 #ifdef FOPENCLOSE
       //fprintf(stderr,"FOPENCLOSE: opened %s ... ",((f->files)[i])->fname);
-      fclose(((f->files)[i])->file);
+      H5Fclose(((f->files)[i])->file);
       // DO NOT SET THE POINTER TO NULL AS file!=NULL INDICATES FOR FOLLOWING ROUTINES THAT FILE COULD BE OPENED
       //fprintf(stderr,"and closed file (temporarily)\n");
 #endif
@@ -667,7 +667,7 @@ io_mgizmo_open(io_logging_t log,
       
 #ifdef FOPENCLOSE
       //fprintf(stderr,"FOPENCLOSE: opened %s ... ",((f->files)[i])->fname);
-      fclose(((f->files)[i])->file);
+      H5Fclose(((f->files)[i])->file);
       // DO NOT SET THE POINTER TO NULL AS file!=NULL INDICATES FOR FOLLOWING ROUTINES THAT FILE COULD BE OPENED
       //fprintf(stderr,"and closed file (temporarily)\n");
 #endif
