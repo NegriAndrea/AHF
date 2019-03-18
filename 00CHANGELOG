@@ -1940,6 +1940,9 @@
 (BUILD 098)    -> io_mgizmo.c: the filename format should be "path+stem+fileid+".hdf5"
              - -DSUSSING2013 now overwrites -DAHFnewHaloIDs
 
-15/01/2019   - bug fixes in io_mgizmo.c
+15/03/2019   - bug fixes in io_mgizmo.c
 (BUILD 099)  - bug fixes in io_gizmo_header_def.c related to missing definitions of GIZMO_HEADER_FILLHEADER
              - bug fixes in io_gizmo.c related to missing definitions of CHECK_BLOCK, SKIP, etc.
+
+18/03/2019   - Doug Rennehan also implemented GIZMO support for the "AGE " and "Z   " block of GIZMO files
+(BUILD 100)

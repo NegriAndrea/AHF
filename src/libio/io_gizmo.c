@@ -155,17 +155,16 @@ local_get_block_z(io_logging_t log,
                   io_gizmo_t f,
                   uint64_t pskip,
                   uint64_t pread,
-                  io_file_strg_struct_t strg);
+                  io_file_strg_struct_t strg,
+                  hid_t hdf5_grp[]);
 
 static uint64_t
 local_get_block_age(io_logging_t log,
                     io_gizmo_t f,
                     uint64_t pskip,
                     uint64_t pread,
-                    io_file_strg_struct_t strg);
-
-static void
-local_skip_GIZMO1_blocks(FILE *, int, int);
+                    io_file_strg_struct_t strg,
+                    hid_t hdf5_grp[]);
 #endif
 
 
@@ -479,11 +478,25 @@ io_gizmo_readpart_raw(io_logging_t log,
     return UINT64_C(0);
   }
   
-  /* @TODO: D. Rennehan: not implemented yet! */
-#	ifdef METALHACK
-  local_get_block_age(log, f, pskip, pread, strg);
-  local_get_block_z(log, f, pskip, pread, strg);
-#	endif
+#ifdef METALHACK
+  funcrtn = local_get_block_age(log, f, pskip, pread, strg, hdf5_grp);
+  if (funcrtn != pread) {
+    io_logging_fatal(log,
+                     "Expected to read %"PRIu64
+                     " particle identities, but only got %"PRIu64
+                     ".  Aborting.");
+    return UINT64_C(0);
+  }
+
+  funcrtn = local_get_block_z(log, f, pskip, pread, strg, hdf5_grp);
+  if (funcrtn != pread) {
+    io_logging_fatal(log,
+                     "Expected to read %"PRIu64
+                     " particle identities, but only got %"PRIu64
+                     ".  Aborting.");
+    return UINT64_C(0);
+  }
+#endif
   
 #ifdef FOPENCLOSE
   for (type = 5; type >= 0; type--)
@@ -1494,12 +1507,7 @@ local_get_block_u(io_logging_t log,
                   io_file_strg_struct_t strg,
                   hid_t hdf5_grp[])
 {
-  uint32_t blocksize, blocksize2;
-  int32_t partsize;
-  uint32_t bytes_file;
-  double fweight, oldfweight;
-  uint32_t curprtt;
-  uint64_t i, psum;
+  uint64_t i;
   float dummy;
   double fu;
   int ptype;
@@ -1572,401 +1580,179 @@ local_get_block_u(io_logging_t log,
 
 #ifdef METALHACK
 #include "../define.h"
-/* No we define a bunch of macros to make life easier */
-#define SKIP  {io_util_readuint32(f->file, &blocksize,  f->swapped);}
-#define SKIP2 {io_util_readuint32(f->file, &blocksize2, f->swapped);}
-#define CHECK_BLOCK {\
-if (blocksize != blocksize2) {\
-io_logging_fatal(log,\
-"The block boundaries (beginning: %" PRIu32\
-" end: %" PRIu32 ") are not identical. "\
-"Corrupt file?", blocksize, blocksize2);\
-fflush(NULL);\
-exit(999);\
-return UINT64_C(0);\
-} else {\
-io_logging_msg(log, INT32_C(5),\
-"Block claimed correctly to be %f MB long.", \
-(float)(blocksize/1024./1024.));\
-}\
-}
-#define GET_BLOCK {\
-SKIP;\
-io_util_readstring(f->file, str, (size_t)4);\
-io_util_readuint32(f->file, &nextblocksize, f->swapped);\
-io_logging_msg(log, INT32_C(1),\
-"Arrived at block %s, size of it will be %" \
-PRIi32, str, nextblocksize);\
-SKIP2;\
-CHECK_BLOCK;\
-}
-
 static uint64_t
 local_get_block_z(io_logging_t log,
-                  io_gizmo_t f,
-                  uint64_t pskip,
-                  uint64_t pread,
-                  io_file_strg_struct_t strg)
-{
-  uint32_t blocksize, blocksize2, nextblocksize;
-  int32_t partsize, bytes_file;
-  char str[5];
-  int tries;
-  uint64_t i, metalzread, starsoffset, metalzskip;
-  double fz;
-  float dummy;
-  
-  /* if this is not a Gizmo 2 file, skip until METAL block */
-  /* (assuming the orderting POS,VEL,ID,MASS,UGAS,RHO,NE,NH,HSML,SFR,AGE,Z) */
-  if (f->ver != 2) {
-    local_skip_GIZMO1_blocks(f->file, f->swapped, 11); // we skip the first 11 blocks
-  }
-  
-  /* we have a Gizmo 2 file and hence use the HEAD to find Z */
-  else {
-    /* Go to the metal block */
-    str[0] = 'A';
-    tries = 0;
-    nextblocksize = 0;
-    while ( (strncmp(str, "Z   ", 4) != 0) && (tries < 100)) {
-#ifdef GIZMO_MAGNETICUM
-      fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
-#endif
-      fseek(f->file, nextblocksize, SEEK_CUR);
-      GET_BLOCK;
-      tries++;
-    }
-#ifdef GIZMO_MAGNETICUM
-    fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
-#endif
-  }
-  
-  /* Start with the block */
-  SKIP;
-  bytes_file = blocksize / (f->header->np[0]+f->header->np[4]);
-  CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
-  io_logging_msg(log, INT32_C(1),
-                 "A total of %" PRIu64 " metallicities "
-                 "with %" PRIi32 " bytes per float (%f MB total) "
-                 "are stored.",
-                 f->header->np[0]+f->header->np[4], bytes_file,
-                 (float)(blocksize/1024./1024.));
-  
-  /* Set the particle size */
-  partsize = bytes_file;
-  
-  /* Find the right spot */
-  metalzskip = UINT64_C(0);
-  metalzread = UINT64_C(0);
-  starsoffset =   f->header->np[0] + f->header->np[1]
-  + f->header->np[2] + f->header->np[3];
-  if (pskip < f->header->np[0])
-    metalzskip = pskip; // Skip the first gas particles
-  else if (pskip < starsoffset)
-    metalzskip = f->header->np[0]; // Skip all gas
-  else if (pskip < starsoffset + f->header->np[4])
-    metalzskip = f->header->np[0] + pskip - starsoffset; // Skip all gas and a few stars
-  else
-    metalzskip = f->header->np[0] + f->header->np[4]; // Skip all gas and all stars
-  
-  /* Now we skip to right position in the file */
-  fseek(f->file, metalzskip * partsize, SEEK_CUR);
-  
-  /* Read the gas metalz */
-  for (i=0; i<pread && i+pskip<f->header->np[0]; i++) {
-    /* STEP 1:  Read the metal from the file */
-    if (bytes_file == sizeof(float)) {
-      io_util_readfloat(f->file, &dummy, f->swapped);
-      fz = (double)dummy;
-    } else  {
-      io_util_readdouble(f->file, &fz, f->swapped);
-    }
-    /* STEP 2:  Store the metal in the array */
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.z.val) = (float)fz;
-    } else {
-      *((double *)strg.z.val) = fz;
-    }
-    /* STEP 3:  Increment the pointers to the next particle */
-    strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
-    metalzread++;
-  }
-  
-  /* Conjure up metalz for the nonmetal particles */
-  for (; i<pread && i+pskip<starsoffset; i++) {
-    fz = 0.0;
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.z.val) = (float)fz;
-    } else {
-      *((double *)strg.z.val) = fz;
-    }
-    strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
-  }
-  
-  /* Read the star metalz */
-  for (; i<pread && i+pskip<starsoffset+f->header->np[4]; i++) {
-    /* STEP 1:  Read the metal from the file */
-    if (bytes_file == sizeof(float)) {
-      io_util_readfloat(f->file, &dummy, f->swapped);
-      fz = (double)dummy;
-    } else  {
-      io_util_readdouble(f->file, &fz, f->swapped);
-    }
-    /* STEP 2:  Store the metal in the array */
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.z.val) = (float)fz;
-    } else {
-      *((double *)strg.z.val) = fz;
-    }
-    /* STEP 3:  Increment the pointers to the next particle */
-    strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
-    metalzread++;
-  }
-  
-  /* Conjure up metalz for the nonmetal particles */
-  for (; i<pread; i++) {
-    fz = 0.0;
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.z.val) = (float)fz;
-    } else {
-      *((double *)strg.z.val) = fz;
-    }
-    strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
-  }
-  
-  /* Go to the end of the block */
-  fseek(f->file,
-        partsize*(f->header->np[0]+f->header->np[4]-metalzread-metalzskip),
-        SEEK_CUR);
-  
-  io_logging_msg(log, INT32_C(1),
-                 "A total of %" PRIu64 " metals were read.",
-                 metalzread);
-  
-  /* Finish the block */
-  SKIP2;
-  CHECK_BLOCK;
-  
-  /* And return the number of read particles for error checking */
-  return pread;
-}
-
-static uint64_t
-local_get_block_age(io_logging_t log,
                     io_gizmo_t f,
                     uint64_t pskip,
                     uint64_t pread,
-                    io_file_strg_struct_t strg)
+                    io_file_strg_struct_t strg,
+                    hid_t hdf5_grp[])
 {
-  uint32_t blocksize, blocksize2, nextblocksize;
-  int32_t partsize, bytes_file;
-  char str[5];
-  int tries;
-  uint64_t i, agesread, agesskip, starsoffset;
-  double fage;
+  double fz;
   float dummy;
-  
-  /* if this is not a Gizmo 2 file, skip until AGE block */
-  /* (assuming the orderting POS,VEL,ID,MASS,UGAS,RHO,NE,NH,HSML,SFR,AGE,METAL) */
-  if (f->ver != 2) {
-    local_skip_GIZMO1_blocks(f->file, f->swapped, 10); // we skip the first 10 blocks
-  }
-  
-  /* we have a Gizmo 2 file and hence use the HEAD to find AGE */
-  else {
-    /* Go to the AGE block */
-    str[0] = 'X';
-    tries = 0;
-    nextblocksize = 0;
-    while ( (strncmp(str, "AGE ", 4) != 0) && (tries < 100)) {
-#ifdef GIZMO_MAGNETICUM
-      fprintf(stderr,"skipping block %s of size %"PRIu32"\n",str,nextblocksize);
-#endif
-      fseek(f->file, nextblocksize, SEEK_CUR);
-      GET_BLOCK;
-      tries++;
+  uint64_t i;
+  int type;
+  hid_t hdf5_datatype = 0;
+  void * CommBuffer;
+  int num_bytes = 0;
+  int num_elements = f->header->flagmetals;
+
+  for (type = 0; type < 6; type ++)
+  {
+    io_logging_msg(log, INT32_C(2), "local_get_block_z(): read %d of part type %d ", f->header->np[type], type);
+    
+    if (f->header->np[type] == 0 )
+    {
+      io_logging_msg(log, INT32_C(2), "local_get_block_z(): no particles of type %d, skip! ", type);
+      continue;
     }
-#ifdef GIZMO_MAGNETICUM
-    fprintf(stderr,"found block %s of size %"PRIu32"\n",str,nextblocksize);
-#endif
-  }
-  
-  /* Start with the block */
-  SKIP;
-  bytes_file = blocksize / (f->header->np[4]);
-  CHECK_FLOATBYTES(bytes_file, strg.bytes_float);
-  io_logging_msg(log, INT32_C(1),
-                 "A total of %" PRIu64 " star "
-                 "with %" PRIi32 " bytes per float (%f MB total) "
-                 "are stored.",
-                 f->header->np[4], bytes_file,
-                 (float)(blocksize/1024./1024.));
-  
-  /* Set the particle size */
-  partsize = bytes_file;
-  
-  /* Find the right spot in the file */
-  agesskip = UINT64_C(0);
-  agesread = UINT64_C(0);
-  starsoffset =   f->header->np[0] + f->header->np[1]
-  + f->header->np[2] + f->header->np[3];
-  if (pskip < starsoffset)
-    agesskip = 0;
-  else if (pskip < starsoffset + f->header->np[4])
-    agesskip = pskip - starsoffset;  // Skip the first few stars
-  else
-    agesskip = f->header->np[4]; // Skip all stars
-  
-  fseek(f->file, partsize*(agesskip), SEEK_CUR);
-  
-  /* Set ages of particles type 0-3*/
-  for (i=0; i<pread && i+pskip<starsoffset; i++) {
-    fage = 0.0;
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.age.val) = (float)fage;
+
+    /* Only gas and stars (pt=0 & pt=4) have metals in cosmo sims */
+    if (type == 0 || type == 4)
+    {    
+      if (f->header->flagdoubleprecision)
+      {
+        hdf5_datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+        num_bytes = f->header->np[type] * num_elements * sizeof(double);
+        CommBuffer = (double *)malloc(num_bytes);
+      } else {
+        hdf5_datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+        num_bytes = f->header->np[type] * num_elements * sizeof(float);
+        CommBuffer = (float *)malloc(num_bytes);
+      }
+    
+      if (CommBuffer == NULL)
+      {
+        io_logging_fatal(log, "local_get_block_z(): could not allocate %d bytes", (int)num_bytes);
+        return UINT64_C(0);
+      }
+    
+      io_logging_msg(log, INT32_C(2), "local_get_block_z(): part type %d: allocated %d bytes for CommBuffer", type, (int)num_bytes);
+   
+      io_util_readhdf5(log, f, "Metallicity", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
+    
+      /* Loop over the particle positions */
+      for (i = 0; i < num_elements * f->header->np[type]; i += num_elements) {
+        if (f->header->flagdoubleprecision)
+        {
+          fz = ((double *)CommBuffer)[i]; // Only take the first element, the mass fraction
+        } else {
+          fz = (double)((float *)CommBuffer)[i];
+        }
+      
+        if (strg.bytes_float != sizeof(float))
+        {
+          *((double *)strg.z.val) = fz;
+        } else {
+          *((float *)strg.z.val) = (float)fz;
+        }
+      
+        /* Increment the pointers to the next particle */
+        strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
+      } /* End of particle metal loop */
+
+      free(CommBuffer); // We allocated this for both pt=0 and pt=4, so free every time
     } else {
-      *((double *)strg.age.val) = fage;
+      for (i = 0; i < f->header->np[type]; i++) {
+        fz = 0.0; // This is already a double
+
+        if (strg.bytes_float != sizeof(float))
+        {
+          *((double *)strg.z.val) = fz;
+        } else {
+          *((float *)strg.z.val) = (float)fz;
+        }
+
+        strg.z.val = (void *)(((char *)strg.z.val) + strg.z.stride);
+      }
     }
-    strg.age.val = (void *)(((char *)strg.age.val) + strg.age.stride);
   }
   
-  /* Read the star ages */
-  for (; i<pread && i+pskip<starsoffset+f->header->np[4]; i++) {
-    /* STEP 1:  Read the age from the file */
-    if (bytes_file == sizeof(float)) {
-      io_util_readfloat(f->file, &dummy, f->swapped);
-      fage = (double)dummy;
-    } else  {
-      io_util_readdouble(f->file, &fage, f->swapped);
+  pread = f->no_part;
+  return pread;
+}
+ 
+static uint64_t
+local_get_block_age(io_logging_t log,
+                  io_gizmo_t f,
+                  uint64_t pskip,
+                  uint64_t pread,
+                  io_file_strg_struct_t strg,
+                  hid_t hdf5_grp[])
+{
+  uint64_t i;
+  float dummy;
+  double fage;
+  int ptype;
+  int type;
+  hid_t hdf5_datatype = 0;
+  void * CommBuffer;
+  int num_bytes = 0;
+  
+  for (type = 0; type < 6; type ++)
+  {
+    /* Type==4 is usually stars formed in the simulations, so only treat them */
+    if (type == 4 && f->header->np[type] != 0) {
+      if (f->header->flagdoubleprecision)
+      {
+        hdf5_datatype = H5Tcopy(H5T_NATIVE_DOUBLE);
+        num_bytes = f->header->np[type] * sizeof(double);
+        CommBuffer = (double *)malloc(num_bytes);
+      } else {
+        hdf5_datatype = H5Tcopy(H5T_NATIVE_FLOAT);
+        num_bytes = f->header->np[type] * sizeof(float);
+        CommBuffer = (float *)malloc(num_bytes);
+      }
+      
+      if (CommBuffer == NULL)
+      {
+        io_logging_fatal(log, "local_get_block_age(): could not allocate %d bytes", (int)num_bytes);
+        return UINT64_C(0);
+      }
+      
+      io_logging_msg(log, INT32_C(2), "local_get_block_age(): part type %d: allocated %d bytes for CommBuffer", type, (int)num_bytes);
+      
+      /* StellarAge should be the proper tag in the HDF5 file */
+      io_util_readhdf5(log, f, "StellarFormationTime", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
     }
-    /* STEP 2:  Store the age in the array */
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.age.val) = (float)fage;
-    } else {
-      *((double *)strg.age.val) = fage;
+    
+    /* Loop over the particles */
+    for (i = 0; i < f->header->np[type]; i++)
+    {
+      if (type == 4)
+      {
+        if (f->header->flagdoubleprecision)
+        {
+          fage = ((double *)CommBuffer)[i];
+        } else {
+          fage = (double)((float *)CommBuffer)[i];
+        }
+      } else {
+        fage = 0.0;
+      }
+      
+      /* Store the particle in the array */
+      if (strg.bytes_float != sizeof(float))
+      {
+        *((double *)strg.age.val) = fage;
+      } else {
+        *((float *)strg.age.val) = (float)fage;
+      }
+      
+      /* Increment the pointers to the next particle */
+      strg.age.val = (void *)(((char *)strg.age.val) + strg.age.stride);
+    } /* End of particle velocity loop */
+    
+    if (type == 4 && f->header->np[type] != 0)
+    {
+      free(CommBuffer);
     }
-    /* STEP 3:  Increment the pointers to the next particle */
-    strg.age.val = (void *)(((char *)strg.age.val) + strg.age.stride);
-    agesread++;
   }
   
-  /* Set ages of particle type 5 */
-  for (; i<pread; i++) {
-    fage = 0.0;
-    if (strg.bytes_float == sizeof(float)) {
-      *((float *)strg.age.val) = (float)fage;
-    } else {
-      *((double *)strg.age.val) = fage;
-    }
-    strg.age.val = (void *)(((char *)strg.age.val) + strg.age.stride);
-  }
-  
-  io_logging_msg(log, INT32_C(1),
-                 "A total of %" PRIu64 " ages were read.",
-                 agesread);
-  
-  /* Go to the end of the block */
-  fseek(f->file,
-        partsize*(f->header->np[4]-agesread-agesskip),
-        SEEK_CUR);
-  
-  /* Finish the block */
-  SKIP2;
-  CHECK_BLOCK;
-  
-  /* And return the number of read particles for error checking */
+  pread = f->no_part;
   return pread;
 }
 
-void local_skip_GIZMO1_blocks(FILE *fpgizmo, int swapped, int nblocks)
-{
-  double       ddummy;
-  int          idummy;
-  int          nskipblocks;
-  unsigned int uidummy;
-  unsigned int blocksize1, blocksize2;
-  int          iblock;
-  char         unused[GIZMO_HEADER_FILLHEADER+1];
-  
-  /* set the number of blocks to be skipped (excluding the header!) */
-  nskipblocks = nblocks;
-  
-  /* rewind file back to the beginning */
-  rewind(fpgizmo);
-  
-#ifdef VERBOSE_GIZMO1_HEADER
-  /* skip header */
-  io_util_readuint32(fpgizmo, &blocksize1, swapped); // GIZMO1-SKIP
-  
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np0=%d\n",idummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np1=%d\n",idummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np2=%d\n",idummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np3=%d\n",idummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np4=%d\n",idummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);   //fprintf(stderr,"np5=%d\n",idummy);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"expansion=%g\n",ddummy);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"redshift=%g\n",ddummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"boxsize=%g\n",ddummy);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"omega=%g\n",ddummy);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"omegalambda=%g\n",ddummy);
-  io_util_readdouble(fpgizmo, &ddummy, swapped);  //fprintf(stderr,"hubble=%g\n",ddummy);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readuint32(fpgizmo, &uidummy, swapped);
-  io_util_readint32(fpgizmo, &idummy, swapped);
-  io_util_readstring(fpgizmo, unused, GIZMO_HEADER_FILLHEADER);
-  
-  io_util_readuint32(fpgizmo, &blocksize2, swapped); // GIZMO1-SKIP
-  
-  //fprintf(stderr,"skipped HEADER of size %u vs. %u bytes\n",blocksize1,blocksize2);
-  
-#else /* VERBOSE_GIZMO1_HEADER */
-  nskipblocks++;
-#endif
-  
-  /* skip GIZMO1 blocks */
-  for(iblock=0; iblock<nskipblocks; iblock++)
-  {
-    io_util_readuint32(fpgizmo, &blocksize1, swapped); // GIZMO1-SKIP
-    fseek(fpgizmo, blocksize1, SEEK_CUR);              // block-SKIP
-    io_util_readuint32(fpgizmo, &blocksize2, swapped); // GIZMO1-SKIP
-    
-    //fprintf(stderr,"skipped block #%d (out of %d in total) of size %u vs. %d MB\n",iblock,nblocks,blocksize1/1024/1024,blocksize2/1024/1024);
-    
-    /* the file appears to be corrupted */
-    if(blocksize1 != blocksize2)
-    {
-      fprintf(stderr,"We are already trying to help you with your ancient GIZMO1 file, but enough is enough!\n");
-      exit(-1);
-    }
-  }
-}
-#undef GET_BLOCK
-#undef CHECK_FLOATBYTES
-#undef SKIP
-#undef SKIP2
-#undef CHECK_BLOCK
 #endif // METALHACK
 
 #endif // WITH_HDF5
