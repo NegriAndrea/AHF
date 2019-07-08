@@ -49,7 +49,7 @@
 //#define WITH_QSORT                    // uses qsort() instead of indexx() when ordering the progenitors according to merit function
 
 //#define SNAPSKIPPING                  // whenever a connection [0]->[1] is not considered credible, the halo wll be copied and considered in the connection [1]->[2] (recursively)
-#define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2
+#define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2000
 //#define DEBUG_SNAPSKIPPING
 
 

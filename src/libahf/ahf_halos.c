@@ -4465,16 +4465,17 @@ HaloProfiles(HALO *halo)
 			dVY = (VYp - VYc / M_sphere);
 			dVZ = (VZp - VZc / M_sphere);
       
-
-			/* angular momentum of particles within sphere [0, cur_rad] */
+			/* angular momentum of particles within sphere [0, cur_rad] (Hubble drag not relevant for angular momentum) */
 			Lx += weight * (dY * dVZ - dZ * dVY);
 			Ly += weight * (dZ * dVX - dX * dVZ);
 			Lz += weight * (dX * dVY - dY * dVX);
-
+      
+#ifndef AHFnoHubbleDrag
 			/* add Hubble flow to velocities */
 			dVX += Hubble * dX * r_fac / v_fac;
 			dVY += Hubble * dY * r_fac / v_fac;
 			dVZ += Hubble * dZ * r_fac / v_fac;
+#endif
 
       /* kinetic energy of particle */
 			Tpart = weight * (pow2(dVX) + pow2(dVY) + pow2(dVZ));
@@ -4775,7 +4776,10 @@ HaloProfiles(HALO *halo)
 		halo->prof.npart[ibin]   = npart;
 		halo->prof.nvpart[ibin]  = M_sphere;
 		halo->prof.ovdens[ibin]  = M_sphere / Volume;
-		halo->prof.dens[ibin]    = dM       / dV;
+    if (dV>0)
+      halo->prof.dens[ibin]    = dM       / dV;
+    else
+      halo->prof.dens[ibin]    = 0.0;
 		halo->prof.v2_circ[ibin] = M_sphere / cur_rad;
 #ifdef AHF_LRSI
 		halo->prof.v2_circ[ibin]*= (1.0+(1.0 + x_fac*cur_rad/simu.lrsi_r_s)*simu.lrsi_beta*exp(-x_fac*cur_rad/simu.lrsi_r_s));
@@ -5040,16 +5044,24 @@ HaloProfiles(HALO *halo)
 	halo->E3.x     = halo->prof.E3x[nbins - 1];
 	halo->E3.y     = halo->prof.E3y[nbins - 1];
 	halo->E3.z     = halo->prof.E3z[nbins - 1];
-	halo->AngMom.x = Lx / absAngMom;
-	halo->AngMom.y = Ly / absAngMom;
-	halo->AngMom.z = Lz / absAngMom;
-  
-  /* Bullock et al. (2001) spin parameter */
-	halo->lambda   = absAngMom / halo->M_vir / sqrt(2. * halo->M_vir * halo->R_vir);
-	halo->lambda  *= v_fac * sqrt(r_fac / (Grav * m_fac));
-  
-  /* energy based spin parameter (ala Peebles) */
-	halo->lambdaE  = calc_lambdaE(absAngMom, halo->M_vir, halo->M_vir, halo->Ekin, halo->Epot);
+  if(absAngMom > 0) {
+    halo->AngMom.x = Lx / absAngMom;
+    halo->AngMom.y = Ly / absAngMom;
+    halo->AngMom.z = Lz / absAngMom;
+
+    /* Bullock et al. (2001) spin parameter */
+    halo->lambda   = absAngMom / halo->M_vir / sqrt(2. * halo->M_vir * halo->R_vir);
+    halo->lambda  *= v_fac * sqrt(r_fac / (Grav * m_fac));
+    
+    /* energy based spin parameter (ala Peebles) */
+    halo->lambdaE  = calc_lambdaE(absAngMom, halo->M_vir, halo->M_vir, halo->Ekin, halo->Epot);
+  } else {
+    halo->AngMom.x = 0.0;
+    halo->AngMom.y = 0.0;
+    halo->AngMom.z = 0.0;
+    halo->lambda   = 0.0;
+    halo->lambdaE  = 0.0;
+  }
   
   /* NFW concentration ala Prada et al. (2012) */
   halo->cNFW     = calc_cNFW(halo->V2_max, halo->M_vir/halo->R_vir);
@@ -5293,11 +5305,7 @@ HaloProfiles(HALO *halo)
 		halo->DM_only.AngMom.z = Lz_dark / absAngMom;
 		halo->DM_only.lambda   = absAngMom / M_dark / sqrt(2. * halo->M_vir * halo->R_vir);
 		halo->DM_only.lambda  *= v_fac * sqrt(r_fac / (Grav * m_fac));
-		halo->DM_only.lambdaE  = calc_lambdaE(absAngMom,
-		                                      halo->M_vir,
-		                                      halo->DM_only.Mass,
-		                                      halo->DM_only.Ekin,
-		                                      halo->DM_only.Epot);
+		halo->DM_only.lambdaE  = calc_lambdaE(absAngMom, halo->M_vir, halo->DM_only.Mass, halo->DM_only.Ekin, halo->DM_only.Epot);
 
 		/* get shape of DM particles (all DM part's within sphere!) */
 		itensor[0][0] = a11_dark;
@@ -5722,6 +5730,8 @@ HaloProfilesDisk(HALO *halo)
       dvx = ((double)cur_part->mom[X]) - VXc;
       dvy = ((double)cur_part->mom[Y]) - VYc;
       dvz = ((double)cur_part->mom[Z]) - VZc;
+      
+      // as we are only dealing with angular momentum here, there is no need for the Hubble term as it just leads to cross(r,r)=0
       
 			/* Get the distance from the center */
 			cur_dist = sqrt(pow2(dx) + pow2(dy) + pow2(dz));

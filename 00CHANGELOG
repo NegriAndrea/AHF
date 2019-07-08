@@ -1946,3 +1946,6 @@
 
 18/03/2019   - Doug Rennehan also implemented GIZMO support for the "AGE " and "Z   " block of GIZMO files
 (BUILD 100)
+
+01/07/2019   - addressed some issues with GIZMO support that led to 'nan' values in the output files
+(BUILD 101)  - fixed issue with large GIZMO files (uint32_t -> uint64_t)
