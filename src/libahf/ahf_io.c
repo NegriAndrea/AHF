@@ -1143,7 +1143,8 @@ WriteParticlesLegacy(FILE          *fout,
           fprintf(fout, "%" PRIpartid "\t%d\n", current->id, (current->u >= PGAS) ? (int)PGAS : (int)(-current->u));
 #else // GAS_PARTICLES
 #		if (!(defined AHF_NO_PARTICLES && defined AHFlean))
-          fprintf(fout, "%" PRIpartid "\t%d\n", current->id,(int)(-PDM));
+//          fprintf(fout, "%" PRIpartid "\t%d\n", current->id,(int)(-PDM));
+          fprintf(fout, "%" PRIpartid "\t%d\n", current->id,(int)(current->weight));
 #		endif
 #endif     /* GAS_PARTICLES */
 

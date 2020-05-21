@@ -6250,7 +6250,7 @@ void exciseSubhaloStars(HALO *halos, long ihost)
           idsubstar[ksubstar] = cur_part - global.fst_part;
           ksubstar++;
           
-          // just in case all subhaloes combined contain more stars than the host (this can happen if there are sub-subhaloes present!)
+          // just in case all subhaloes combined contain more stars than the host (this can happen if subhalo extends across host's radius!)
           if(ksubstar >= nhoststar)
             idsubstar = (long *) realloc(idsubstar, (ksubstar+1)*sizeof(long));
         }

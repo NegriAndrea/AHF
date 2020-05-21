@@ -59,7 +59,7 @@ GADGET_LUNIT      = 1.
 GADGET_MUNIT      = 1e10
 
 [GIZMO]
-GIMZO_LUNIT       = 1.
+GIZMO_LUNIT       = 1.
 GIZMO_MUNIT       = 1e10
 
 [TIPSY]
