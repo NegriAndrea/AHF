@@ -160,7 +160,8 @@ int main(int argc, char **argv)
   fpout = fopen(outname,"w");
   
    for(cur_part=global_info.fst_part; cur_part<(global_info.fst_part+global_info.no_part); cur_part++) {
-     if(cur_part->weight>1) {
+     //if(cur_part->weight>1)
+     {
        fprintf(fpout,"%e %e %e %f %f %f\n",
                cur_part->pos[X]*simu.boxsize,cur_part->pos[Y]*simu.boxsize,cur_part->pos[Z]*simu.boxsize,
                cur_part->mom[X]*H0*simu.boxsize/global.a,cur_part->mom[Y]*H0*simu.boxsize/global.a,cur_part->mom[Z]*H0*simu.boxsize/global.a);

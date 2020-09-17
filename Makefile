@@ -25,7 +25,7 @@ export MAKE
 AHF:	FORCE dirs
 	cd src;\
 	${MAKE} AHF;\
-	mv -f AHF ../bin/AHF-v1.0-102
+	mv -f AHF ../bin/AHF-v1.0-103
 
 
 # everything in convert/

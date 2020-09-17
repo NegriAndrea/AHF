@@ -1952,3 +1952,6 @@
 
 20/05/2020   - for DM simulations with MULTIMASS WriteParticlesLegacy() now write the "(int)mass" of the dm particle as the type instead of '1' for all types
 (BUILD 102)  - fix typo in AHF.input-example: GIMZO -> GIZMO
+
+17/09/2020   - bug fix in ahf_io.c: AHF tried to write particle masses even without the -DMULTIMASS flag
+(BUILD 103)
