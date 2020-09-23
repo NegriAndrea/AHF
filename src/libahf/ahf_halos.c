@@ -3658,6 +3658,8 @@ rem_unbound(HALO *halo)
 #endif   /* GAS_PARTICLES */
 #endif /* AHFignore_ugas */
 
+//      fprintf(stderr,"v=%lf v_esc=%lf\n",sqrt(vel2),sqrt(v_esc2));
+      
 			/* unbound particle? */
 			if (vel2 > v2_tune * v_esc2) {
 				/* count number of particles to be removed */

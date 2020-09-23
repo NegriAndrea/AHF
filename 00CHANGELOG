@@ -1955,3 +1955,6 @@
 
 17/09/2020   - bug fix in ahf_io.c: AHF tried to write particle masses even without the -DMULTIMASS flag
 (BUILD 103)
+
+23/09/2020   - bug fix in calc_Hubble() for -DNO_EXPANSION
+(BUILD 104)    -> the code previously set Hubble=0.0 which led to problems in calc_virial() and the value for rho_vir used in ahf_halos.c

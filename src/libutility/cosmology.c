@@ -99,7 +99,7 @@ double calc_Hubble(double a)
    double Hubble;
    
 #ifdef NO_EXPANSION
-   Hubble = 0.0;
+  Hubble = H0;   // we need to set it to some value as otherwiese rho_crit and ultimately rho_vir will be zero; but they are used to define the edge of the halo!
 #else /* NO_EXPANSION */
 #ifdef DARK_ENERGY
    Hubble = H0 * Hubble_DE(a); 
