@@ -1958,3 +1958,6 @@
 
 23/09/2020   - bug fix in calc_Hubble() for -DNO_EXPANSION
 (BUILD 104)    -> the code previously set Hubble=0.0 which led to problems in calc_virial() and the value for rho_vir used in ahf_halos.c
+
+22/10/2020   - a few adjustments in io_gizmo.c and io_gizmo_header_def.h to better handle files with large numbers of particles
+(BUILD 105)    (e.g. type casting to uint64_t where appropriate)
