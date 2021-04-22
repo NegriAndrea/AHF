@@ -847,7 +847,7 @@ WriteHalosLegacy(FILE          *fout,
     COLUMN_INFO(fout, "ID", column);
     COLUMN_INFO(fout, "hostHalo", column);
     COLUMN_INFO(fout, "numSubStruct", column);
-		COLUMN_INFO(fout, "Mvir", column);
+		COLUMN_INFO(fout, "Mhalo", column);
  		COLUMN_INFO(fout, "npart", column);
 		COLUMN_INFO(fout, "Xc", column);
 		COLUMN_INFO(fout, "Yc", column);
@@ -855,7 +855,7 @@ WriteHalosLegacy(FILE          *fout,
 		COLUMN_INFO(fout, "VXc", column);
 		COLUMN_INFO(fout, "VYc", column);
 		COLUMN_INFO(fout, "VZc", column);
-		COLUMN_INFO(fout, "Rvir", column);
+		COLUMN_INFO(fout, "Rhalo", column);
 		COLUMN_INFO(fout, "Rmax", column);
 		COLUMN_INFO(fout, "r2", column);
 		COLUMN_INFO(fout, "mbp_offset", column);
@@ -1887,10 +1887,10 @@ ahf_binwrite_halos(char          *prefix,
             "numHalos\n"
             "numColumns\n"
 		        "ID(%i) hostHalo(%i) numSubStruct(%i) "
-		        "Mvir(%i) npart(%i) "
+		        "Mhalo(%i) npart(%i) "
             "Xc(%i) Yc(%i) Zc(%i) "
             "VXc(%i) VYc(%i) VZc(%i) "
-            "Rvir(%i) Rmax(%i) r2(%i) mbp_offset(%i) com_offset(%i) "
+            "Rhalo(%i) Rmax(%i) r2(%i) mbp_offset(%i) com_offset(%i) "
             "Vmax(%i) v_esc(%i) sigV(%i) "
             "lambda(%i) lambdaE(%i) "
             "Lx(%i) Ly(%i) Lz(%i) "

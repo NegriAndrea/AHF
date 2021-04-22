@@ -1961,3 +1961,6 @@
 
 22/10/2020   - a few adjustments in io_gizmo.c and io_gizmo_header_def.h to better handle files with large numbers of particles
 (BUILD 105)    (e.g. type casting to uint64_t where appropriate)
+
+19/04/2021   - to avoid confusion, "Mvir" and "Rvir" "in the _halos file has been renamed to "Mhalo" and "Rhalo", respectively
+(BUILD 106)    (note, the edge and mass definition are provided in AHF.input and hence can be whatever you want...)
