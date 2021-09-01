@@ -137,9 +137,9 @@ void    exciseSubhaloStars          (HALO *halos, long ihost);
 /***************************************************************************
  *   Global variables                                                      *
  ***************************************************************************/
-SRINDEX        *spatialRefIndex;
-int            totnumIsoRef; /* Number of spatially isolated refinements */
-int            *numIsoRef;   /* Number of spatially isolated refinements */
+extern SRINDEX        *spatialRefIndex;
+extern int            totnumIsoRef; /* Number of spatially isolated refinements */
+extern int            *numIsoRef;   /* Number of spatially isolated refinements */
 
 static int     numHalos;
 static HALO    *halos;

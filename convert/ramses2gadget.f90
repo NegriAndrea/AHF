@@ -93,7 +93,8 @@ program ramses2gadget
   real(kind=8)            :: gadget_length_unit, gadget_mass_unit, gadget_velocity_unit, &
        & gadget_etherm_unit
   real(kind=8)            :: xfactor, vfactor, mfactor, ufactor
-  real(kind=8), parameter :: kpc_in_cm = 3.08d21 ! the factor is from ramses: dont use more digits!
+  real(kind=8), parameter :: kpc_in_cm = 3.0856776d+21 ! the factor is from ramses: dont use more digits! TC: UPDATE VALUES ACCORDING TO RAMSES params
+  real(kind=8), parameter :: Mpc_in_cm = 3.0856776d+24 ! the factor is from ramses: dont use more digits! TC: UPDATE VALUES ACCORDING TO RAMSES params
   real(kind=8), parameter :: Msun_in_cm = 1.9891d33
 
   ! variables needed for file management

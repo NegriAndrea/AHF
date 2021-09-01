@@ -2001,7 +2001,7 @@ double calc_cNFW(double V2_max, double V2_vir)
       b = c;  
    }
   
-#ifdef NEW_cNFW
+#ifdef NEW_cNFW // not implemented yet, just sketched the idea here...
   a=2.0;
   b=100.0;
   c = 5.0;  // starting at 5 is a better choice than 50 (thanks, Julian Onions, for that tip)

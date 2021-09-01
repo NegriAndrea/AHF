@@ -32,9 +32,14 @@ void dummy_ahf_gridinfo(void)
 
 #include "ahf.h"
 
-SRINDEX *spatialRefIndex;
-int     *numIsoRef;          /* Number of spatially isolated refinements */
-int      totnumIsoRef;       /* Number of spatially isolated refinements */
+/***************************************************************************
+ *   Global variables                                                      *
+ ***************************************************************************/
+extern SRINDEX *spatialRefIndex;
+extern int     *numIsoRef;          /* Number of spatially isolated refinements */
+extern int      totnumIsoRef;       /* Number of spatially isolated refinements */
+extern SPATIALREF *spatialRefTail;
+extern COLOURHOLDER    col;
 
 
 /*********************************************************************

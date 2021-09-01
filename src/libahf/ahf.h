@@ -44,9 +44,6 @@ typedef struct spatialRef {
 } SPATIALREF;
 
 
-SPATIALREF *spatialRefTail;
-
-COLOURHOLDER	col;
 
 
 /* internally used functions */

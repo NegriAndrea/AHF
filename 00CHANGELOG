@@ -1964,3 +1964,6 @@
 
 19/04/2021   - to avoid confusion, "Mvir" and "Rvir" "in the _halos file has been renamed to "Mhalo" and "Rhalo", respectively
 (BUILD 106)    (note, the edge and mass definition are provided in AHF.input and hence can be whatever you want...)
+
+06/06/2021   - fixed bad coding practice regarding global variables used in ahf_gridinfo.c and ahf_halos.c
+(BUILD 107)
