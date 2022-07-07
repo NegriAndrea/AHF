@@ -229,8 +229,6 @@ local_readRequired(io_parameter_t params, parse_ini_t ini)
 	           ini, "de_filename", local_secName);
 #endif
   
-  
-
   /* read additional information for some input file formats and write the respective IO_FILE.info */
   
   /*-----------------
@@ -267,18 +265,38 @@ local_readRequired(io_parameter_t params, parse_ini_t ini)
     /* Get GADGET_LUNIT */
     getFromIni(&(params->GIZMO_l2Mpch), parse_ini_get_double,
                ini, "GIZMO_LUNIT", "GIZMO");
-    
+
 #ifdef VERBOSE2
     fprintf(stderr,"GIZMO_LUNIT       = %g\n",params->GIZMO_l2Mpch);
     fprintf(stderr,"GIZMO_MUNIT       = %g\n",params->GIZMO_m2Msunh);
     fprintf(stderr,"\n");
 #endif
-    
     // nothing to write here as GIZMO_stuff will be passed on ;-)
-    
+  }
+
+  fprintf(stderr,"here\n");
+  
+  /*-----------------
+   *  PKDGRAV3
+   *-----------------*/
+  if(params->ic_filetype == IO_FILE_PKDGRAV)
+  {
+    /* Get PKDGRAV_MUNIT */
+    getFromIni(&(params->PKDGRAV_m2Msunh), parse_ini_get_double,
+               ini, "PKDGRAV_MUNIT", "PKDGRAV");
+    /* Get PKDGRAV_LUNIT */
+    getFromIni(&(params->PKDGRAV_l2Mpch), parse_ini_get_double,
+               ini, "PKDGRAV_LUNIT", "PKDGRAV");
+
+#ifdef VERBOSE_PKDGRAV
+    fprintf(stderr,"PKDGRAV_LUNIT       = %g\n",params->PKDGRAV_l2Mpch);
+    fprintf(stderr,"PKDGRAV_MUNIT       = %g\n",params->PKDGRAV_m2Msunh);
+    fprintf(stderr,"\n");
+#endif
+
   }
 #endif // WITH_HDF5
-  
+
   /*-----------------
    *       ART
    *-----------------*/

@@ -26,6 +26,7 @@
 #ifdef WITH_HDF5
 #include "io_gizmo.h"
 #include "io_mgizmo.h"
+#include "io_pkdgrav.h"
 #endif
 #include "io_deva.h"
 #include "io_tipsy.h"

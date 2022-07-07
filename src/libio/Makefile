@@ -38,6 +38,8 @@ OBJS = io_logging.o \
        io_gizmo.o \
        io_gizmo_header.o \
        io_mgizmo.o \
+       io_pkdgrav.o \
+       io_pkdgrav_header.o \
        io_deva.o\
        io_deva_header.o\
        io_read_fortran.o\
@@ -90,6 +92,8 @@ io_file.o: io_file.h io_file_aux.h \
            io_mgadget.h io_mgadget_def.h \
            io_gizmo.h io_gizmo_def.h \
            io_gizmo_header.h io_gizmo_header_def.h \
+           io_pkdgrav.h io_pkdgrav_def.h \
+           io_pkdgrav_header.h io_pkdgrav_header_def.h \
            io_mgizmo.h io_mgizmo_def.h \
            io_deva.h io_deva_def.h \
            io_deva_header.h io_deva_header_def.h \
@@ -191,11 +195,26 @@ io_gizmo.o: io_gizmo.h \
             io_gizmo.c
 	$(CC) $(CFLAGS) -c -o io_gizmo.o io_gizmo.c
 
+io_pkdgrav.o: io_pkdgrav.h \
+		io_gizmo_header_def.h io_gizmo_def.h \
+		io_pkdgrav_header_def.h io_pkdgrav_def.h io_file.h io_file_aux.h \
+		io_logging.h io_util.h \
+		io_pkdgrav.c
+	$(CC) $(CFLAGS) -c -o io_pkdgrav.o io_pkdgrav.c
+
+
 io_gizmo_header.o: io_gizmo_header.h \
                     io_gizmo_header_def.h io_gizmo_def.h io_logging.h \
                     io_util.h \
                     io_gizmo_header.c
 	$(CC) $(CFLAGS) -c -o io_gizmo_header.o io_gizmo_header.c
+
+io_pkdgrav_header.o: io_pkdgrav_header.h \
+			  io_gizmo_header_def.h io_gizmo_def.h \
+                    io_pkdgrav_header_def.h io_pkdgrav_def.h io_logging.h \
+                    io_util.h \
+                    io_pkdgrav_header.c
+	$(CC) $(CFLAGS) -c -o io_pkdgrav_header.o io_pkdgrav_header.c
 
 io_mgizmo.o: io_mgizmo.h \
               io_mgizmo_def.h \

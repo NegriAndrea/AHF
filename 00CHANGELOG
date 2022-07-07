@@ -1967,3 +1967,9 @@
 
 06/06/2021   - fixed bad coding practice regarding global variables used in ahf_gridinfo.c and ahf_halos.c
 (BUILD 107)
+
+06/07/2022   - implemented native Pkdgrav reader (ic_filetype = 40)
+(BUILD 108)    -> this requires a working HDF5 installation (and hence when intended to be used, also use -DWITH_HDF5)
+               -> and as HDF5 is required, we also require to compile this with mpicc (and hence only work for "Standard MPI" and "Standard MPI+OpenMP")
+               -> Note: this reader was developed by Isaac Alonso!
+
