@@ -62,10 +62,6 @@ GADGET_MUNIT      = 1e10
 GIZMO_LUNIT       = 1.
 GIZMO_MUNIT       = 1e10
 
-[PKDGRAV]
-PKDGRAV_LUNIT       = 1.
-PKDGRAV_MUNIT       = 1e10
-
 [TIPSY]
 TIPSY_BOXSIZE       = 50.0
 TIPSY_MUNIT         = 4.75e16

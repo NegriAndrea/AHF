@@ -1973,3 +1973,8 @@
                -> and as HDF5 is required, we also require to compile this with mpicc (and hence only work for "Standard MPI" and "Standard MPI+OpenMP")
                -> Note: this reader was developed by Isaac Alonso!
 
+21/07/2022   - bug fix in the output of the u_gas[] profile: missing m_fac factor.
+(BUILD 109)    -> Note, that profile is the total thermal energy of all particles in that bin and hence the column heading was also changed to "U_gas"
+
+22/07/2022   - changes to Pkdgrav reader: length and mass scale are now read from file and not from AHF.input anymore
+(BUILD 110)

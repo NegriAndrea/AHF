@@ -681,7 +681,7 @@ WriteProfilesLegacy(FILE          *fout,
 #  ifdef GAS_PARTICLES
       COLUMN_INFO(fout, "M_gas", column);
       COLUMN_INFO(fout, "M_star", column);
-      COLUMN_INFO(fout, "u_gas", column);
+      COLUMN_INFO(fout, "U_gas", column);
 #  endif
 #  ifdef AHFphspdens
       COLUMN_INFO(fout, "sigma2_vx_sh", column);
@@ -784,7 +784,7 @@ WriteProfilesLegacy(FILE          *fout,
 #  ifdef GAS_PARTICLES
           fprintf(fout, "\t%e",				        halos[i].prof.M_gas[ibin] * m_fac);
           fprintf(fout, "\t%e",				        halos[i].prof.M_star[ibin] * m_fac);
-          fprintf(fout, "\t%e",				        halos[i].prof.u_gas[ibin] * u_fac);  // remember, in HaloProfiles() we converted cur_part->u to code internal units, here we need to undo that!
+          fprintf(fout, "\t%e",				        halos[i].prof.u_gas[ibin] * m_fac * u_fac);  // remember, in HaloProfiles() we converted cur_part->u to code internal units (and multiplied by cur_part->weight), here we need to undo that!
 #  endif
 #  ifdef AHFphspdens
           fprintf(fout, "\t%g",				        halos[i].prof.sigma2_vx_sh[ibin] * v_fac * v_fac);
@@ -1453,7 +1453,7 @@ ahf_binwrite_profiles(char          *prefix,
 #  if (defined GAS_PARTICLES)
 	if (f_info != NULL)
 		fprintf(f_info,
-		        "M_gas(%i) M_star(%i) u_gas(%i) ",
+		        "M_gas(%i) M_star(%i) U_gas(%i) ",
 		        i + 1, i + 2, i + 3);
 	i += 3;
 #ifdef METALHACK
@@ -1621,7 +1621,7 @@ ahf_binwrite_profiles(char          *prefix,
           WRITE_F;
           tmp_float = (bin_float_t)(halos[i].prof.M_star[ibin] * m_fac);
           WRITE_F;
-          tmp_float = (bin_float_t)(halos[i].prof.u_gas[ibin] * u_fac); // remember, in HaloProfiles() we converted cur_part->u to code internal units, here we need to undo that!
+          tmp_float = (bin_float_t)(halos[i].prof.u_gas[ibin] * m_fac * u_fac); // remember, in HaloProfiles() we converted cur_part->u to code internal units (and multiplied by cur_part->weight), here we need to undo that!
           WRITE_F;
 #ifdef METALHACK
           tmp_float = (bin_float_t)(halos[i].prof.z_gas[ibin]);
