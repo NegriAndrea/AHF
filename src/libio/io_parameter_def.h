@@ -45,9 +45,6 @@ struct io_parameter_struct {
 #ifdef WITH_HDF5
   double         GIZMO_m2Msunh;
   double         GIZMO_l2Mpch;  // the GIZMO units
-
-  double         PKDGRAV_m2Msunh;
-  double         PKDGRAV_l2Mpch;  // the PKDGRAV units
 #endif
   
 #ifdef AHF_LRSI

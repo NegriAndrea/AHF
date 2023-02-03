@@ -43,7 +43,7 @@ io_pkdgrav_header_get(io_logging_t log, io_pkdgrav_t f)
 	io_pkdgrav_header_t dummy;
 	long skipsize;
         hid_t fpin, hdf5_headergrp, hdf5_attribute;;
-        hid_t hdf5_cosmogrp;
+        hid_t hdf5_cosmogrp, hdf5_unitsgrp;
 
 #ifdef FOPENCLOSE
   //fprintf(stderr,"FOPENCLOSE: reading header information from %s ... ",f->fname);
@@ -67,14 +67,15 @@ io_pkdgrav_header_get(io_logging_t log, io_pkdgrav_t f)
 		return f->header;
 
 	/* Create the header structure array */
-	dummy = (io_pkdgrav_header_t)malloc((size_t)GIZMO_HEADER_SIZE+1); // make +1 larger because of trailing '\0' inserted by io_util_readstring()
+	dummy = (io_pkdgrav_header_t)malloc(sizeof(io_pkdgrav_header_struct_t)); // make +1 larger because of trailing '\0' inserted by io_util_readstring()
 	if (dummy == NULL) {
-		io_logging_memfatal(log, "PKDGRAV header structure %d",GIZMO_HEADER_SIZE+1);
+		io_logging_memfatal(log, "PKDGRAV header structure %d",sizeof(io_pkdgrav_header_struct_t));
 		return NULL;
 	}
     
         hdf5_headergrp = H5Gopen(fpin, "/Header");
         hdf5_cosmogrp = H5Gopen(fpin, "/Cosmology");
+        hdf5_unitsgrp = H5Gopen(fpin, "/Units");
 
         hdf5_attribute = H5Aopen_name(hdf5_headergrp, "NumPart_ThisFile");
         H5Aread(hdf5_attribute, H5T_NATIVE_INT, dummy->np);
@@ -145,10 +146,25 @@ io_pkdgrav_header_get(io_logging_t log, io_pkdgrav_t f)
         H5Aread(hdf5_attribute, H5T_NATIVE_INT, &dummy->flagmetals);
         H5Aclose(hdf5_attribute);
 
-        H5Gclose(hdf5_headergrp);
+        hdf5_attribute = H5Aopen_name(hdf5_unitsgrp, "MsolUnit");
+        H5Aread(hdf5_attribute, H5T_NATIVE_DOUBLE, &dummy->MsolUnit);
+        H5Aclose(hdf5_attribute);
 
-/* @TODO: Rennehan : BEGIN BLOCK READING CAN REMOVE BELOW */
-        //dummy->flagentropyu = 0;
+        hdf5_attribute = H5Aopen_name(hdf5_unitsgrp, "KpcUnit");
+        H5Aread(hdf5_attribute, H5T_NATIVE_DOUBLE, &dummy->KpcUnit);
+        H5Aclose(hdf5_attribute);
+
+        hdf5_attribute = H5Aopen_name(hdf5_unitsgrp, "KmPerSecUnit");
+        H5Aread(hdf5_attribute, H5T_NATIVE_DOUBLE, &dummy->KmPerSecUnit);
+        H5Aclose(hdf5_attribute);
+
+        hdf5_attribute = H5Aopen_name(hdf5_unitsgrp, "ErgPerGmUnit");
+        H5Aread(hdf5_attribute, H5T_NATIVE_DOUBLE, &dummy->ErgPerGmUnit);
+        H5Aclose(hdf5_attribute);
+
+        H5Gclose(hdf5_headergrp);
+        H5Gclose(hdf5_unitsgrp);
+        H5Gclose(hdf5_cosmogrp);
 
 	f->header = dummy;
   
@@ -315,6 +331,18 @@ io_pkdgrav_header_log(io_logging_t log, io_pkdgrav_header_t header)
 	/*io_logging_msg(log, INT32_C(5),
 	               "  Flag Entropy insted U:         %" PRIi32,
 	               header->flagentropyu);*/
+	io_logging_msg(log, INT32_C(5),
+	               "  MsolUnit:              %e",
+	               header->MsolUnit);
+	io_logging_msg(log, INT32_C(5),
+	               "  KpcUnit:              %e",
+	               header->KpcUnit);
+	io_logging_msg(log, INT32_C(5),
+	               "  KmPerSecUnit:              %e",
+	               header->KmPerSecUnit);
+	io_logging_msg(log, INT32_C(5),
+	               "  ErgPerGmUnit:              %e",
+	               header->ErgPerGmUnit);
 
 	return;
 }

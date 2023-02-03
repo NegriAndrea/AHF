@@ -240,21 +240,6 @@ io_pkdgrav_set(io_logging_t log,
 extern void
 io_pkdgrav_log(io_logging_t log, io_pkdgrav_t f);
 
-/**
- * \brief Resets the position and weight scales to given values
- *
- * \param log          The logging object.
- * \param f            The file object.
- * \param posscale     The new scale to translate from pkdgrav file
- *                     units to Mpc.
- * \param weightscale  The new scale to translate from pkdgrav file units
- *                     to Msun.
- */
-extern void
-io_pkdgrav_resetscale(io_logging_t log,
-                     io_pkdgrav_t f,
-                     double posscale,
-                     double weightscale);
 
 /**
  * \brief Does the scaling of particles.
@@ -274,14 +259,16 @@ io_pkdgrav_resetscale(io_logging_t log,
  */
 extern uint64_t
 io_pkdgrav_scale_particles(io_logging_t log,
-                          double maxpos[],
-                          double minpos[],
-                          double *boxsize,
-                          double expansion,
-                          double posscale,
-                          double mmass,
-                          uint64_t particles_read,
-                          io_file_strg_struct_t strg);
+                         double maxpos[],
+                         double minpos[],
+                         double boxsize,
+                         double expansion,
+                         double KpcUnit,
+                         double MsolUnit,
+                         double ErgPerGmUnit,
+                         double KmPerSecUnit,
+                         uint64_t particles_read,
+                         io_file_strg_struct_t strg);
 
 #ifdef WITH_MPI
 /**

@@ -1977,4 +1977,7 @@
 (BUILD 109)    -> Note, that profile is the total thermal energy of all particles in that bin and hence the column heading was also changed to "U_gas"
 
 22/07/2022   - changes to Pkdgrav reader: length and mass scale are now read from file and not from AHF.input anymore
-(BUILD 110)
+(BUILD 110)    
+
+09/12/2022   - changes to simuPk.c -> now one can properly pick particle species when reading GADGET files (or downsample the data)
+(BUILD 110)  - no BUILD change as AHF is not affected

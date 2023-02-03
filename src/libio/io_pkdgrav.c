@@ -235,14 +235,15 @@ io_pkdgrav_open(io_logging_t log,
   
   /* Set swapping */
   /*local_openswapped(log, f, swapped);
-  if (    (f->mode == IO_FILE_READ) && (f->swapped == IO_FILE_UNKOWN_SWAPPING)) {
-    if (local_opengetswap(log, f) != f) {
-      io_logging_fatal(log, "Cannot open this file.");
-      free(f->fname);
-      free(f);
-      return NULL;
-    }
-  }*/
+   if (    (f->mode == IO_FILE_READ)
+   && (f->swapped == IO_FILE_UNKOWN_SWAPPING)) {
+   if (local_opengetswap(log, f) != f) {
+   io_logging_fatal(log, "Cannot open this file.");
+   free(f->fname);
+   free(f);
+   return NULL;
+   }
+   }*/
   
   /* Identify PKDGRAV3 format */
   local_openversion(log, f);
@@ -347,6 +348,7 @@ io_pkdgrav_init(io_logging_t log,
       }
     }
   }
+
   
   return;
 }
@@ -381,10 +383,14 @@ io_pkdgrav_readpart(io_logging_t log,
    * It seems that the normalization by mmass is somewhat arbitrary.
    */
   f->mmass = 1.;
+
   tmp = io_pkdgrav_scale_particles(log, f->maxpos, f->minpos,
-                                 &(f->header->boxsize),
+                                 f->header->boxsize,
                                  f->header->expansion,
-                                 f->posscale, f->weightscale,
+                                 f->header->KpcUnit,
+                                 f->header->MsolUnit,
+                                 f->header->ErgPerGmUnit,
+                                 f->header->KmPerSecUnit,
                                  particles_read, strg);
   if (tmp != particles_read) {
     return tmp;
@@ -590,11 +596,7 @@ io_pkdgrav_get(io_logging_t log,
       *((double *)res) =   f->header->boxsize;
       break;
     case IO_FILE_GET_PMASS:
-      if (f->multimass) {
-        *((double *)res) = f->mmass * f->weightscale / f->header->hubbleparameter;
-      } else {
-        *((double *)res) =   f->header->massarr[1] * f->weightscale / f->header->hubbleparameter;
-      }
+      *((double *)res) = f->header->MsolUnit * f->header->hubbleparameter;
       break;
     case IO_FILE_GET_ZINITIAL:
       io_logging_warn(log, INT32_C(1),
@@ -769,77 +771,29 @@ io_pkdgrav_log(io_logging_t log, io_pkdgrav_t f)
   io_logging_msg(log, INT32_C(5),
                  "  No. of species:       %" PRIi32,
                  f->no_species);
-  io_logging_msg(log, INT32_C(5),
-                 "  Position scale:       %g",
-                 f->posscale);
-  io_logging_msg(log, INT32_C(5),
-                 "  Weight scale:         %g",
-                 f->weightscale);
   io_pkdgrav_header_log(log, f->header);
   
   return;
 }
 
-extern void
-io_pkdgrav_resetscale(io_logging_t log,
-                    io_pkdgrav_t f,
-                    double posscale,
-                    double weightscale) {
-  if (f == NULL)
-    return;
-  
-  io_logging_msg(log, INT32_C(8),
-                 "Old posscale: %g   New posscale: %g",
-                 f->posscale, posscale);
-  io_logging_msg(log, INT32_C(8),
-                 "Old weightscale: %g   New weightscale: %g",
-                 f->weightscale, weightscale);
-  f->posscale = posscale;
-  f->weightscale = weightscale;
-  
-  return;
-}
 
 extern uint64_t
 io_pkdgrav_scale_particles(io_logging_t log,
                          double maxpos[],
                          double minpos[],
-                         double *boxsize,
+                         double boxsize,
                          double expansion,
-                         double posscale,
-                         double mmass,
+                         double KpcUnit,
+                         double MsolUnit,
+                         double ErgPerGmUnit,
+                         double KmPerSecUnit,
                          uint64_t particles_read,
                          io_file_strg_struct_t strg)
 {
   double box[3], shift[3];
   double scale_pos, scale_mom, scale_weight, scale_u;
   uint64_t i;
-  
-  /* Now we can do the scaling */
-  box[0] = fabs(maxpos[0] - minpos[0]);
-  box[1] = fabs(maxpos[1] - minpos[1]);
-  box[2] = fabs(maxpos[2] - minpos[2]);
-  if (isgreater(box[0], *boxsize)) {
-    io_logging_warn(log, INT32_C(1),
-                    "x-Separation of particles exceeds boxsize "
-                    "(%g > %g), resetting boxsize.",
-                    box[0], *boxsize);
-    *boxsize = box[0];
-  }
-  if (isgreater(box[1], *boxsize)) {
-    io_logging_warn(log, INT32_C(1),
-                    "y-Separation of particles exceeds boxsize "
-                    "(%g > %g), resetting boxsize.",
-                    box[1], *boxsize);
-    *boxsize = box[1];
-  }
-  if (isgreater(box[2], *boxsize)) {
-    io_logging_warn(log, INT32_C(1),
-                    "z-Separation of particles exceeds boxsize "
-                    "(%g > %g), resetting boxsize.",
-                    box[2], *boxsize);
-    *boxsize = box[2];
-  }
+
   io_logging_msg(log, INT32_C(4),
                  "Extreme positions: xmin = %g  xmax = %g",
                  minpos[0], maxpos[0]);
@@ -863,30 +817,24 @@ io_pkdgrav_scale_particles(io_logging_t log,
    *
    *    NOTE: the thermal energy is scaled to (km/sec)^2 !!!!!
    *================================================================*/
-  /* It is assumed that the PKDGRAV_MUNITS and PKDGRAV_LUNITS*1000 are the same
-   * as the units (dMsolUnit, dKpcUnit) used for running the simulation
+  /* We use directly the unit information in the snapshot to make the convertions
    */
   scale_pos    = 1.0;
   /* Velocity output in PKDGRAV3 is \dot{x} directly, for safety we convert to
    * km/s and then apply the conversion to internal units as in the docs
    */
-#define MSOLG 1.98847e33        /* solar mass in grams */
-#define GCGS 6.67408e-8         /* G in cgs */
-#define KPCCM 3.085678e21       /* kiloparsec in centimeters */
-  const double dKmPerSecUnit = sqrt(GCGS*mmass*MSOLG/(posscale*1000.*KPCCM))/1e5;
-  const double dErgPerGmUnit = GCGS*mmass*MSOLG/(posscale*1000.*KPCCM);
 #ifdef NO_EXPANSION
-  scale_mom    = dKmPerSecUnit / (*boxsize * posscale * 100.);
+  scale_mom    = KmPerSecUnit / (boxsize * 100.);
 #else
-  scale_mom    = dKmPerSecUnit * expansion * expansion /
-                        (*boxsize * posscale * 100.);
+  scale_mom    = KmPerSecUnit * expansion * expansion /
+                        ( boxsize * 100.);
 #endif
 
   /* The mass unit seems to be arbitrary, so we left it there */
   scale_weight = 1.0;
 
   /* Internal energy per unit mass conversion to (km/sec)^2 */
-  scale_u      = dErgPerGmUnit / 1e10;
+  scale_u      = ErgPerGmUnit / 1e10;
   
   
   

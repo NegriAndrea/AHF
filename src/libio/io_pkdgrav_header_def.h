@@ -57,6 +57,11 @@ struct io_pkdgrav_header_struct {
   
   char fill[18];                /*!< fills to 256 Bytes */
   char names[15][2];
+
+  double MsolUnit;
+  double KpcUnit;
+  double ErgPerGmUnit;
+  double KmPerSecUnit;
 };
 
 /** Convenient typedef */

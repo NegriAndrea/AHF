@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   109
+#define BUILD   110
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)

@@ -247,11 +247,6 @@ local_startrunFopen(void)
 		                      global_io.params->GADGET_m2Msunh);
   
 #ifdef WITH_HDF5
-  if (global_io.file->ftype == IO_FILE_PKDGRAV)
-    io_pkdgrav_resetscale(global_io.log,
-                        (io_pkdgrav_t)global_io.file,
-                        global_io.params->PKDGRAV_l2Mpch,
-                        global_io.params->PKDGRAV_m2Msunh);
   if (global_io.file->ftype == IO_FILE_GIZMO)
     io_gizmo_resetscale(global_io.log,
                         (io_gizmo_t)global_io.file,
@@ -519,8 +514,6 @@ local_startrunSimparams()
     simu.GADGET_l2Mpch = global_io.params->GADGET_l2Mpch;
      
 #ifdef WITH_HDF5
-    simu.PKDGRAV_m2Msunh= global_io.params->PKDGRAV_m2Msunh;
-    simu.PKDGRAV_l2Mpch = global_io.params->PKDGRAV_l2Mpch;
     simu.GIZMO_m2Msunh= global_io.params->GIZMO_m2Msunh;
     simu.GIZMO_l2Mpch = global_io.params->GIZMO_l2Mpch;
 #endif
