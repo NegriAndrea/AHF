@@ -10,6 +10,8 @@
              AMIGA's-Halo-Finder:
 Adaptive Mesh Investigations of Galaxy Assembly
 
+The code manual and papers can be found on http://popia.ft.uam.es/AHF/download.html
+
 ===============
  developed by
 ===============
@@ -19,6 +21,7 @@ Stuart Gill        (2001-2005)
 Steffen Knollmann  (2006-2012)
 Doug Rennehan      (2018, GIZMO libio)
 Isaac Alonso       (2022, Pkdgrav libio)
+Andrea Negri       (2023, git repo)
 Alexander Knebe    (continuously)
 
 ==========
