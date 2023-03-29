@@ -6,6 +6,9 @@ ic_filename       = ../00DATA/SubhaloesGoingNotts/snap_C02_400_1023.
 # what type of input file (cf. src/libio/io_file.h)
 ic_filetype       = 61
 
+# SNAPID for assigning a unique haloid across all snapshots
+snapID            = 071
+
 # prefix for the output files
 outfile_prefix    = test-v010.snap_C02_400_1023
 

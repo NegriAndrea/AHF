@@ -8,6 +8,7 @@
 #include "../common.h"
 #include "../param.h"
 #include "../tdef.h"
+#include "refine_grid.h"
 
 /* ...and now for the actual includes */
 #include "amr_serial.h"
