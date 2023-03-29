@@ -1981,3 +1981,15 @@
 
 09/12/2022   - changes to simuPk.c -> now one can properly pick particle species when reading GADGET files (or downsample the data)
 (BUILD 110)  - no BUILD change as AHF is not affected
+
+22/03/2023   - substantial cleaning of analyseRef() in ahf_halos.c:
+(BUILD 111)    - removed #ifdef AHFnewCloseRefDist
+               - we now calculate closeRefDist also for the main branch daughter
+            - BUG FIX in the way sub-subhaloes are treated:
+              - when checking for the credibility of subhaloes, a non-credible subhalo was not passed on upwards in the hierarchy of sub-sub-etc.-halos for recursive credibility checks
+                -> this bug led to some sub-subhaloes being tagged as field haloes! FIXED NOW!
+                   (for a defintion of 'subhalo credibility' please refer to the AHF user's guide)
+            - substantial changes to spatialRef2halos() in ahf_halos.c
+            - lots of re-writing of code in general...
+            - there are now far more messages written to the logfile that help debugging certain instances
+            - removed timing of generate_tree (commented in specific.c)

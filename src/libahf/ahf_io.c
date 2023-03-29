@@ -2209,6 +2209,14 @@ void write_halos_line(FILE *fout, HALO *halos, long unsigned j, long unsigned i,
   fprintf(fout, "%22"PRIu64,            halos[i].hostHaloID);
 #else
 #ifdef SUSSING2013
+//  {
+//    uint64_t haloid;
+//    haloid =getSussing2013ID(simu.isnap, j);
+//    if((haloid == 128000000006332)) {
+//      fprintf(io.logfile,"%"PRIu64"  %ld\n",haloid,i);
+//    }
+//  }
+
   fprintf(fout, "%10"PRIu64,	          getSussing2013ID(simu.isnap, j));
   if(halos[i].hostHalo < 0)
     fprintf(fout, "\t%10ld",            (long)0);

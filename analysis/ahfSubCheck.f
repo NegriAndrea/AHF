@@ -73,8 +73,8 @@
  777  continue
       print*,'o locating subhaloes of host ',
      &        Xhost,Yhost,Zhost,Rhost,Mhost
-      write(12,222)'s ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost
-      write(13,222)'s ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost
+      write(12,222)'# ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost
+      write(13,222)'# ',Xhost,Yhost,Zhost,Rhost,0,0,1,Mhost
  222  FORMAT(A,4f16.8,3i5,g16.8)
 
       !==========================================
@@ -106,14 +106,16 @@
                gg = 0.
                bb = 0.
                
-               write(12,111)'s ',
+               if(hostHalo(i) .EQ. -1)then
+                  write(12,111)
      &              Xc(i),Yc(i),Zc(i),Rvir(i),
      &              rr,gg,bb,
      &              '   ',
      &              Mvir(i),
-     &              idhalo(i),sqrt(dX**2 + dY**2 + dZ**2)
-
- 111           FORMAT(A,4f16.8,3f12.8,A,g16.8,i22,f16.8)
+     &              idhalo(i), hostHalo(i),
+     &              sqrt(dX**2 + dY**2 + dZ**2)
+               endif
+ 111           FORMAT(4f16.8,3f12.8,A,g16.8,i22,i22,f16.8)
                
                Nsat = Nsat + 1
                Msat = Msat + Mvir(i)
@@ -145,14 +147,14 @@
             gg = 1.
             bb = 0.
             
-            write(13,333)'s ',
+            write(13,333)
      &           Xc(i),Yc(i),Zc(i),Rvir(i),
      &           rr,gg,bb,
      &           '   ',
      &           Mvir(i),
      &           idhalo(i)
             
- 333        FORMAT(A,4f16.8,3f12.8,A,g16.8,i22)
+ 333        FORMAT(4f16.8,3f12.8,A,g16.8,i22)
             
             Nsat = Nsat + 1
             Msat = Msat + Mvir(i)

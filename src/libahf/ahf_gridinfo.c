@@ -344,7 +344,7 @@ void ahf_gridinfo(gridls *grid_list, int curgrid_no)
                     
                     /* Join the new SPATIALREF to the link list */
                     spatialRefTail = insertColour(tmpSpatialRef, firstCOLOUR);
-                    // the call ti insertColout() is equivalent to:
+                    // the call to insertColout() is equivalent to:
 //                    tmpSpatialRef->next = NULL;
 //                    if ( firstCOLOUR==0 )
 //                      spatialRefTail->next = newColour;

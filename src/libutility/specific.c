@@ -1258,7 +1258,7 @@ void write_logfile(double timecounter, double timestep, int no_timestep)
   fprintf(io.logfile,"ahf_halos    = %ld\n",timing.ahf_halos);
   fprintf(io.logfile,"      - RefCentre                   = %ld\n",timing.RefCentre);
   fprintf(io.logfile,"      - analyseRef                  = %ld\n",timing.analyseRef);
-  fprintf(io.logfile,"      - generate_tree               = %ld\n",timing.generate_tree);
+//  fprintf(io.logfile,"      - generate_tree               = %ld\n",timing.generate_tree);
   fprintf(io.logfile,"      - spatialRef2halos            = %ld\n",timing.spatialRef2halos);
   fprintf(io.logfile,"      - ahf_halos_sfc_constructHalo = %ld\n",timing.ahf_halos_sfc_constructHalo);
   fprintf(io.logfile,"      - I/O                         = %ld\n",timing.ahf_io);
@@ -1365,7 +1365,6 @@ void write_parameterfile()
         fprintf(fpparam,"AHF_MIN_REF_OFFSET         \t\t%d\n",        AHF_MIN_REF_OFFSET);
         fprintf(fpparam,"AHF_NBIN_MULTIPLIER        \t\t%d\n",       AHF_NBIN_MULTIPLIER);
         fprintf(fpparam,"AHF_HIRES_DM_WEIGHT        \t\t%g\n",       AHF_HIRES_DM_WEIGHT);
-        fprintf(fpparam,"AHF_HOSTHALOLEVEL          \t\t%d\n",         AHF_HOSTHALOLEVEL);
         fprintf(fpparam,"PGAS                       \t\t%g\n",                      PGAS);
         fprintf(fpparam,"PDM                        \t\t%g\n",                       PDM);
         fprintf(fpparam,"PSTAR                      \t\t%g\n",                     PSTAR);
