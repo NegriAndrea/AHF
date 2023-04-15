@@ -42,15 +42,15 @@
  *                                     DEFINES
  *-------------------------------------------------------------------------------------*/
 #define ONLY_USE_PTYPE                // restrict analysis to certain particle species (define them yourself in read_particles()!)
-                                      // note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
+// note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
 #define MINCOMMON      10             // we only cross-correlate haloes if they at least share MINCOMMON particles
-//#define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant (this is relevant for SAM models)
+#define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant (this is relevant for SAM models)
 //#define USE_PIDMAP                    // the Pids are not used as array indices anymore, e.g. one can now also use star particles for the tree building
 //#define EXCLUSIVE_PARTICLES           // each particle is only allowed to belong to one object (i.e. the lowest mass one): NOT fully tested yet!!!
 //#define WITH_QSORT                    // uses qsort() instead of indexx() when ordering the progenitors according to merit function: NOT fully implemented yet!!!
 
 // flags that only work together with SNAPSKIPPING
-#define SNAPSKIPPING                         // whenever a connection [0]->[1] is not considered credible, the halo will be copied and considered in the connection [1]->[2] (recursively)
+//#define SNAPSKIPPING                         // whenever a connection [0]->[1] is not considered credible, the halo will be copied and considered in the connection [1]->[2] (recursively)
 #define SNAPSKIPPING_UNCREDIBLEMASSRATIO 2   // do not allow for mass jumps Mdesc = UNCREDIBLEMASSRATIO * Mprog
 //#define SNAPSKIPPING_CONSIDERALLPROGENITORS  // consider all progenitors for UNCREDIBLEMASSRATIO test, in order of merit function
 //#define DEBUG_SNAPSKIPPING
@@ -131,10 +131,10 @@ int      read_particles         (char filename[MAXSTRING], int isimu);
 int      read_particles_bin     (char filename[MAXSTRING], int isimu);
 int      particle_halo_mapping  (int  isimu);
 int      cross_correlation      (char OutFile[MAXSTRING]);
-int      create_mtree           (uint64_t ihalo, int  isimu0,int isimu1);
-int      create_mtree_qsort     (uint64_t ihalo, int isimu0, int isimu1);
-int      clean_connection       (uint64_t ihalo, int isimu0, int isimu1);
 int      write_mtree            (char OutFile[MAXSTRING]);
+void     clean_connection       (uint64_t ihalo, int isimu0, int isimu1);
+void     create_mtree           (uint64_t ihalo, int  isimu0,int isimu1);
+void     create_mtree_qsort     (uint64_t ihalo, int isimu0, int isimu1);
 uint64_t max_merit              (uint64_t ihalo, int isimu);
 void     construct_filename     (char filename[MAXSTRING], int32_t, char infile[MAXSTRING]);
 uint64_t count_halos            (char filename[MAXSTRING], int32_t);
@@ -171,26 +171,26 @@ int main()
   HaloFile = (char **) calloc(nFiles, sizeof(char *));
   OutFile  = (char **) calloc(nFiles, sizeof(char *));
   for(i=0; i<nFiles; i++)
-   {
+  {
     HaloFile[i] = (char *) calloc(MAXSTRING, sizeof(char));
     OutFile[i]  = (char *) calloc(MAXSTRING, sizeof(char));
-   }
+  }
   
   /* read input filenames from stdin */
   for(i=0; i<nFiles; i++)
-   {
+  {
     fprintf(stderr,"Please give name of %5d. *_particles file:            ",i+1);
     scanf("%s", HaloFile[i]);
     fprintf(stderr,"%s\n",HaloFile[i]);
-   }
+  }
   
   /* read output filenames from stdin */
   for(i=0; i<nFiles-1; i++)
-   {
+  {
     fprintf(stderr,"Please give prefix for %5d. output file:                 ",i+1);
     scanf("%s", OutFile[i]);
     fprintf(stderr,"%s\n",OutFile[i]);
-   }
+  }
   fprintf(stderr,"\n");
   
   
@@ -201,7 +201,7 @@ int main()
   fprintf(stderr,"Startup:\n");
   read_particles(HaloFile[0], 0);
 #ifdef USE_PIDMAP
-    create_PidMap(0);
+  create_PidMap(0);
 #endif
   particle_halo_mapping(0);
   fprintf(stderr,"\n");
@@ -217,7 +217,7 @@ int main()
     create_PidMap(1);
 #endif
     particle_halo_mapping(1);
-      
+    
 #ifdef MTREE_BOTH_WAYS
     /* capture the case where PidMax[1] > PidMax[0] */
     if(PidMax[1] > PidMax[0]) {
@@ -292,10 +292,10 @@ int main()
   
   /* remove filename storage */
   for(i=0; i<nFiles; i++)
-   {
+  {
     if(HaloFile[i]) free(HaloFile[i]);
     if(OutFile[i])  free(OutFile[i]);
-   }
+  }
   if(HaloFile) free(HaloFile);
   if(OutFile)  free(OutFile);
   
@@ -359,10 +359,10 @@ int read_particles_bin(char filename[MAXSTRING], int isimu)
   
   // loop over halos and their particle ids
   for(ihalo=0; ihalo<nh; ihalo++) {
-
+    
     // use halo counter as haloid
     haloid = ihalo;
-
+    
     // nparticles in halo
     ReadLong(fpin,&i64,SWAPBYTES);
     nPartInHalo = i64;
@@ -392,6 +392,7 @@ int read_particles_bin(char filename[MAXSTRING], int isimu)
       // here we can restrict the cross-correlation to a ceratain sub-set of all particles
 #ifdef ONLY_USE_PTYPE
       if(Ptype == 1) // restrict to 1=dm
+//      if(Ptype == 1 || Ptype == 4) // restrict to 1=dm and 4=stars
 #endif
       {
         halos[isimu][ihalo].Pid             = (uint64_t *) realloc(halos[isimu][ihalo].Pid, (nPartInUse+1)*sizeof(uint64_t));
@@ -445,7 +446,7 @@ int read_particles(char filename[MAXSTRING], int isimu)
   clock_t   elapsed;
   
   elapsed = clock();
-    
+  
 #ifdef READ_MPARTICLES
   int32_t  nfiles, ifile;
   uint64_t nHalosInFile;
@@ -478,17 +479,17 @@ int read_particles(char filename[MAXSTRING], int isimu)
   for(ifile=0; ifile<nfiles; ifile++) {
     
     fprintf(stderr,"%"PRIi32,ifile);
-
+    
     // open file
     construct_filename(filename, ifile, infile);
     fpin = fopen(infile,"r");
-
+    
     // read total number of haloes in file
     fgets(line,MAXSTRING,fpin);
     sscanf(line,"%"SCNu64, &nHalosInFile);
     
     fprintf(stderr," (%"PRIu64") ",nHalosInFile);
-
+    
     // loop over all haloes in this file
     for(jhalo=0; jhalo<nHalosInFile; jhalo++) {
       
@@ -498,12 +499,12 @@ int read_particles(char filename[MAXSTRING], int isimu)
       
       // store haloid
       halos[isimu][ihalo].haloid = haloid;
-
+      
       // loop over all particles in halo
       nPartInUse              = 0;
       halos[isimu][ihalo].Pid = NULL;
       for(ipart=0; ipart<nPartInHalo; ipart++)
-       {
+      {
         /* read line containing ID and possibly some more information */
         fgets(line,MAXSTRING,fpin);
         
@@ -520,14 +521,15 @@ int read_particles(char filename[MAXSTRING], int isimu)
         // here we can restrict the cross-correlation to a ceratain sub-set of all particles
 #ifdef ONLY_USE_PTYPE
         if(Ptype == 1) // restrict to 1=dm
+//        if(Ptype == 1 || Ptype == 4) // restrict to 1=dm and 4=stars
 #endif
-         {
+        {
           halos[isimu][ihalo].Pid = (uint64_t *) realloc(halos[isimu][ihalo].Pid, (nPartInUse+2)*sizeof(uint64_t));
           if(halos[isimu][ihalo].Pid == NULL) {
             fprintf(stderr,"\n read_particles: could not realloc() halos[%d][%ld].Pid for %"PRIu64" particles (Pid=%ld)\nABORTING\n",isimu,(long)ihalo,(nPartInUse+1),halos[isimu][ihalo].Pid);
             exit(-1);
           }
-
+          
           halos[isimu][ihalo].Pid[nPartInUse] = Pid;
           
           if(halos[isimu][ihalo].Pid[nPartInUse] > PidMax[isimu])       PidMax[isimu] = (halos[isimu][ihalo].Pid[nPartInUse]);
@@ -536,13 +538,13 @@ int read_particles(char filename[MAXSTRING], int isimu)
           if(halos[isimu][ihalo].Pid[nPartInUse] < PidMin_local)        PidMin_local  = (halos[isimu][ihalo].Pid[nPartInUse]);
           
           nPartInUse++;
-         } // if(Ptype)
+        } // if(Ptype)
         
-       } // for(ipart)
+      } // for(ipart)
       
       // store number of particles in halo
       halos[isimu][ihalo].npart = nPartInUse;
-
+      
       // move to next halo in overall list
       ihalo++;
       
@@ -559,19 +561,19 @@ int read_particles(char filename[MAXSTRING], int isimu)
   
   fpin = fopen(filename,"r");
   if(fpin == NULL)
-   {
+  {
     fprintf(stderr,"could not open file %s\nexiting!\n",filename);
     exit(0);
-   }
-
+  }
+  
 #ifdef READ_HALOIDS_FROM_FILE
   sprintf(hidsname,"%s_hids",filename);
   fphids = fopen(hidsname,"r");
   if(fphids == NULL)
-   {
+  {
     fprintf(stderr,"could not open file %s\nexiting!\n",hidsname);
     exit(0);
-   }
+  }
 #endif
   
   /* reset all variables */
@@ -590,16 +592,16 @@ int read_particles(char filename[MAXSTRING], int isimu)
   
   do {
     if(strncmp(line,"#",1) != 0)
-     {
+    {
       /* has a haloid been written */
       if(sscanf(line,"%"SCNu64" %"SCNu64, &nPartInHalo, &haloid) == 1)
-       {
+      {
         /* if not, just get the number of particles */
         sscanf(line,"%"SCNu64, &nPartInHalo);
         
         /* and use halo counter as id */
         haloid = ihalo+1; // +1, because ihalo has not been incremented yet!
-       }
+      }
 #ifdef USE_LINENUMBER_AS_HALOID
       haloid = ihalo+1; // +1, because ihalo has not been incremented yet!
 #endif
@@ -623,7 +625,7 @@ int read_particles(char filename[MAXSTRING], int isimu)
       /* read all their id's */
       nPartInUse = 0;
       for(ipart=0; ipart<nPartInHalo; ipart++)
-       {
+      {
         /* read line containing ID and possibly some more information */
         fgets(line,MAXSTRING,fpin);
         
@@ -639,9 +641,10 @@ int read_particles(char filename[MAXSTRING], int isimu)
         
         // here we can restrict the cross-correlation to a ceratain sub-set of all particles
 #ifdef ONLY_USE_PTYPE
-         if(Ptype == 1) // restrict to 1=dm
+        if(Ptype == 1) // restrict to 1=dm
+//        if(Ptype == 1 || Ptype == 4) // restrict to 1=dm and 4=stars
 #endif
-         {
+        {
           halos[isimu][ihalo].Pid = (uint64_t *) realloc(halos[isimu][ihalo].Pid, (nPartInUse+1)*sizeof(uint64_t));
           if(halos[isimu][ihalo].Pid == NULL) {
             fprintf(stderr,"read_particles: could not realloc() halos[%d][%ld].Pid for %"PRIu64"particles\nABORTING\n",isimu,(long)ihalo,(nPartInUse+1));
@@ -659,12 +662,12 @@ int read_particles(char filename[MAXSTRING], int isimu)
           if(halos[isimu][ihalo].Pid[nPartInUse] < PidMin_local)        PidMin_local  = (halos[isimu][ihalo].Pid[nPartInUse]);
           
           nPartInUse++;
-         }
-       }
+        }
+      }
       
       /* store number of particles in halo */
       halos[isimu][ihalo].npart = nPartInUse;
-     }
+    }
   } while( fgets(line,MAXSTRING,fpin) != NULL);
   
   fclose(fpin);
@@ -675,11 +678,11 @@ int read_particles(char filename[MAXSTRING], int isimu)
 #endif // READ_MPARTICLES
   
   elapsed = clock()-elapsed;
-
+  
   fprintf(stderr," done in %4.2f sec. (nhalos = %"PRIu64", full ID range = %"PRIu64" -> %"PRIu64", local ID range = %"PRIu64" -> %"PRIu64")\n",
           (float)elapsed/CLOCKS_PER_SEC,nHalos[isimu],PidMin,PidMax[isimu],PidMin_local,PidMax_local);
   
-
+  
   return(1);
 }
 
@@ -693,7 +696,7 @@ int read_particles(char filename[MAXSTRING], int isimu)
 int particle_halo_mapping(int isimu)
 {
   int64_t  ihalo;         // the downwards for-loop is running until ihalo=-1
-  uint64_t ipart, jpart;
+  uint64_t ipart, jpart, *position;
   clock_t  elapsed;
   
   elapsed = clock();
@@ -701,7 +704,7 @@ int particle_halo_mapping(int isimu)
   PidMax_global = MAX(PidMax[0],PidMax_global);
   PidMax_global = MAX(PidMax[1],PidMax_global);
   fprintf(stderr,"  o creating particle<->halo mapping for file %d (PidMax=%"PRIu64", PidMax_global=%"PRIu64") ... ",isimu,PidMax[isimu],PidMax_global);
-
+  
   parts[isimu] = (PARTptr) calloc((PidMax_global+1), sizeof(PARTS)); // +1 because we are accessing an array like [PidMax_global] !
   if(parts[isimu] == NULL) {
     fprintf(stderr,"\nCould not allocate memory for parts[] array of isimu = %d (size = %f GB)\nAborting\n",
@@ -714,21 +717,40 @@ int particle_halo_mapping(int isimu)
 #pragma omp parallel for schedule(dynamic) private(ihalo,jpart,ipart) shared(nHalos,halos,parts,isimu)
 #endif
   for(ihalo=nHalos[isimu]-1; ihalo>=0; ihalo--)
-   {
+  {
     for(jpart=0; jpart<halos[isimu][ihalo].npart; jpart++)
-     {
+    {
 #ifdef USE_PIDMAP
-       //  find halos[isimu][ihalo].Pid[jpart] in PidMap[isimu] to get the 'ipart' to be used with parts[isimu][ipart]
-       ipart = (uint64_t) ((uint64_t *)bsearch(&(halos[isimu][ihalo].Pid[jpart]), PidMap[isimu], NPids[isimu], sizeof(uint64_t), pid_cmp) - PidMap[isimu]);
-#else
-       // simply use the Pid as the 'ipart'
-       ipart = halos[isimu][ihalo].Pid[jpart];
+      //  find halos[isimu][ihalo].Pid[jpart] in PidMap[isimu] to get the 'ipart' to be used with parts[isimu][ipart]
+      position = (uint64_t *)bsearch(&(halos[isimu][ihalo].Pid[jpart]), PidMap[isimu], NPids[isimu], sizeof(uint64_t), pid_cmp);
+      if(position != NULL) {
+        ipart = (uint64_t) (position - PidMap[isimu]);
+        
+#ifdef EXCLUSIVE_PARTICLES
+        if(parts[isimu][ipart].nhalos == 0)
 #endif
+        {
+          parts[isimu][ipart].nhalos++;
+          parts[isimu][ipart].Hid = (uint64_t *) realloc(parts[isimu][ipart].Hid, parts[isimu][ipart].nhalos*sizeof(uint64_t)); // valgrind says "16 bytes lost"
+          if(parts[isimu][ipart].Hid == NULL) {
+            fprintf(stderr,"particle_halo_mapping(): could not realloc() memory for Hid array\n");
+            exit(0);
+          }
+          
+          parts[isimu][ipart].Hid[parts[isimu][ipart].nhalos-1] = ihalo;
+        }
+      }
+      else {
+        // this particle must come from some previous simulation and does not exist here...
+      }
+#else // USE_PIDMAP
+      // simply use the Pid as the 'ipart'
+      ipart = halos[isimu][ihalo].Pid[jpart];
 
 #ifdef EXCLUSIVE_PARTICLES
       if(parts[isimu][ipart].nhalos == 0)
 #endif
-       {
+      {
         parts[isimu][ipart].nhalos++;
         parts[isimu][ipart].Hid = (uint64_t *) realloc(parts[isimu][ipart].Hid, parts[isimu][ipart].nhalos*sizeof(uint64_t)); // valgrind says "16 bytes lost"
         if(parts[isimu][ipart].Hid == NULL) {
@@ -737,10 +759,12 @@ int particle_halo_mapping(int isimu)
         }
         
         parts[isimu][ipart].Hid[parts[isimu][ipart].nhalos-1] = ihalo;
-       }
+      }
+#endif // USE_PIDMAP
       
-     }
-   }
+      
+    } // for(jpart)
+  } // for(ihalo)
   
   elapsed = clock()-elapsed;
   fprintf(stderr,"done in %4.2f sec.\n",(float)elapsed/CLOCKS_PER_SEC);
@@ -810,7 +834,7 @@ int cross_correlation(char OutFile[MAXSTRING])
   fprintf(stderr," done in %4.2f sec.\n", (double)elapsed/CLOCKS_PER_SEC);
   
 #endif // MTREE_BOTH_WAYS
- 
+  
   
 #ifdef SNAPSKIPPING
   elapsed = clock();
@@ -828,7 +852,7 @@ int cross_correlation(char OutFile[MAXSTRING])
 /*==================================================================================================
  * clean_connection
  *==================================================================================================*/
-int clean_connection(uint64_t ihalo, int isimu0, int isimu1)
+void clean_connection(uint64_t ihalo, int isimu0, int isimu1)
 {
   uint64_t jhalo, icroco, ncroco_new;
   MTREE    *mtree;
@@ -910,7 +934,7 @@ uint64_t max_merit(uint64_t jhalo, int isimu)
 /*==================================================================================================
  * create_mtree
  *==================================================================================================*/
-int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
+void create_mtree(uint64_t ihalo, int isimu0, int isimu1)
 {
   uint64_t  jhalo, khalo, ipart, jpart, ncroco, icroco;
   int64_t   jcroco;
@@ -941,21 +965,24 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
 #ifdef USE_PIDMAP
     //  find halos[isimu0][ihalo].Pid[jpart] in PidMap[isimu1] to get the actual ipart to be used with parts[isimu1][ipart]
     position = (uint64_t *) bsearch(&(halos[isimu0][ihalo].Pid[jpart]), PidMap[isimu1], NPids[isimu1], sizeof(uint64_t), pid_cmp);
-
+    
     // when using the PidMap[] we need to make this additional check as this map for each isimu only contains the actual present particles
     if(position != NULL) {
       ipart = (uint64_t) (position - PidMap[isimu1]);
-
+      
       /* ipart belongs to nhalos halos in isimu1 */
       for(jhalo=0; jhalo<parts[isimu1][ipart].nhalos; jhalo++) {  // valgrind says "invalid read of size 4" here!?
         khalo          = parts[isimu1][ipart].Hid[jhalo];
         common[khalo] += 1;
       }
     }
+    else {
+      // Pid[jpart] is not in [isimu1] and hence not shared with any halo from [isimu1]
+    }
 #else
     // simply use Pid as 'ipart'
     ipart = halos[isimu0][ihalo].Pid[jpart];
-
+    
     // here we do not need that check as parts[][] contains PidMax_global entries, irrespective of isimu
     // (and .nhalos will be 0 for non-existent particles...)
     
@@ -1048,7 +1075,7 @@ int create_mtree(uint64_t ihalo, int isimu0, int isimu1)
 /*==================================================================================================
  * create_mtree_qsort
  *==================================================================================================*/
-int create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
+void create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
 {
   uint64_t  jhalo, khalo, ipart, jpart, ncroco, icroco;
   int64_t   jcroco;
@@ -1056,15 +1083,15 @@ int create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
 #ifdef USE_PIDMAP
   uint64_t *position;
 #endif
-
+  
   // reset the actual mtree[] pointer
   if(halos[isimu0][ihalo].mtree != NULL)
     free(halos[isimu0][ihalo].mtree);
   halos[isimu0][ihalo].mtree = NULL;
-
+  
   /* temporary array pointers */
   common = NULL;
-
+  
   /* common[] records how many particles ihalo(isimu0) has in common with khalo(isimu1) */
   common = (uint64_t *) calloc(nHalos[isimu1], sizeof(uint64_t));
   
@@ -1072,21 +1099,24 @@ int create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
 #ifdef USE_PIDMAP
     //  find halos[isimu0][ihalo].Pid[jpart] in PidMap[isimu1] to get the actual ipart to be used with parts[isimu1][ipart]
     position = (uint64_t *) bsearch(&(halos[isimu0][ihalo].Pid[jpart]), PidMap[isimu1], NPids[isimu1], sizeof(uint64_t), pid_cmp);
-
+    
     // when using the PidMap[] we need to make this additional check as this map for each isimu only contains the actual present particles
     if(position != NULL) {
       ipart = (uint64_t) (position - PidMap[isimu1]);
-
+      
       /* ipart belongs to nhalos halos in isimu1 */
       for(jhalo=0; jhalo<parts[isimu1][ipart].nhalos; jhalo++) {  // valgrind says "invalid read of size 4" here!?
         khalo          = parts[isimu1][ipart].Hid[jhalo];
         common[khalo] += 1;
       }
     }
+    else {
+      // Pid[jpart] is not in [isimu1] and hence not shared with any halo from [isimu1]
+    }
 #else
     // simply use Pid as 'ipart'
     ipart = halos[isimu0][ihalo].Pid[jpart];
-
+    
     // here we do not need that check as parts[][] contains PidMax_global entries, irrespective of isimu
     // (and .nhalos will be 0 for non-existent particles...)
     
@@ -1127,7 +1157,7 @@ int create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
         icroco++;
       }
     }
-
+    
     /* qsort particles according to merit function */
     qsort((void *)halos[isimu0][ihalo].mtree, ncroco, sizeof(MTREE), merit_sort);
     
@@ -1135,7 +1165,7 @@ int create_mtree_qsort(uint64_t ihalo, int isimu0, int isimu1)
     halos[isimu0][ihalo].mtree = NULL;
   }
   
-
+  
   /* free temporary structures */
   if(common) {
     free(common);
@@ -1172,13 +1202,13 @@ int write_mtree(char OutFile[MAXSTRING])
     fprintf(stderr,"could not open file %s\nexiting\n",outname_idx);
     exit(0);
   }
-
+  
   fpout_croco = fopen(outname_croco,"w");
   if(fpout_croco == NULL) {
     fprintf(stderr,"could not open file %s\nexiting\n",outname_croco);
     exit(0);
   }
-
+  
   
   
   // count the number of halos with a progenitor
@@ -1217,11 +1247,11 @@ int write_mtree(char OutFile[MAXSTRING])
               halos[0][ihalo].ncroco);
       fflush(fpout);
       fflush(fpout_croco);
-
+      
       for(icroco=0; icroco<halos[0][ihalo].ncroco; icroco++) {
         fprintf(fpout,"%"PRIu64"\n",
                 halos[0][ihalo].mtree[icroco].haloid[1]);
-
+        
         fprintf(fpout_croco,"  %"PRIu64"  %"PRIu64"  %"PRIu64" %g\n",
                 halos[0][ihalo].mtree[icroco].common,
                 halos[0][ihalo].mtree[icroco].haloid[1],
@@ -1238,7 +1268,7 @@ int write_mtree(char OutFile[MAXSTRING])
   fclose(fpout);
   fclose(fpout_idx);
   fclose(fpout_croco);
-
+  
   elapsed = clock()-elapsed;
   fprintf(stderr," done in %4.2f sec.\n",(float)elapsed/CLOCKS_PER_SEC);
   return(1);
@@ -1360,7 +1390,7 @@ int pid_cmp(const void *id1, const void *id2)
   
   pid1 = (uint64_t *)id1;
   pid2 = (uint64_t *)id2;
-
+  
   if(*pid1 < *pid2)
     return(-1);
   else if(*pid1 > *pid2)
@@ -1385,20 +1415,20 @@ void create_PidMap(int isimu)
   uint64_t *tmp_PidMap, tmp_NPids;
   clock_t   elapsed;
   elapsed = clock();
-
+  
   fprintf(stderr,"  o creating PidMap for simu=%d ... ",isimu);
-
+  
   tmp_NPids   = (uint64_t)0;
   tmp_PidMap  = NULL;
   
   for(ihalo=(uint64_t)0; ihalo<nHalos[isimu]; ihalo++) {
-      for(ipart=(uint64_t)0; ipart<halos[isimu][ihalo].npart; ipart++) {
-        tmp_PidMap            = (uint64_t *)realloc(tmp_PidMap, (tmp_NPids+1)*sizeof(uint64_t));
-        tmp_PidMap[tmp_NPids] = halos[isimu][ihalo].Pid[ipart];
-        tmp_NPids++;
-      }
+    for(ipart=(uint64_t)0; ipart<halos[isimu][ihalo].npart; ipart++) {
+      tmp_PidMap            = (uint64_t *)realloc(tmp_PidMap, (tmp_NPids+1)*sizeof(uint64_t));
+      tmp_PidMap[tmp_NPids] = halos[isimu][ihalo].Pid[ipart];
+      tmp_NPids++;
+    }
   }
-
+  
   // make PidMap[] searchable via bsearch()
   qsort((void *)tmp_PidMap, tmp_NPids, sizeof(uint64_t), pid_cmp);
   
@@ -1417,9 +1447,9 @@ void create_PidMap(int isimu)
   PidMap[isimu][NPids[isimu]] = tmp_PidMap[ipart];
   NPids[isimu]++;
   free(tmp_PidMap);
-
+  
   PidMax[isimu] = NPids[isimu];
-
+  
   elapsed = clock()-elapsed;
   
   fprintf(stderr," done in %4.2f sec. (removed %"PRIu64" duplicates, keeping %"PRIu64" unique Pids)\n", (float)elapsed/CLOCKS_PER_SEC,(tmp_NPids-NPids[isimu]),NPids[isimu]);
@@ -1438,7 +1468,7 @@ int connectionrejection(HALOS halo, MTREE progmtree)
 {
   double Mratio;
   
-//  Mratio = (double)halo.npart/(double)halo.mtree[0].npart[1];
+  //  Mratio = (double)halo.npart/(double)halo.mtree[0].npart[1];
   Mratio = (double)halo.npart/(double)progmtree.npart[1];
   if(Mratio<1) Mratio=1.0/Mratio;
   
@@ -1491,7 +1521,7 @@ void check_connections()
         fprintf(stderr,"      [1]:                                                               mtree.haloid=%12"PRIu64" mtree.id=%12"PRIu64" mtree.npart=%12"PRIu64"\n", halos[0][ihalo].mtree[0].haloid[1], halos[0][ihalo].mtree[0].id[1], halos[0][ihalo].mtree[0].npart[1]);
 #endif
         rejected = 1;
-
+        
         // flag halos[0][ihalo] to not be written (only halos with ncroco>0 will be written to file...)
         halos[0][ihalo].ncroco = 0;
       }
@@ -1505,7 +1535,7 @@ void check_connections()
           fprintf(stderr,"      [1]: new => icroco=%"PRIu64" merit=%lf                       mtree.haloid=%12"PRIu64" mtree.id=%12"PRIu64" mtree.npart=%12"PRIu64"\n", icroco,halos[0][ihalo].mtree[icroco].merit,halos[0][ihalo].mtree[icroco].haloid[1], halos[0][ihalo].mtree[icroco].id[1], halos[0][ihalo].mtree[icroco].npart[1]);
         }
 #endif
-
+        
         // re-shuffle the mtree[] list up to this point
         mtree_tmp.haloid[0] = halos[0][ihalo].mtree[icroco].haloid[0];
         mtree_tmp.haloid[1] = halos[0][ihalo].mtree[icroco].haloid[1];
@@ -1544,7 +1574,7 @@ void check_connections()
         fprintf(stderr,"      [1]:                                                               mtree.haloid=%12"PRIu64" mtree.id=%12"PRIu64" mtree.npart=%12"PRIu64"\n", halos[0][ihalo].mtree[0].haloid[1], halos[0][ihalo].mtree[0].id[1], halos[0][ihalo].mtree[0].npart[1]);
 #endif
         rejected = 1;
-
+        
         // flag halos[0][ihalo] to not be written (only halos with ncroco>0 will be written to file...)
         halos[0][ihalo].ncroco = 0;
       }
@@ -1593,7 +1623,14 @@ void check_connections()
     } // if (missing || rejected)
   } // for(ihalo)
   
+  // have we added additional halos to [1]?
   if(nHalos[1] > nHalos1) {
+#ifdef USE_PIDMAP
+    // update the PidMap for [1]
+    free(PidMap[1]);
+    create_PidMap(1);
+#endif
+    
     // we need to update the particle_halo_maping for [1]
     for(ipart=0; ipart<PidMax_global+1; ipart++) {   // free() old memory first
       if(parts[1][ipart].Hid != NULL){
