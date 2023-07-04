@@ -1993,3 +1993,6 @@
             - lots of re-writing of code in general...
             - there are now far more messages written to the logfile that help debugging certain instances
             - removed timing of generate_tree (commented in specific.c)
+
+15/06/2023   - substantial changes in exciseSubhaloStars():
+(BUILD 112)    - the list of subhalos stars (to be removed from the host) is now build recursively, taking into account sub-sub-sub...-halos

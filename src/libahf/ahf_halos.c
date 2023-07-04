@@ -545,8 +545,8 @@ ahf_halos(gridls *grid_list)
   fflush(io.logfile);
 #endif
 #ifdef WITH_OPENMP
-//#  pragma omp parallel for schedule (dynamic)	shared(halos,numHalos,stderr,ahf) private(i,k,numSubStruct,SubStruct,ihost,isub) default(none)
-// this loop cannot be parallelized as information is written to halos[isub] and possibly other levels of halos[ihost]!
+  //#  pragma omp parallel for schedule (dynamic)	shared(halos,numHalos,stderr,ahf) private(i,k,numSubStruct,SubStruct,ihost,isub) default(none)
+  // this loop cannot be parallelized as information is written to halos[isub] and possibly other levels of halos[ihost]!
 #endif
   for (i = 0; i < numHalos; i++) {
     
@@ -558,16 +558,16 @@ ahf_halos(gridls *grid_list)
       isub  = halos[i].subStruct[k];
       ihost = halos[isub].hostHalo; // this should be identical to i !?
       
-//      if(ihost != i) fprintf(stderr,"ihost=%ld i=%ld\n",ihost,i);
-//      if(isub < 0) fprintf(stderr,"ihost=%ld i=%ld isub=%ld\n",ihost,i,isub);
+      //      if(ihost != i) fprintf(stderr,"ihost=%ld i=%ld\n",ihost,i);
+      //      if(isub < 0) fprintf(stderr,"ihost=%ld i=%ld isub=%ld\n",ihost,i,isub);
       
       // if subhalo spawned from ahf.min_ref (or below), we check for distance (and mass!) and possibly make an assignment to halos[i]
-//      if(halos[isub].hostHaloLevel >= ahf.min_ref) {
-     if(halos[isub].hostHaloLevel >= AHF_HOSTHALOLEVEL) {
-
+      //      if(halos[isub].hostHaloLevel >= ahf.min_ref) {
+      if(halos[isub].hostHaloLevel >= AHF_HOSTHALOLEVEL) {
+        
         // do we consider this to be a credible subhalo?
         if(check_subhalo(halos+ihost, halos+isub) == TRUE) {
-
+          
           // add halos[isub] to the list of subhalos of halos[i]
           numSubStruct++;
           SubStruct = (int *) realloc(SubStruct, numSubStruct*sizeof(int));
@@ -610,7 +610,7 @@ ahf_halos(gridls *grid_list)
               ihost = halos[ihost].hostHalo;
             }
           } // while(ihost != -1)
-
+          
           /* this is now either coming from the 'break' with a valid ihost or from the while-loop condition */
           halos[isub].hostHalo = ihost;
         }
@@ -1660,7 +1660,7 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
   double dx, dy, dz;
   double dist, tmpMin, closeRefDist;
   long   maxParts, maxNodes;
-    
+  
   gridls *cur_grid;
   double xx, yy, zz;
   double tmpRad;
@@ -1881,7 +1881,7 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
         // only do a double-check, if this patch [j] has multiple parents
         if (spatialRef[i][j].numParDom > 1) {
           numcomplex++;
-                    
+          
           /* parent halo = halo on next coarser level
            *               with centre closest to current spatialRef */
           tmpMin         = 10000000000000.0;
@@ -1905,7 +1905,7 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
             if (dz > 0.5)	dz = 1.0 - dz;
             
             dist = dx * dx + dy * dy + dz * dz;
-
+            
             // if this parent is closer anyp revious one, keep it
             if (dist < tmpMin) {
               isoRefIndexNew = isoRefIndex;
@@ -2167,11 +2167,11 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
   //   - main branch of the refinement trees
   //   - distance between the all daughters and their nearest daughter on the same level
   /********************************************************************************************************************************************************/
-
+  
   //TODO: this loop could be parallelized!? not really: the i-loop sets values for [i+1] (i.e. the closeRefDist)
   for (i = 0; i < num_refgrids - 1; i++) {
     for (j = 0; j < numIsoRef[i]; j++) {
-
+      
       // find the main branch of the refinement tree
       //=============================================
       // only need to decide on the main branch, if there is more than one daughter
@@ -2206,7 +2206,7 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
             isoRefIndexNew = isoRefIndex;
           }
 #endif
-
+          
 #ifdef PARDAU_NODES
           if (spatialRef[i+1][isoRefIndex].numNodes > maxNodes) {
             isoRefIndexNew = isoRefIndex;
@@ -2355,7 +2355,7 @@ analyseRef(int num_refgrids, SPATIALREF **spatialRef)
     totalcount = totalcount + count2 - count1;
   }
   fprintf(stderr, "Number of Dark Matter Halos = %d\n", totalcount + numIsoRef[0]);
-
+  
   /******************************************************************************************
    * Checking for duplication of subhalos */
   for (i = 0; i < num_refgrids; i++) {
@@ -2424,7 +2424,7 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
   
   long unsigned *idxtmp, *idx;
   double        *fsort;
-    
+  
   idx = NULL;
   
   // count the number of leaves (= number of potential halos) in the spatialRef[][] tree
@@ -2641,7 +2641,7 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
           }
           count++;
         } // if(numSubStruct == 1)
-                
+        
         // the spatialRef[][] tree spreads into multiple leaves
         else {
 #ifdef VERBOSE2
@@ -2887,7 +2887,7 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
         
         // spatialRef[i][j].numParDom == 0
         else {
-
+          
           OKcountBC = 1;
           for (f = 0; f < numDensZero; f++) {
             if ((i == densZero[f].refLevel) && (j == densZero[f].isoRefIndex))
@@ -5981,7 +5981,7 @@ sort_halo_particles(HALO *halo)
 boolean check_subhalo(HALO *host, HALO *sub)
 {
   double dx,dy,dz;
-    
+  
   dx = fabs(host->pos.x - sub->pos.x);
   dy = fabs(host->pos.y - sub->pos.y);
   dz = fabs(host->pos.z - sub->pos.z);
@@ -6182,11 +6182,44 @@ int id_comp(const void *id1, const void *id2)
     return 0;
 }
 
+// recursively find all sub-sub-...-halo star particles
+void get_idsubstar(HALO *halos, long ihalo, long *nsubstar, long **idsubstar)
+{
+  long    i, k, isub;
+  partptr cur_part;
+    
+  // loop over all substructures
+  if(halos[ihalo].numSubStruct > 0) {
+    for(i=0; i<halos[ihalo].numSubStruct; i++) {
+      
+      // array id for substructure
+      isub = halos[ihalo].subStruct[i];
+      
+      // access every single particle of the substructure
+      for(k=0; k<halos[isub].npart; k++) {
+        cur_part = global.fst_part + halos[isub].ipart[k];
+        
+        // is it a star particle?  -> attach it to the idsubstar[] list...
+        if(fabs(cur_part->u - PSTAR) < ZERO) {
+          (*idsubstar) = (long *) realloc(*idsubstar, (*nsubstar+1)*sizeof(long));
+          (*idsubstar)[*nsubstar] = cur_part - global.fst_part;
+          (*nsubstar)++;
+        } // if(PSTAR)
+      } // for(k = [isub].npart)
+      
+      // get all the starpids from the subhaloes of the subhalo
+      get_idsubstar(halos, isub, nsubstar, idsubstar);
+          
+    } // for(i = numSubStruct)
+  } // if(numSubStruct)
+    
+}
+
 void exciseSubhaloStars(HALO *halos, long ihost)
 {
-  long *idsubstar;
-  long *idhoststar;
-  long *ipart_uniquestars;
+  long *idsubstar          = NULL;
+  long *idhoststar         = NULL;
+  long *ipart_uniquestars  = NULL;
   long unsigned nhoststar, nsubstar, k, khoststar, ksubstar, isub, i, npart_uniquestars;
   partptr       cur_part;
   
@@ -6195,14 +6228,12 @@ void exciseSubhaloStars(HALO *halos, long ihost)
     
     /* allocate temporary arrays (one malloc() for an array big enough to hold everything) */
     nhoststar  = halos[ihost].stars_only.npart;
-    
     idhoststar = (long *) malloc(nhoststar*sizeof(long));
-    idsubstar  = (long *) malloc(nhoststar*sizeof(long));
-    if(idsubstar == NULL || idhoststar == NULL) {
+    if(idhoststar == NULL) {
       fprintf(stderr, "Not enough memory to allocate arrays in %s.  Aborting.\n\n", __func__);
       common_terminate(EXIT_FAILURE);
     }
-    
+
     /* copy host star particle IDs over to temporary array */
     khoststar = 0;
     for(k=0; k<halos[ihost].npart; k++) {
@@ -6217,38 +6248,16 @@ void exciseSubhaloStars(HALO *halos, long ihost)
       fprintf(stderr,"exciseSubhaloStars(1): number of stars in host does not add up: khoststar=%ld nhoststar=%ld\n",khoststar,nhoststar);
       common_terminate(EXIT_FAILURE);
     }
+        
+    // recursively excise all subhalo stars
+//    fprintf(stderr,"excising subhalo stars from ihost=%ld (numSubStruct=%ld)\n",ihost,halos[ihost].numSubStruct);
+    nsubstar  = 0;
+    idsubstar = NULL;
+    get_idsubstar(halos, ihost, &nsubstar, &idsubstar);
     
-    
-    /* copy all subhalo star particle IDs over to temporary array */
-    ksubstar = 0;
-    for(i=0; i<halos[ihost].numSubStruct; i++) {
-      isub = halos[ihost].subStruct[i];
-      
-      for(k=0; k<halos[isub].npart; k++) {
-        cur_part = global.fst_part + halos[isub].ipart[k];
-        if(fabs(cur_part->u - PSTAR) < ZERO) {
-          idsubstar[ksubstar] = cur_part - global.fst_part;
-          ksubstar++;
-          
-          // just in case all subhaloes combined contain more stars than the host (this can happen if subhalo extends across host's radius!)
-          if(ksubstar >= nhoststar)
-            idsubstar = (long *) realloc(idsubstar, (ksubstar+1)*sizeof(long));
-        }
-      }
-    }
-    nsubstar = ksubstar;
-    
-    /* the subhaloes contain stars */
+    /* compare subhalo stars to halo stars now... */
     if(nsubstar > 0)
     {
-      /* remove excess array elements */
-      //idhoststar = (long *) realloc(idhoststar, nhoststar*sizeof(long));
-      idsubstar  = (long *) realloc(idsubstar,  nsubstar *sizeof(long));
-      if(idsubstar == NULL || idhoststar == NULL) {
-        fprintf(stderr, "Not enough memory to re-allocate arrays in %s (nhoststar=%ld, nsubstar=%ld).  Aborting.\n\n", __func__,nhoststar,nsubstar);
-        common_terminate(EXIT_FAILURE);
-      }
-      
       /* qsort both idhoststar[] and idsubstar[] arrays */
       qsort((void *)idhoststar, nhoststar, sizeof(long), id_comp);
       qsort((void *)idsubstar,  nsubstar,  sizeof(long), id_comp);
