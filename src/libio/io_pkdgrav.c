@@ -1299,16 +1299,19 @@ local_get_block_id(io_logging_t log,
   hid_t hdf5_datatype = 0;
   void * CommBuffer;
   uint64_t num_bytes = 0;
-  bool long_ids = false;
+  /*bool long_ids = false;
   
-  /* D. Rennehan: Going to assume that if there is a high word for any particle we are using long-ids. */
+  // D. Rennehan: Going to assume that if there is a high word for any particle we are using long-ids.
   for (type = 0; type < 6; type ++)
   {
     if (f->header->nallhighw[type] != 0)
     {
       long_ids = true;
     }
-  }
+  }*/
+
+  /* PKDGRAV3 outputs long ids by default */
+  bool long_ids = true;
   
   for (type = 0; type < 6; type ++)
   {
