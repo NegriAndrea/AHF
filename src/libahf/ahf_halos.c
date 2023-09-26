@@ -573,9 +573,9 @@ ahf_halos(gridls *grid_list)
           SubStruct = (int *) realloc(SubStruct, numSubStruct*sizeof(int));
           SubStruct[numSubStruct-1] = isub;
           
-#ifdef MPI_SUBHALO_FIX
+#if (defined WITH_MPI && defined SUSSING2013)
           // if the host halo is not written, also do not write the subhalo
-          if(halos[i].ignoreme == TRUE)
+          if(halos[ihost].ignoreme == TRUE)
             halos[isub].ignoreme = TRUE;
           
           // but if the host halo is written, also write the subhalo
@@ -595,7 +595,7 @@ ahf_halos(gridls *grid_list)
               halos[ihost].subStruct = (int *) realloc(halos[ihost].subStruct, halos[ihost].numSubStruct*sizeof(int));
               halos[ihost].subStruct[halos[ihost].numSubStruct-1] = isub;
               
-#ifdef MPI_SUBHALO_FIX
+#if (defined WITH_MPI && defined SUSSING2013)
               // if the host halo is not written, also do not write the subhalo
               if(halos[ihost].ignoreme == TRUE)
                 halos[isub].ignoreme = TRUE;
@@ -3045,91 +3045,7 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
     halos[i].gatherRad = MAX(halos[i].gatherRad, halos[i].R_vir);
     halos[i].gatherRad = MIN(halos[i].gatherRad, maxGathRad);
   } /* for ( i=numHalos-1; i>=0; i-- ) */
-  
-#ifdef DPhalos
-  /*********************************************************************************************************
-   *********************************************************************************************************
-   * Dump preliminary halo properties to file -> these objects are our DPhaloes (Avila Perez et al., in prep.) */
-  {
-    FILE *fptmp;
-    char  prename[MAXSTRING];
     
-    
-#ifdef WITH_MPI
-    fprintf(stderr,"\n MPI rank %d writing DPhalos ... ",global_mpi.rank);
-    sprintf(prename,"%s.%04d.z%.3f.AHF_DPhalos", global_io.params->outfile_prefix,global_mpi.rank,fabs(global.z));
-    
-    if( (fptmp = fopen(prename,"w")) == NULL ) {
-      fprintf(stderr,"Could not open DPhalos file %s\nABORTING\n",prename);
-      common_terminate(EXIT_FAILURE);
-    }
-    
-    if(global_mpi.rank == 0)
-      fprintf(fptmp,"# x(1) y(2) z(3) npart(4) ncells(5)\n");
-    
-    /* Flagging the haloes in the boundary zone */
-    flag_boundary_haloes();
-#else
-    fprintf(stderr,"\n Writing DPhalos ... ");
-    sprintf(prename,"%s.z%.3f.AHF_DPhalos",      global_io.params->outfile_prefix,                fabs(global.z));
-    if( (fptmp = fopen(prename,"w")) == NULL ) {
-      fprintf(stderr,"Could not open DPhalos file %s\nABORTING\n",prename);
-      common_terminate(EXIT_FAILURE);
-    }
-    fprintf(fptmp,"# x(1) y(2) z(3) npart(4) ncells(5)\n");
-#endif
-    
-    
-#ifdef DPhalos_WITHCOMMENTS
-    fprintf(fptmp, "\n\n   preliminary halo properties:\n");
-    fprintf(fptmp, "   ============================\n");
-#endif
-    for (ii = numHalos - 1; ii >= 0; ii--) {
-      /* pick halo from ordered list */
-      i = idx[ii];
-      
-#ifdef WITH_MPI
-      if(halos[i].ignoreme == FALSE) {
-#endif
-        
-#ifdef DPhalos_WITHCOMMENTS
-        fprintf(fptmp, "   halos[%d].numNodes         = %16d\n",                          i, halos[i].numNodes);
-        fprintf(fptmp, "   halos[%d].npart            = %16ld\n",                         i, halos[i].npart);
-        fprintf(fptmp, "   halos[%d].R_vir            = %16.8g kpc/h (=closeRefDist)\n",  i, halos[i].R_vir * x_fac * 1000.);
-        fprintf(fptmp, "   halos[%d].gatherRad        = %16.8g kpc/h (=closeHostDist)\n", i, halos[i].gatherRad * x_fac * 1000.);
-        fprintf(fptmp, "   halos[%d].spaRes           = %16.8g\n",                        i, halos[i].spaRes);
-        fprintf(fptmp, "   halos[%d].pos.x            = %16.8g\n",                        i, halos[i].pos.x * x_fac);
-        fprintf(fptmp, "   halos[%d].pos.y            = %16.8g\n",                        i, halos[i].pos.y * x_fac);
-        fprintf(fptmp, "   halos[%d].pos.z            = %16.8g\n",                        i, halos[i].pos.z * x_fac);
-        fprintf(fptmp, "   halos[%d].hostHalo         = %16d\n",                          i, halos[i].hostHalo);
-        fprintf(fptmp, "   halos[%d].hostHaloLevel    = %16d\n",                          i, halos[i].hostHaloLevel);
-        fprintf(fptmp, "   halos[%d].numSubStruct     = %16d\n",                          i, halos[i].numSubStruct);
-        fprintf(fptmp, "            gatherRad/R_vir   = %16.8g\n",                        halos[i].gatherRad / halos[i].R_vir);
-        fprintf(fptmp, "   #########################################################################\n");
-#else
-        if(halos[i].npart > 0) {
-          fprintf(fptmp,"%16.8f %16.8f %16.8f %16ld %16d\n",
-                  halos[i].pos.x     * x_fac * 1000,
-                  halos[i].pos.y     * x_fac * 1000,
-                  halos[i].pos.z     * x_fac * 1000,
-                  halos[i].npart,
-                  halos[i].numNodes);
-          fflush(fptmp);
-        }
-#endif
-        
-#ifdef WITH_MPI
-      } // if(ignoreme == FALSE)
-#endif
-    } // for(ii=numHalos)
-    fclose(fptmp);
-    
-    // we are not interested in anything else, right?
-    fprintf(stderr,"done and exiting now.\n");
-    common_terminate(EXIT_SUCCESS);
-  }
-#endif   /* DPhalos */
-  
   /* remove tempory index array again */
   if(idx != NULL)
     free(idx);

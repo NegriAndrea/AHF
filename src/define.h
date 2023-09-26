@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   112
+#define BUILD   114
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)
@@ -106,7 +106,6 @@
 //#define AHFcentrefileBASIC        /* writes a basic file containing substructure info  */
 //#define AHFgridtreefile           /* file containing information about grid-tree       */
 
-//#define DPhalos   /* writes DPhalos file (cf. Avila Perez et al., in prep.)      */
 
 
 

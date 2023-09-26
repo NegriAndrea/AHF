@@ -1661,11 +1661,6 @@ void write_parameterfile()
 #else
         fprintf(fpparam,"AHFcentrefileBASIC         \t\t0\n");
 #endif
-#ifdef DPhalos
-        fprintf(fpparam,"DPhalos                    \t\t1\n");
-#else
-        fprintf(fpparam,"DPhalos                    \t\t0\n");
-#endif
 #ifdef AHFshellshape
         fprintf(fpparam,"AHFshellshape              \t\t1\n");
 #else
@@ -2076,8 +2071,12 @@ uint64_t getHaloID(HALO *halos, int i)
 uint64_t getSussing2013ID(int isnap, int ihalo)
 {
   uint64_t ID;
-  
+
+#ifdef WITH_MPI
+  ID = (uint64_t) ( ((uint64_t)1e16)*isnap + ((uint64_t)1e10)*global_mpi.rank + (ihalo+1) );
+#else
   ID = (uint64_t) ( ((uint64_t)1e12)*isnap + (ihalo+1) );
+#endif
   
   return(ID);
 }
