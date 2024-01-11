@@ -66,14 +66,24 @@ def writeParticleType(h5f, name, dic):
     g.attrs.create('Nparticles', dic['N'])
 
     if dic['N']>0:
-        g['ParticleID'] = dic['pID']
+        # g['ParticleID'] = dic['pID']
+        g.create_dataset('ParticleID',
+                data = dic['pID'],
+                compression="gzip", compression_opts=9)
 
         assert dic['N'] == dic['pID'].size
 
         gD = g.create_group('descriptor')
-        gD['FoFID'] = dic['unFoFID']
-        gD['dim'] = dic['dim']
-        gD['off'] = dic['off']
+
+        gD.create_dataset('FoFID',
+                data = dic['unFoFID'],
+                compression="gzip", compression_opts=9)
+        gD.create_dataset('dim',
+                data = dic['dim'],
+                compression="gzip", compression_opts=9)
+        gD.create_dataset('off',
+                data = dic['off'],
+                compression="gzip", compression_opts=9)
 
 import time
 
@@ -85,11 +95,20 @@ parser.add_argument('-v','--verbose', help='verbose output',
         action='store_true')
 parser.add_argument('-o', action='store_true',
         help='overwrite output files')
+parser.add_argument('--no-cast', action='store_true',
+        help='Do not try to cast the IDs to a smaller datatype')
 
 args = parser.parse_args()
 
 fname = args.filename
 t=time.time()
+
+# read the first line, with the number of "haloes"
+Nhaloes = int(np.loadtxt(fname, dtype=np.uint64, max_rows=1, unpack=True))
+
+if Nhaloes == 0:
+    print(f'No data in {fname}, skipping this file')
+    exit()
 
 # these two readings work, but loadtxt is faster
 col1, col2 = np.loadtxt(fname, dtype=np.uint64, skiprows=1, unpack=True)
@@ -102,8 +121,6 @@ print('time=', time.time()-t)
 # print(Table.read(fname, format='ascii',
         # delimiter='\s', data_end=1))
 
-# read the first line, with the number of "haloes"
-Nhaloes = int(np.loadtxt(fname, dtype=np.uint64, max_rows=1, unpack=True))
 
 dim = np.zeros(Nhaloes, dtype=np.uint64)
 ID = np.zeros(Nhaloes, dtype=np.uint64)
@@ -158,12 +175,24 @@ extractParts(Nhaloes, ID, pID, pT, pFoFID, col1, col2, off, dim, off_new)
 del off
 print(time.time()-t)
 
-# try to cast it to a lesser precision, if possible
-maxpT = pT.max()
-if np.can_cast(maxpT, np.uint16):
-    pT = pT.astype(np.uint16, casting='same_kind')
-elif np.can_cast(maxpT, np.uint32):
-    pT = pT.astype(np.uint32, casting='same_kind')
+if not args.no_cast:
+    # try to cast it to a lesser precision, if possible
+
+    maxpT = pT.max()
+    if np.can_cast(maxpT, np.uint8):
+        pT = pT.astype(np.uint8, casting='same_kind')
+    elif np.can_cast(maxpT, np.uint16):
+        pT = pT.astype(np.uint16, casting='same_kind')
+    elif np.can_cast(maxpT, np.uint32):
+        pT = pT.astype(np.uint32, casting='same_kind')
+
+    maxpID = pID.max()
+    if np.can_cast(maxpID, np.uint8):
+        pID = pID.astype(np.uint8, casting='same_kind')
+    elif np.can_cast(maxpID, np.uint16):
+        pID = pID.astype(np.uint16, casting='same_kind')
+    elif np.can_cast(maxpID, np.uint32):
+        pID = pID.astype(np.uint32, casting='same_kind')
 
 gas   = extractSinglePartType(0, pT, pID, pFoFID)
 DM    = extractSinglePartType(1, pT, pID, pFoFID)
@@ -178,12 +207,28 @@ else:
 
 with h5py.File(outname, writeMode) as h5f:
     T = h5f.create_group('total')
-    T['pID']=pID
-    T['pT']=pT
+    # T['pID']=pID
+    # T['pT']=pT
+    T.create_dataset('pID',
+            data = pID,
+            compression="gzip", compression_opts=9)
+    T.create_dataset('pT',
+            data = pT,
+            compression="gzip", compression_opts=9)
     Td = T.create_group('descriptor')
-    Td['off']=off_new
-    Td['dim']=dim
-    Td['FoFID'] = ID
+    # Td['off']=off_new
+    # Td['dim']=dim
+    # Td['FoFID'] = ID
+
+    Td.create_dataset('off',
+            data = off_new,
+            compression="gzip", compression_opts=9)
+    Td.create_dataset('dim',
+            data = dim,
+            compression="gzip", compression_opts=9)
+    Td.create_dataset('FoFID',
+            data = ID,
+            compression="gzip", compression_opts=9)
 
     writeParticleType(h5f, 'DM', DM)
     writeParticleType(h5f, 'gas', gas)
