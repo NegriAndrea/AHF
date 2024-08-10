@@ -31,16 +31,22 @@
  */
 #define TIPSY_HEADER_EXTRA 40
 
+#ifdef TIPSYSUSSHEADER
+#define TIPSY_NPART_SIZE uint64_t
+#else
+#define TIPSY_NPART_SIZE uint32_t
+#endif
+
 /*
  * The header structure itself
  */
 struct io_tipsy_header_struct {
   double time;
-  uint32_t    nbodies;
+  TIPSY_NPART_SIZE nbodies;
   uint32_t    ndim;
-  uint32_t    nsph;
-  uint32_t    ndark;
-  uint32_t    nstar;
+  TIPSY_NPART_SIZE nsph;
+  TIPSY_NPART_SIZE ndark;
+  TIPSY_NPART_SIZE nstar;
   uint32_t    pad;
   
   /* this is the extra information not found in the actual header */
