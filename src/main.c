@@ -564,6 +564,18 @@ int main(int argc, char **argv)
   dumpf = fopen(fname, "w");
   fprintf(dumpf, "# x y z  vx vy vz  ID\n");
   for (uint64_t i=0L; i<global_info.no_part; i++) {
+#ifdef GAS_PARTICLES
+    fprintf(dumpf, "%15e %15e %15e   %15e %15e %15e   %15e %d  %lu\n",
+            global_info.fst_part[i].pos[0]*simu.boxsize,
+            global_info.fst_part[i].pos[1]*simu.boxsize,
+            global_info.fst_part[i].pos[2]*simu.boxsize,
+            global_info.fst_part[i].mom[0]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].mom[1]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].mom[2]*H0*simu.boxsize/global.a,
+            global_info.fst_part[i].weight*simu.pmass,
+            (int)global_info.fst_part[i].u,
+            (unsigned long)global_info.fst_part[i].id);
+#else
     fprintf(dumpf, "%15e %15e %15e   %15e %15e %15e   %15e   %lu\n",
             global_info.fst_part[i].pos[0]*simu.boxsize,
             global_info.fst_part[i].pos[1]*simu.boxsize,
@@ -573,6 +585,7 @@ int main(int argc, char **argv)
             global_info.fst_part[i].mom[2]*H0*simu.boxsize/global.a,
             global_info.fst_part[i].weight*simu.pmass,
             (unsigned long)global_info.fst_part[i].id);
+#endif
   }
   fclose(dumpf);
   common_terminate(EXIT_SUCCESS);

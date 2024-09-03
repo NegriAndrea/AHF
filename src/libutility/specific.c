@@ -1681,6 +1681,11 @@ void write_parameterfile()
 #else
         fprintf(fpparam,"AHFnewHaloIDs              \t\t0\n");
 #endif
+#ifdef AHFcR1
+        fprintf(fpparam,"AHFcR1                     \t\t1\n");
+#else
+        fprintf(fpparam,"AHFcR1                     \t\t0\n");
+#endif
 #ifdef AHFrestart
         fprintf(fpparam,"AHFrestart                 \t\t1\n");
 #else
@@ -1960,6 +1965,57 @@ void write_parameterfile()
      } 
   
 }   
+
+/*==============================================================================
+ * routines related to calculating concentration following Wang et al. (arxiv:2310.00200)
+ *==============================================================================*/
+double cR1root(double c, double R1)
+{
+  return( (c-2.0*log(1.0+c)+c/(1.0+c))/(c*(log(1.0+c)-c/(1.0+c))) - R1 );
+}
+
+double calc_R1(double *r, double *dens, int nbins)
+{
+  double R1, rmid, dr;
+  int    ibin;
+  
+  R1 = pow3(r[0]/2.0)*dens[0]*(r[0]);
+  for(ibin=1; ibin<nbins; ibin++) {
+    rmid = (r[ibin]+r[ibin-1])/2.0;
+    dr   =  r[ibin]-r[ibin-1];
+    R1  += pow3(rmid)*dens[ibin]*dr;
+  }
+  
+  return(4*PI*R1);
+}
+
+double calc_cR1(double R1)
+{
+  double cR1;
+  double a,b,c;
+  
+  // uncredible range for R1 (corresponds to concentrations c<1 and c>500)
+  if(R1<=0.19 || 0.585<=R1) {
+    return(-1.0);
+  }
+
+  // bi-section method (starting range [a,b] lies within [0.19,0.585]!)
+  a = 1.0;
+  b = 500.0;
+
+  while (b-a > 1e-3) /* we only care about the concentration up to the 3rd decimal */
+   {
+    c = (a+b)/2;
+    
+    if (cR1root(a, R1)*cR1root(c, R1) > 0)
+      a = c;
+    else
+      b = c;
+   }
+  cR1 = (a+b)/2.0;
+
+  return(cR1);
+}
 
 /*==============================================================================
  * small routine calculating cNFW according to Eq.(9) in Prada et al. (2012)

@@ -887,6 +887,10 @@ WriteHalosLegacy(FILE          *fout,
 		COLUMN_INFO(fout, "SurfP", column);
 		COLUMN_INFO(fout, "Phi0", column);
     COLUMN_INFO(fout, "cNFW", column);
+#ifdef AHFcR1
+     COLUMN_INFO(fout, "cR1", column);
+     COLUMN_INFO(fout, "R1", column);
+#endif
 #ifdef AHFvmbp
     COLUMN_INFO(fout, "mbp_Vx", column);
     COLUMN_INFO(fout, "mbp_Vy", column);
@@ -2274,6 +2278,10 @@ void write_halos_line(FILE *fout, HALO *halos, long unsigned j, long unsigned i,
   fprintf(fout, "\t%12.6g",			        halos[i].SurfP * m_fac * pow2(v_fac));
   fprintf(fout, "\t%12.6g",			        halos[i].Phi0 * phi_fac);
   fprintf(fout, "\t%12.6g",			        halos[i].cNFW);
+#ifdef AHFcR1
+  fprintf(fout, "\t%12.6g",             halos[i].cR1);
+  fprintf(fout, "\t%12.6g",             halos[i].R1);
+#endif
 #ifdef AHFvmbp
   fprintf(fout, "\t%8.2f",			        halos[i].vel_mbp.x * v_fac);
   fprintf(fout, "\t%8.2f",			        halos[i].vel_mbp.y * v_fac);

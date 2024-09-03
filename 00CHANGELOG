@@ -2002,3 +2002,9 @@
 
 25/09/2023   - refinements related to WITH_MPI and SUSSING2013 haloids: proper treatment of subhaloes now
 (BUILD 114)  - removed DPhalos
+
+10/10/2023   - added calculation of R1 (and eventually c_R1) as proposed in Wang et al. (arxiv:2310.00200)
+(BUILD 115)  - currently this is not default, but has to be switched on via -DAHFcR1
+
+30/01/2024   - minor bug fix in MergerTree.c that prevented proper writing of the merit function values into AHF_croco
+(---)        - no change in BUILD number as AHF is not affected

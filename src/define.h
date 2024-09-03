@@ -5,7 +5,7 @@
  * this is written into the logfile just for information
  *=============================================================================*/
 #define VERSION 1.0
-#define BUILD   114
+#define BUILD   115
 
 /*=============================================================================
  * here we switch on/off various features of AMIGA (i.e. DEFINEFLAGS)
@@ -81,6 +81,7 @@
 //#define AHFrestart                /* activate this when analysing output from AHFsplit_only         */
 //#define AHFexciseSubhaloStars     /* this writes an additional _particlesSTARDUSTexcised file       */
 //#define AHFnewHaloIDs             /* assigns a unique ID to each halo even across MPI tasks         */
+//#define AHFcR1                    /* adds concentration calculation ala Wang et al. (arxiv:2310.00200) to _halos       */
 
 /* restrict analysis to certain particles only */
 //#define AHFhiresfocus             /* only keep particles of type [0], [1], and [4]                  */

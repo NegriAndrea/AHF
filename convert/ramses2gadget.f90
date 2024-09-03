@@ -64,7 +64,7 @@
 !
 ! Some more remarks:
 !
-! - the code is presently limited to 1024^3 particles of each type (see "nteger (kind=4)" for npart, ngaspart, etc. below)
+! - the code is presently limited to 1024^3 particles of each type (see "integer (kind=4)" for npart, ngaspart, etc. below)
 ! - for the MPI version the code needs to be compiled with -DMPI; the code itself figures out the best distribution
 ! - as the code uses pre-processor statements such as #ifdef, #define, etc. , this needs to be switched on as a compiler flag, e.g. "gfortran -x f95-cpp-input"
 

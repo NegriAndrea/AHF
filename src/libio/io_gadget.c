@@ -1492,6 +1492,7 @@ local_get_block_id(io_logging_t log,
 	bytes_int_file = blocksize / f->no_part;
 #ifdef AHOBBS_GADGET_FILE_FIX
   bytes_int_file = sizeof(uint32_t);
+  bytes_int_file = sizeof(uint64_t);
 #endif
 	if (    (bytes_int_file != sizeof(uint32_t))
 	     && (bytes_int_file != sizeof(uint64_t))) {

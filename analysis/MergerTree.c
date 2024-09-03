@@ -209,8 +209,8 @@ int main()
   for(i=0; i<nFiles-1; i++) {
     
     /* be verbose */
-    fprintf(stderr,"Correlating '%s' to '%s'\n           -> writing to '%s'\n", HaloFile[i], HaloFile[i+1],OutFile[i]);
-    
+    fprintf(stderr,"Correlating [%d/%d] '%s' to '%s'\n           -> writing to '%s'\n", i, nFiles-2, HaloFile[i], HaloFile[i+1],OutFile[i]);
+
     /* read the next file into memory */
     read_particles(HaloFile[i+1], 1);
 #ifdef USE_PIDMAP
@@ -881,7 +881,8 @@ void clean_connection(uint64_t ihalo, int isimu0, int isimu1)
       mtree[ncroco_new-1].id[1]     = halos[isimu0][ihalo].mtree[icroco].id[1];
       mtree[ncroco_new-1].haloid[1] = halos[isimu0][ihalo].mtree[icroco].haloid[1];
       mtree[ncroco_new-1].npart[1]  = halos[isimu0][ihalo].mtree[icroco].npart[1];
-      
+      mtree[ncroco_new-1].merit     = halos[isimu0][ihalo].mtree[icroco].merit;
+
 #ifdef DEBUG
       fprintf(stderr,"icroco=%ld (of %ld) for ihalo=%ld: jhalo=%ld is     a real progenitor of ihalo=%ld (jhalo has %ld descendants)\n",
               icroco,halos[isimu0][ihalo].ncroco,ihalo,
@@ -1252,12 +1253,11 @@ int write_mtree(char OutFile[MAXSTRING])
         fprintf(fpout,"%"PRIu64"\n",
                 halos[0][ihalo].mtree[icroco].haloid[1]);
         
-        fprintf(fpout_croco,"  %"PRIu64"  %"PRIu64"  %"PRIu64" %g\n",
+        fprintf(fpout_croco,"  %"PRIu64"  %"PRIu64"  %"PRIu64" %lf\n",
                 halos[0][ihalo].mtree[icroco].common,
                 halos[0][ihalo].mtree[icroco].haloid[1],
                 halos[0][ihalo].mtree[icroco].npart[1],
                 halos[0][ihalo].mtree[icroco].merit);
-        
         fflush(fpout);
         fflush(fpout_croco);
       }

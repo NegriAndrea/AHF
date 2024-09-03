@@ -29,6 +29,8 @@ void    write_filename       (char *f_name, char *prefix, unsigned l1dim);
 void    write_logfile        (double timecounter, double timestep, int no_timestep);
 void    write_parameterfile  ();
 double  calc_cNFW            (double V2_max, double V2_vir);
+double  calc_R1              (double *r, double *dens, int nbins);
+double  calc_cR1             (double R1);
 uint64_t getHaloID           (HALO *halos, int i);
 uint64_t getSussing2013ID    (int isnap, int ihalo);
 extern int

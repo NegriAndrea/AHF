@@ -2517,6 +2517,8 @@ int spatialRef2halos(int num_refgrids, SPATIALREF **spatialRef)
     halos[i].Phi0       = 0.0;
     halos[i].v_esc2     = 0.0;
     halos[i].cNFW       = 0.0;
+    halos[i].cR1        = 0.0;
+    halos[i].R1         = 0.0;
     halos[i].SurfP      = 0.0;
     
     
@@ -3292,8 +3294,7 @@ rem_unbound(HALO *halo)
   double        Xp, Yp, Zp, VXp, VYp, VZp;
   double        dX, dY, dZ, dVX, dVY, dVZ;
   double        v2_tune, weight;
-  double        Phi, Phi0, Phi_infty, M_r, M_vir, M_vel, vel2, v_esc2,
-  d_prev, R_vir;
+  double        Phi, Phi0, Phi_infty, M_r, M_vir, M_vel, vel2, v_esc2, d_prev, R_vir;
   double        I_now, I_mid, I_prev, dr;
   partptr       cur_part, pre_part, host_part, tmp_part;
   gasptr        cur_gas;
@@ -4960,8 +4961,12 @@ HaloProfiles(HALO *halo)
   }
   
   /* NFW concentration ala Prada et al. (2012) */
-  halo->cNFW     = calc_cNFW(halo->V2_max, halo->M_vir/halo->R_vir);
+  halo->cNFW = calc_cNFW(halo->V2_max, halo->M_vir/halo->R_vir);
   
+  /* halo concentration ala Wang et al. (arxiv:2310.00200)*/
+  halo->R1   = calc_R1(halo->prof.r, halo->prof.dens, halo->prof.nbins)/halo->M_vir/halo->R_vir;
+  halo->cR1  = calc_cR1(halo->R1);
+
   /* surface pressure term ala Shaw et al. (2006) */
   Ts    = 2.0*(halo->prof.Ekin[nbins-1]-halo->prof.Ekin[nbins-2]);
   frad  = fabs(halo->prof.r[nbins-2]/halo->prof.r[nbins-1]);
@@ -5721,11 +5726,7 @@ get_haloedge(double *r, double *Rho, int iRadOut, int ismooth)
         Rhoright = Rho[ir + 1];
         
         /* get interpolated virial radius */
-        R_edge
-        = (rleft
-           * (global.ovlim
-              - Rhoright) + rright * (Rholeft - global.ovlim))
-        /                  (Rholeft - Rhoright);
+        R_edge   = (rleft * (global.ovlim - Rhoright) + rright * (Rholeft - global.ovlim)) / (Rholeft - Rhoright);
         goto found_edge;
       }
     }
