@@ -42,7 +42,7 @@
  *                                     DEFINES
  *-------------------------------------------------------------------------------------*/
 #define ONLY_USE_PTYPE                // restrict analysis to certain particle species (define them yourself in read_particles()!)
-// note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
+                                      // note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
 #define MINCOMMON      10             // we only cross-correlate haloes if they at least share MINCOMMON particles
 #define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant (this is relevant for SAM models)
 //#define USE_PIDMAP                    // the Pids are not used as array indices anymore, e.g. one can now also use star particles for the tree building
@@ -1221,7 +1221,7 @@ int write_mtree(char OutFile[MAXSTRING])
   fprintf(stderr,"  o writing cross-correlation for %"PRIu64" haloes (out of %"PRIu64" in total) ...",nHalos0_good,nHalos[0]);
   fprintf(fpout,"%"PRIu64"\n",nHalos0_good);
   fprintf(fpout_croco,"#   HaloID(1)   HaloPart(2)  NumProgenitors(3)\n");
-  fprintf(fpout_croco,"#      SharedPart(1)    HaloID(2)   HaloPart(3)\n");
+  fprintf(fpout_croco,"#      SharedPart(1)    HaloID(2)   HaloPart(3) merit(4)\n");
   fprintf(fpout_idx,"# HaloID(1) HaloID(2)\n");
   fflush(fpout);
   fflush(fpout_idx);

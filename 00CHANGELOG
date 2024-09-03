@@ -1985,14 +1985,20 @@
 22/03/2023   - substantial cleaning of analyseRef() in ahf_halos.c:
 (BUILD 111)    - removed #ifdef AHFnewCloseRefDist
                - we now calculate closeRefDist also for the main branch daughter
-            - BUG FIX in the way sub-subhaloes are treated:
-              - when checking for the credibility of subhaloes, a non-credible subhalo was not passed on upwards in the hierarchy of sub-sub-etc.-halos for recursive credibility checks
-                -> this bug led to some sub-subhaloes being tagged as field haloes! FIXED NOW!
-                   (for a defintion of 'subhalo credibility' please refer to the AHF user's guide)
-            - substantial changes to spatialRef2halos() in ahf_halos.c
-            - lots of re-writing of code in general...
-            - there are now far more messages written to the logfile that help debugging certain instances
-            - removed timing of generate_tree (commented in specific.c)
-
+             - BUG FIX in the way sub-subhaloes are treated:
+               - when checking for the credibility of subhaloes, a non-credible subhalo was not passed on upwards in the hierarchy of sub-sub-etc.-halos for recursive credibility checks
+                 -> this bug led to some sub-subhaloes being tagged as field haloes! FIXED NOW!
+                    (for a defintion of 'subhalo credibility' please refer to the AHF user's guide)
+             - substantial changes to spatialRef2halos() in ahf_halos.c
+             - lots of re-writing of code in general...
+             - there are now far more messages written to the logfile that help debugging certain instances
+             - removed timing of generate_tree (commented in specific.c)
+            
 15/06/2023   - substantial changes in exciseSubhaloStars():
 (BUILD 112)    - the list of subhalos stars (to be removed from the host) is now build recursively, taking into account sub-sub-sub...-halos
+
+20/09/2023   - -DSUSSING2013 now also works with -DWITH_MPI
+(BUILD 113)
+
+25/09/2023   - refinements related to WITH_MPI and SUSSING2013 haloids: proper treatment of subhaloes now
+(BUILD 114)  - removed DPhalos
