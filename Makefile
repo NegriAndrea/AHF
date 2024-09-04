@@ -25,7 +25,7 @@ export MAKE
 AHF:	FORCE dirs
 	cd src;\
 	${MAKE} AHF;\
-	mv -f AHF ../bin/AHF-v1.0-115
+	mv -f AHF ../bin/AHF-v1.0-116
 
 
 # everything in convert/
@@ -172,20 +172,10 @@ simuSigmaR:	FORCE dirs
 		${MAKE} simuSigmaR;\
 		mv -f simuSigmaR ../bin
 
-MergerRates:			FORCE dirs
-		cd analysis;\
-		${MAKE} MergerRates;\
-		mv -f MergerRates ../bin
-
 MergerTree:			FORCE dirs
-		cd analysis;\
+		cd analysis/MergerTree/;\
 		${MAKE} MergerTree;\
-		mv -f MergerTree ../bin
-
-MergerTreeMPI:			FORCE dirs
-		cd analysis;\
-		${MAKE} MergerTreeMPI;\
-		mv -f MergerTreeMPI ../bin
+		mv -f bin/MergerTree ../../bin
 
 ahfFindHalo:			FORCE dirs
 		cd analysis;\
@@ -246,7 +236,8 @@ clean:	FORCE
 	cd src; ${MAKE} clean;\
 	cd ../convert; ${MAKE} clean;\
 	cd ../tools; ${MAKE} clean;\
-	cd ../analysis; ${MAKE} clean
+	cd ../analysis; ${MAKE} clean;\
+	cd MergerTree/; ${MAKE} clean
 
 #-------------------------------------------------------------------#
 # "make veryclean" 
@@ -262,7 +253,8 @@ veryclean:	FORCE
 	cd src; ${MAKE} veryclean;\
 	cd ../convert; ${MAKE} veryclean;\
 	cd ../tools; ${MAKE} veryclean;\
-	cd ../analysis; ${MAKE} veryclean
+	cd ../analysis; ${MAKE} veryclean;\
+	cd MergerTree/; ${MAKE} veryclean
 
 FORCE:	
 

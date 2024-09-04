@@ -1984,7 +1984,7 @@
 
 22/03/2023   - substantial cleaning of analyseRef() in ahf_halos.c:
 (BUILD 111)    - removed #ifdef AHFnewCloseRefDist
-               - we now calculate closeRefDist also for the main branch daughter
+                 -> we now calculate closeRefDist also for the main branch daughter
              - BUG FIX in the way sub-subhaloes are treated:
                - when checking for the credibility of subhaloes, a non-credible subhalo was not passed on upwards in the hierarchy of sub-sub-etc.-halos for recursive credibility checks
                  -> this bug led to some sub-subhaloes being tagged as field haloes! FIXED NOW!
@@ -2008,3 +2008,14 @@
 
 30/01/2024   - minor bug fix in MergerTree.c that prevented proper writing of the merit function values into AHF_croco
 (---)        - no change in BUILD number as AHF is not affected
+
+27/02/2024   - fully detached MergerTree from AHF: it is now located in analysis/MergerTree/, a directory that can be moved to any other place, if desired.
+(---)        - you can though still use 'make MergerTree' as usual from within the ahf/ directory
+             - MergerTree will now feature its own version history and might - in the future - be removed from ahf/ completely
+
+07/03/2024   - added -DNFILES_MUST_MATCH_HEADER which affects the analysis of multiple (Gadget) snapshot files
+(BUILD 116)    -> AHF only continues when the number of found files matches the number of files as specified in the file header
+             - removed -std=c99 from all compile flags
+
+11/07/2024   - improved the usage of USE_PTYPE in MergerTree
+(---)

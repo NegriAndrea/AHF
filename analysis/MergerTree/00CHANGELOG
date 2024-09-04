@@ -1,0 +1,8 @@
+25/02/2024	- first ever stand-alone version
+(v1.0)
+
+29/02/2024  - added dumping of #define's right at the beginning of main()
+(v1.1)        -> just execute the binary and you will see the flags it was compiled with
+
+01/03/2024  - fixed OpenMP parallelisation, also adding a new parallel environment in libsnapskipping.c
+(v1.2)

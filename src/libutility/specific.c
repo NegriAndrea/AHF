@@ -2195,6 +2195,7 @@ int check_gadgetswap(FILE *fp)
 
 /*==============================================================================
  * calculate the mininum level for the generation of the patch-tree
+ * (used to be a routine of AHF2, but now obsolete as development of AHF2 ceased...)
  *==============================================================================*/
 int ptree_min_level(double Nthreshold)
 {

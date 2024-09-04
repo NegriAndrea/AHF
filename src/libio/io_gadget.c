@@ -829,7 +829,7 @@ io_gadget_log(io_logging_t log, io_gadget_t f)
 	               "  Weight scale:         %g",
 	               f->weightscale);
 	io_gadget_header_log(log, f->header);
-
+  
 	return;
 }
 

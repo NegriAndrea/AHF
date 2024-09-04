@@ -4960,7 +4960,7 @@ HaloProfiles(HALO *halo)
     halo->lambdaE  = 0.0;
   }
   
-  /* NFW concentration ala Prada et al. (2012) */
+  /* NFW concentration ala Eq.(9) of Prada et al. (2012) */
   halo->cNFW = calc_cNFW(halo->V2_max, halo->M_vir/halo->R_vir);
   
   /* halo concentration ala Wang et al. (arxiv:2310.00200)*/

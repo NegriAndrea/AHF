@@ -1,0 +1,3 @@
+Here are just some sample scripts how to best run MergerTree over a bunch of simulation files. They certainly require a lot of adjustments.
+
+However, the probably most interesting part comes after running MergerTree, i.e. when the script(s) merge all AHF_mtree files into one single file compliant with the format used during the Sussing Merger Trees workshop (this is *not* the format proposed a bit later and described in Thomas et al. 2015, arxiv:1508.05388).
