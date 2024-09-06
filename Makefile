@@ -20,6 +20,12 @@ export LNFLAGS
 export MASTER_DEFINEFLAGS
 export MAKE
 
+ALL=AHF simu2tipsy ahf2binary AHFhalos2geom ramses2gadget Hdf2GADGET ahfCalcHaloID ahfCheckHaloIDs ahfSortHalos simuExtractHalos ahfExtractHalosPdens virial age agelist cosmology pmass RemoveUnbound ahfExtractMhalo ahfExtractProfiles HaloShape ahfCalcMinStar simuPdens simuPk simuCroCo simuXi simuVstat simuSigmaR MergerTree ahfFindHalo ahfFindHaloPairs ahfFindCrossPairs ahfHaloHistory ahfSubhaloAccretion ahfSubhaloAccretionStats ahfSubCheck ahfXi sigmaH
+
+.PHONY: ${ALL} veryclean clean dirs
+
+#all: ${ALL}
+
 # everything in src/
 #===================
 AHF:	FORCE dirs
