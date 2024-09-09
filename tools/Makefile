@@ -29,49 +29,49 @@ LIBS = 	../src/libio_serial/libio_serial.a \
 
 # HOW TO MAKE THE ACTUAL PROGRAMMES
 simuExtractHalos:	simuExtractHalos.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o simuExtractHalos simuExtractHalos.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/simuExtractHalos simuExtractHalos.c ${LIBS} ${LIBS} -lm
 
 ahfExtractHalosPdens:	ahfExtractHalosPdens ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfExtractHalosPdens ahfExtractHalosPdens ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfExtractHalosPdens ahfExtractHalosPdens.c ${LIBS} ${LIBS} -lm
 
 virial:	virial.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o virial virial.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/virial virial.c ${LIBS} ${LIBS} -lm
 
 age:	age.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o age age.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/age age.c ${LIBS} ${LIBS} -lm
 
 agelist:	agelist.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o agelist agelist.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/agelist agelist.c ${LIBS} ${LIBS} -lm
 
 cosmology:	cosmology.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o cosmology cosmology.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/cosmology cosmology.c ${LIBS} ${LIBS} -lm
 
 pmass:		pmass.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o pmass pmass.c -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/pmass pmass.c -lm
 
-ahfExtractMhalo:		ahfExtractMhalo ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfExtractMhalo ahfExtractMhalo -lm
+ahfExtractMhalo:		ahfExtractMhalo.c ${LIBS}
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfExtractMhalo ahfExtractMhalo.c -lm
 
 RemoveUnbound:		RemoveUnbound.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o RemoveUnbound RemoveUnbound.c -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/RemoveUnbound RemoveUnbound.c -lm
 
 ahfExtractProfiles:		ahfExtractProfiles.c ${LIBS}
-		$(CC) $(CFLAGS) $(LFLAGS) -o ahfExtractProfiles ahfExtractProfiles.c -lm
+		$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfExtractProfiles ahfExtractProfiles.c -lm
 
 HaloShape:		HaloShape.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o HaloShape HaloShape.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/HaloShape HaloShape.c ${LIBS} ${LIBS} -lm
 
 ahfCalcMinStar:		ahfCalcMinStar.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCalcMinStar ahfCalcMinStar.c -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfCalcMinStar ahfCalcMinStar.c -lm
 
 ahfSortHalos:		ahfSortHalos.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfSortHalos ahfSortHalos.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfSortHalos ahfSortHalos.c ${LIBS} ${LIBS} -lm
 
 ahfCheckHaloIDs:		ahfCheckHaloIDs.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCheckHaloIDs ahfCheckHaloIDs.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfCheckHaloIDs ahfCheckHaloIDs.c ${LIBS} ${LIBS} -lm
 
 ahfCalcHaloID:		ahfCalcHaloID.c ${LIBS}
-	$(CC) $(CFLAGS) $(LFLAGS) -o ahfCalcHaloID ahfCalcHaloID.c ${LIBS} ${LIBS} -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BIN)/ahfCalcHaloID ahfCalcHaloID.c ${LIBS} ${LIBS} -lm
 
 
 # HOW TO MAKE THE LIBRARIES

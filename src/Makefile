@@ -9,10 +9,10 @@
 #                                                                  #
 #******************************************************************#
 
-.PHONY: clean veryclean
+.PHONY: clean veryclean all
 
 #*******************************************************************#
-AHF:			DEFINEFLAGS = ${MASTER_DEFINEFLAGS} -DAHF
+DEFINEFLAGS = ${MASTER_DEFINEFLAGS} -DAHF
 
 export DEFINEFLAGS
 
@@ -45,32 +45,37 @@ LIBS =	\
 
 LIBAHF  = libahf/libahf.a
 
+SUBDIRS = libahf libgravity libio_serial libutility libamr_serial libio libsfc
+.PHONY: $(SUBDIRS)
+
+all: AHF
+
 
 # what's to make ?
 # ----------------
-AHF:	main.o ${OBJS} ${LIBS} ${LIBAHF}
-	$(CC) $(CFLAGS) ${PROFILE} -o AHF  main.o ${OBJS} ${LIBAHF}  ${LIBS} -l${LIB_MATH} ${LFLAGS}
+AHF:	main.o ${OBJS} $(SUBDIRS)
+	$(CC) $(CFLAGS) ${PROFILE} -o $(BIN)/AHF-$(VERSION)  main.o ${OBJS} ${LIBAHF}  ${LIBS} -l${LIB_MATH} ${LFLAGS}
 
 
 clean:
 	rm -f *.o AMIGA* AHF* CONVERT *.il
-	cd libsfc ; ${MAKE} clean
-	cd libio ; ${MAKE} clean
-	cd libio_serial ; ${MAKE} clean
-	cd libahf ; ${MAKE} clean
-	cd libgravity ; ${MAKE} clean
-	cd libamr_serial ; ${MAKE} clean
-	cd libutility ; ${MAKE} clean
+	$(MAKE) -C libsfc        clean
+	$(MAKE) -C libio         clean
+	$(MAKE) -C libio_serial  clean
+	$(MAKE) -C libahf        clean
+	$(MAKE) -C libgravity    clean
+	$(MAKE) -C libamr_serial clean
+	$(MAKE) -C libutility    clean
 
 veryclean:
 	rm -f *.o AHF* *~ *~.* *.il
-	cd libsfc ; ${MAKE} clean
-	cd libio ; ${MAKE} clean
-	cd libio_serial ; ${MAKE} clean
-	cd libahf ; ${MAKE} clean
-	cd libgravity ; ${MAKE} clean
-	cd libamr_serial ; ${MAKE} clean
-	cd libutility ; ${MAKE} clean
+	$(MAKE) -C libsfc        clean
+	$(MAKE) -C libio         clean
+	$(MAKE) -C libio_serial  clean
+	$(MAKE) -C libahf        clean
+	$(MAKE) -C libgravity    clean
+	$(MAKE) -C libamr_serial clean
+	$(MAKE) -C libutility    clean
 
 
 # dependencies for include files
@@ -83,27 +88,9 @@ tdef.h: 		param.h
 
 # how to make the libraries?
 # ------------------------------
-libsfc/libsfc.a:
-	cd libsfc ; ${MAKE} libsfc.a
 
-libio/libio.a:
-	cd libio ; ${MAKE} libio.a
-
-libio_serial/libio_serial.a:
-	cd libio_serial ; ${MAKE} libio_serial.a
-
-libahf/libahf.a:
-	cd libahf ; ${MAKE} libahf.a
-
-libgravity/libgravity.a:
-	cd libgravity ; ${MAKE} libgravity.a
-
-libamr_serial/libamr_serial.a:
-	cd libamr_serial ; ${MAKE} libamr_serial.a
-
-libutility/libutility.a:
-	cd libutility ; ${MAKE} libutility.a
-
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 
 #dependencies for .o files

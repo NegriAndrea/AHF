@@ -2,27 +2,20 @@
 # simple (top-level) Makefile for all things MergerTree related
 ##################################################################################
 
+.PHONY: MergerTree MergerRates clean veryclean
+
 MergerTree:
-	cd src/; \
-	make MergerTree; \
-	mv -f MergerTree ../bin
+	make -C src MergerTree
 
 MergerRates:
-	cd analysis/; \
-	make MergerRates; \
-	mv -f MergerRates ../bin
+	make -C analysis MergerRates
 
 clean:
-	cd src/; \
-	make clean; \
-	cd ../analysis/; \
-	make clean
+	make -C src clean
+	make -C analysis clean
 
 veryclean:
-	cd src/; \
-	make clean; \
-	cd ../analysis/; \
-	make clean; \
-	cd ../; \
+	make -C src veryclean
+	make -C analysis veryclean
 	rm -f bin/*
 

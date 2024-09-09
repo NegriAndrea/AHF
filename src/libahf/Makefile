@@ -25,16 +25,15 @@ OBJS = ahf_gridinfo.o \
        ahf_io_sql.o
 
 # Catch empty make call
-all:
-	${MAKE} libahf.a
-
-# Cleaning up
-clean:
-	rm -f libahf.a $(OBJS)
+all: libahf.a
 
 # The library itself
 libahf.a: $(OBJS)
 	${AR} -r libahf.a $(OBJS)
+
+# Cleaning up
+clean:
+	rm -f libahf.a $(OBJS)
 
 # The individual routines
 ahf_gridinfo.o: ahf_gridinfo.c
