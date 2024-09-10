@@ -68,8 +68,13 @@ void input_grid(gridls *cur_grid)
    /* loop over linked pquads */
    for(ipquad=0; ipquad<no_pquad; ipquad++)
      {
+#ifdef AHFlean
+      ReadInt(instream, &cur_pquad->z,      SWAPBYTES);
+      ReadInt(instream, &cur_pquad->length, SWAPBYTES);
+#else
       ReadLong(instream, &cur_pquad->z,      SWAPBYTES);
       ReadLong(instream, &cur_pquad->length, SWAPBYTES);
+#endif
       
 #ifdef DEBUG_IO_GRIDS
       fprintf(stderr,"%ld -> z = %ld   length = %ld\n",cur_grid->l1dim, cur_pquad->z, cur_pquad->length);
@@ -90,8 +95,13 @@ void input_grid(gridls *cur_grid)
          /* loop over linked cquads */
          for(icquad=0; icquad<no_cquad; icquad++)
            {
+#ifdef AHFlean
+            ReadInt(instream, &icur_cquad->y,      SWAPBYTES);
+            ReadInt(instream, &icur_cquad->length, SWAPBYTES);
+#else
             ReadLong(instream, &icur_cquad->y,      SWAPBYTES);
             ReadLong(instream, &icur_cquad->length, SWAPBYTES);
+#endif
 #ifdef DEBUG_IO_GRIDS
             fprintf(stderr,"%ld -> y = %ld   length = %ld\n",cur_grid->l1dim, icur_cquad->y, icur_cquad->length);
 #endif
@@ -112,8 +122,13 @@ void input_grid(gridls *cur_grid)
                /* loop over linked nquads */
                for(inquad=0; inquad<no_nquad; inquad++)
                  {
+#ifdef AHFlean
+                  ReadInt(instream, &icur_nquad->x,      SWAPBYTES);
+                  ReadInt(instream, &icur_nquad->length, SWAPBYTES);
+#else
                   ReadLong(instream, &icur_nquad->x,      SWAPBYTES);
                   ReadLong(instream, &icur_nquad->length, SWAPBYTES);
+#endif
 #ifdef DEBUG_IO_GRIDS
                   fprintf(stderr,"%ld -> x = %ld   length = %ld\n",cur_grid->l1dim, icur_nquad->x, icur_nquad->length);
 #endif

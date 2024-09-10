@@ -1124,7 +1124,7 @@ local_get_block_pos(io_logging_t log,
     
     io_logging_msg(log, INT32_C(2), "local_get_block_pos(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
     
-    io_util_readhdf5(log, f, "Coordinates", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
+    io_util_readhdf5_pkdgrav(log, f, "Coordinates", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
     
     io_logging_msg(log, INT32_C(2), "local_get_block_pos(): part type %d: read particles into CommBuffer", type);
     
@@ -1240,7 +1240,7 @@ local_get_block_vel(io_logging_t log,
     
     io_logging_msg(log, INT32_C(2), "local_get_block_vel(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
     
-    io_util_readhdf5(log, f, "Velocities", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
+    io_util_readhdf5_pkdgrav(log, f, "Velocities", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
     
     /* Loop over the particle positions */
     for (i = 0; i < num_elements * f->header->np[type]; i += num_elements) {
@@ -1342,7 +1342,7 @@ local_get_block_id(io_logging_t log,
     
     io_logging_msg(log, INT32_C(2), "local_get_block_id(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
     
-    io_util_readhdf5(log, f, "ParticleIDs", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
+    io_util_readhdf5_pkdgrav(log, f, "ParticleIDs", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
     
     /* Loop over the particle IDs */
     for (i = 0; i < f->header->np[type]; i++) {
@@ -1436,7 +1436,7 @@ f->mmass = fweight; \
         return UINT64_C(0);
       }
       
-      io_util_readhdf5(log, f, "Masses", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
+      io_util_readhdf5_pkdgrav(log, f, "Masses", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
       
       /* Loop over the particle massess */
       for (i = 0; i < f->header->np[type]; i++) {
@@ -1530,7 +1530,7 @@ local_get_block_u(io_logging_t log,
       
       io_logging_msg(log, INT32_C(2), "local_get_block_u(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
       
-      io_util_readhdf5(log, f, "InternalEnergy", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
+      io_util_readhdf5_pkdgrav(log, f, "InternalEnergy", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
     }
     
     /* Loop over the particles */
@@ -1621,7 +1621,7 @@ local_get_block_z(io_logging_t log,
       
       io_logging_msg(log, INT32_C(2), "local_get_block_z(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
       
-      io_util_readhdf5(log, f, "Metallicity", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
+      io_util_readhdf5_pkdgrav(log, f, "Metallicity", type, num_elements, hdf5_datatype, hdf5_grp, CommBuffer);
       
       /* Loop over the particle positions */
       for (i = 0; i < num_elements * f->header->np[type]; i += num_elements) {
@@ -1705,7 +1705,7 @@ local_get_block_age(io_logging_t log,
       io_logging_msg(log, INT32_C(2), "local_get_block_age(): part type %d: allocated %" PRIu64 " bytes for CommBuffer", type, num_bytes);
       
       /* StellarAge should be the proper tag in the HDF5 file */
-      io_util_readhdf5(log, f, "StellarFormationTime", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
+      io_util_readhdf5_pkdgrav(log, f, "StellarFormationTime", type, 1, hdf5_datatype, hdf5_grp, CommBuffer);
     }
     
     /* Loop over the particles */

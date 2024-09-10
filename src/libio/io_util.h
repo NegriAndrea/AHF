@@ -20,6 +20,7 @@
 
 #ifdef WITH_HDF5
 #include "io_gizmo_def.h"
+#include "io_pkdgrav_def.h"
 #endif
 /**********************************************************************\
  *    Global defines, structure definitions and typedefs              * 
@@ -331,9 +332,46 @@ io_util_findfiles(const char *path,
 
 
 #ifdef WITH_HDF5
+/* Up to gcc-14 this function was declared as 
+void io_util_readhdf5(io_logging_t log,
+                    io_gizmo_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer)
+
+And it worked just fine since io_pkdgrav_header_struct and io_gizmo_header_struct are both pointers to
+struct having unsigned int np[6] array. However implicit casting of pointer that is not void is not standard,
+and in gcc-14 this is enforced with -std=c99.
+
+To make it generic one could do many tricks, for now, in order to keep -std=c99,
+I manually declare 2 wrappers, while I avoid using the _Generic of C11
+                    */
 extern void
 io_util_readhdf5(io_logging_t log,
+                    uint8_t select,
+                    void* f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer);
+
+extern void
+io_util_readhdf5_gizmo(io_logging_t log,
                     io_gizmo_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer);
+extern void
+io_util_readhdf5_pkdgrav(io_logging_t log,
+                    io_pkdgrav_t f,
                     char dataset_name[],
                     int type,
                     int dataset_num_values,
