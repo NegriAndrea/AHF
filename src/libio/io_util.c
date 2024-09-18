@@ -285,14 +285,19 @@ void io_util_readhdf5(io_logging_t log,
     /* Read dataset from particle group */
     hdf5_dataset = H5Dopen(hdf5_grp[type], dataset_name);
 
-    if (select == 0) {
-        // gizmo file
-        io_gizmo_t fcopy =(io_gizmo_t) f;
-        dims[0] = fcopy->header->np[type];
-    } else {
-        // pkdgrav file
-        io_pkdgrav_t fcopy =(io_pkdgrav_t) f;
-        dims[0] = fcopy->header->np[type];
+    // cast to the right structure
+    switch (select) {
+        case 0:
+            // gizmo file
+            dims[0] = ((io_gizmo_t) f)->header->np[type];
+            break;
+        case 1:
+            // pkdgrav file
+            dims[0] = ((io_pkdgrav_t) f)->header->np[type];
+            break;
+        default:
+            fprintf(stderr, "Error in casting void pointer, wrong flag %u\n", select);
+            exit(0);
     }
 
     dims[1] = dataset_num_values;
