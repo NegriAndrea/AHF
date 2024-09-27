@@ -17,5 +17,5 @@ clean:
 veryclean:
 	make -C src veryclean
 	make -C analysis veryclean
-	rm -f bin/*
+	rm -f bin/* *.dSYM
 

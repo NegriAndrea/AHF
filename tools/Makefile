@@ -94,4 +94,5 @@ clean:
 	rm -f *.o
 
 veryclean:
+	rm -rf  *.dSYM
 	rm -f *.o *~ *~.*

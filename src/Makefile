@@ -68,7 +68,7 @@ clean:
 	$(MAKE) -C libutility    clean
 
 veryclean:
-	rm -f *.o AHF* *~ *~.* *.il
+	rm -f *.o AHF* *~ *~.* *.il *.dSYM
 	$(MAKE) -C libsfc        clean
 	$(MAKE) -C libio         clean
 	$(MAKE) -C libio_serial  clean

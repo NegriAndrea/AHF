@@ -197,7 +197,8 @@ veryclean:
 	echo '*=======================================================================*';\
 	echo '';\
 	echo ''
-	rm -f *~ *~.* bin/*;\
+	rm -rf  bin/*.dSYM
+	rm -f *~ *~.* bin/* *.dSYM
 	$(MAKE) -C src                  veryclean
 	$(MAKE) -C convert              veryclean
 	$(MAKE) -C tools                veryclean

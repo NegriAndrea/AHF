@@ -15,4 +15,4 @@ clean:
 	rm -f *.o 
 
 veryclean:
-	rm -f *.o 
+	rm -f *.o  *.dSYM
