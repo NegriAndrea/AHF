@@ -224,7 +224,8 @@ char **argv;
     cur_part = io.fst_part+ipart;
     
     // gas particle
-    if (isgreaterequal(cur_part->u, PGAS)){
+#ifdef GAS_PARTICLES
+    if (isgreaterequal(cur_part->u, PGAS)) {
       
       // position, velocity & mass
       gp->pos[0] = cur_part->pos[X] * x_fac - 0.5;
@@ -271,7 +272,9 @@ char **argv;
     }
 
     // dm particle
-    else {
+    else
+#endif // MULTIMASS
+    {
       
       // position, velocity & mass
       dp->pos[0] = cur_part->pos[X] * x_fac - 0.5;
@@ -280,14 +283,15 @@ char **argv;
       dp->vel[0] = cur_part->mom[X] * v_fac;
       dp->vel[1] = cur_part->mom[Y] * v_fac;
       dp->vel[2] = cur_part->mom[Z] * v_fac;
+#ifdef GAS_PARTICLES
       dp->mass   = cur_part->weight * m_fac;
+      epstipsy   = pow(cur_part->weight*io.header.pmass/(io.header.omega0*rhoc0), (1./3.)) / 40.;
+      dp->eps    = epstipsy/io.header.boxsize;
+#endif
       
-      epstipsy = pow(cur_part->weight*io.header.pmass/(io.header.omega0*rhoc0), (1./3.)) / 40.;
 
       // additional stuff
       dp->phi    = 0.0;
-      dp->eps    = epstipsy/io.header.boxsize;
-
       
       // next dm particle
       dp++;
@@ -339,12 +343,14 @@ int get_ngas(partptr fst_part, long npart)
   partptr cur_part;
   
   ngas = 0;
+#ifdef GAS_PARTICLES
   for(ipart=0; ipart<npart; ipart++) {
     cur_part = fst_part+ipart;
     if (isgreaterequal(cur_part->u, PGAS)) {
       ngas++;
     }
   }
+#endif
   return(ngas);
 }
 
@@ -358,12 +364,14 @@ int get_nstar(partptr fst_part, long npart)
   partptr cur_part;
   
   nstar = 0;
+#ifdef GAS_PARTICLES
   for(ipart=0; ipart<npart; ipart++) {
     cur_part = fst_part+ipart;
     if (fabs(cur_part->u - PSTAR) < ZERO) {
       nstar++;
     }
   }
+#endif
   return(nstar);
 }
 
