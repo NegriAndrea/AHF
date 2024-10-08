@@ -38,9 +38,6 @@ all: ${ALL}
 #===================
 AHF:	bin
 	${MAKE} -C src AHF
-	#cp src/AHF bin/AHF-v1.0-116
-	#mv -f src/AHF bin/AHF-v1.0-116
-	echo $(BIN)
 
 
 # everything in convert/

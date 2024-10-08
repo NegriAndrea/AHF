@@ -13,17 +13,6 @@
 
 #ifdef AHF
 #include "libahf/ahf.h"
-
-/***************************************************************************
- *   Global variables                                                      *
- ***************************************************************************/
-#include "tdef.h"
-SRINDEX *spatialRefIndex;
-int     *numIsoRef;          /* Number of spatially isolated refinements */
-int      totnumIsoRef;       /* Number of spatially isolated refinements */
-SPATIALREF *spatialRefTail;
-COLOURHOLDER    col;
-
 #endif
 
 #include "libsfc/sfc.h"

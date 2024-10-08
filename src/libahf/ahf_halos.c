@@ -41,6 +41,8 @@
 #include <extrae_user_events.h>
 #endif
 
+#include "../globals.h"
+
 /***************************************************************************
  *   Macros and assorted definitions                                       *
  ***************************************************************************/
@@ -137,9 +139,9 @@ void    exciseSubhaloStars          (HALO *halos, long ihost);
 /***************************************************************************
  *   Global variables                                                      *
  ***************************************************************************/
-extern SRINDEX        *spatialRefIndex;
-extern int            totnumIsoRef; /* Number of spatially isolated refinements */
-extern int            *numIsoRef;   /* Number of spatially isolated refinements */
+//extern SRINDEX        *spatialRefIndex;
+//extern int            totnumIsoRef; /* Number of spatially isolated refinements */
+//extern int            *numIsoRef;   /* Number of spatially isolated refinements */
 
 static int     numHalos;
 static HALO    *halos;
