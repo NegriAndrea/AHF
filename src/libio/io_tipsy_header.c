@@ -69,12 +69,27 @@ io_tipsy_header_get(io_logging_t log, io_tipsy_t f)
   io_util_readuint32(f->file, &(dummy->nstar), f->swapped);
   io_util_readuint32(f->file, &(dummy->pad), f->swapped);
 
+#ifdef TIPSYSUSSHEADER
+  dummy->nbodies += ( (uint64_t)(dummy->pad & 0x000000ff) << 32);
+  dummy->nsph    += ( (uint64_t)(dummy->pad & 0x0000ff00) << 24);
+  dummy->ndark   += ( (uint64_t)(dummy->pad & 0x00ff0000) << 16);
+  dummy->nstar   += ( (uint64_t)(dummy->pad & 0xff000000) << 8);
+
+  fprintf(stderr,"time    = %lf\n",dummy->time);
+  fprintf(stderr,"nbodies = %"PRIu64"\n",dummy->nbodies);
+  fprintf(stderr,"ndim    = %"PRIu64"\n",dummy->ndim);
+  fprintf(stderr,"nsph    = %"PRIu64"\n",dummy->nsph);
+  fprintf(stderr,"ndark   = %"PRIu64"\n",dummy->ndark);
+  fprintf(stderr,"nstar   = %"PRIu64"\n",dummy->nstar);
+#else
+
   fprintf(stderr,"time    = %lf\n",dummy->time);
   fprintf(stderr,"nbodies = %"PRIu32"\n",dummy->nbodies);
   fprintf(stderr,"ndim    = %"PRIu32"\n",dummy->ndim);
   fprintf(stderr,"nsph    = %"PRIu32"\n",dummy->nsph);
   fprintf(stderr,"ndark   = %"PRIu32"\n",dummy->ndark);
   fprintf(stderr,"nstar   = %"PRIu32"\n",dummy->nstar);
+#endif
 //  exit(0);
   
   
