@@ -5,7 +5,7 @@
 #ifndef INCLUDE_DEFINE_H
 #define INCLUDE_DEFINE_H
 
-#define WITH_OPENMP                   // activate the (few) OpenMP parallel for-loops
+//#define WITH_OPENMP                   // activate the (few) OpenMP parallel for-loops
 
 #define USE_PTYPE                     // restrict analysis to certain particle species (define them yourself in read_particles()!)
                                       // note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!

@@ -19,7 +19,9 @@
 #include <inttypes.h>
 #include <libgen.h>
 #include <time.h>
+#ifdef WITH_OPENMP
 #include <omp.h>
+#endif
 
 // all the DEFINEFLAGS defining the mode of operation of MergerTree
 #include "define.h"
