@@ -9,6 +9,9 @@
 #ifndef INCLUDE_INCLUDE_H
 #define INCLUDE_INCLUDE_H
 
+// all the DEFINEFLAGS defining the mode of operation of MergerTree
+#include "define.h"
+
 // C standard includes
 #include <stddef.h>
 #include <stdlib.h>
@@ -22,9 +25,6 @@
 #ifdef WITH_OPENMP
 #include <omp.h>
 #endif
-
-// all the DEFINEFLAGS defining the mode of operation of MergerTree
-#include "define.h"
 
 // all typedefs for the structures etc.
 #include "tdef.h"
