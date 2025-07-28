@@ -42,7 +42,7 @@
  *                                     DEFINES
  *-------------------------------------------------------------------------------------*/
 #define ONLY_USE_PTYPE                // restrict analysis to certain particle species (define them yourself in read_particles()!)
-// note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
+                                      // note: when restricting to stars (or gas) it will only work with -DUSE_PIDMAP!
 #define MINCOMMON      10             // we only cross-correlate haloes if they at least share MINCOMMON particles
 #define MTREE_BOTH_WAYS               // make sure that every halo has only one descendant (this is relevant for SAM models)
 //#define USE_PIDMAP                    // the Pids are not used as array indices anymore, e.g. one can now also use star particles for the tree building
@@ -209,8 +209,8 @@ int main()
   for(i=0; i<nFiles-1; i++) {
     
     /* be verbose */
-    fprintf(stderr,"Correlating '%s' to '%s'\n           -> writing to '%s'\n", HaloFile[i], HaloFile[i+1],OutFile[i]);
-    
+    fprintf(stderr,"Correlating [%d/%d] '%s' to '%s'\n           -> writing to '%s'\n", i, nFiles-2, HaloFile[i], HaloFile[i+1],OutFile[i]);
+
     /* read the next file into memory */
     read_particles(HaloFile[i+1], 1);
 #ifdef USE_PIDMAP
@@ -881,7 +881,8 @@ void clean_connection(uint64_t ihalo, int isimu0, int isimu1)
       mtree[ncroco_new-1].id[1]     = halos[isimu0][ihalo].mtree[icroco].id[1];
       mtree[ncroco_new-1].haloid[1] = halos[isimu0][ihalo].mtree[icroco].haloid[1];
       mtree[ncroco_new-1].npart[1]  = halos[isimu0][ihalo].mtree[icroco].npart[1];
-      
+      mtree[ncroco_new-1].merit     = halos[isimu0][ihalo].mtree[icroco].merit;
+
 #ifdef DEBUG
       fprintf(stderr,"icroco=%ld (of %ld) for ihalo=%ld: jhalo=%ld is     a real progenitor of ihalo=%ld (jhalo has %ld descendants)\n",
               icroco,halos[isimu0][ihalo].ncroco,ihalo,
@@ -1221,7 +1222,7 @@ int write_mtree(char OutFile[MAXSTRING])
   fprintf(stderr,"  o writing cross-correlation for %"PRIu64" haloes (out of %"PRIu64" in total) ...",nHalos0_good,nHalos[0]);
   fprintf(fpout,"%"PRIu64"\n",nHalos0_good);
   fprintf(fpout_croco,"#   HaloID(1)   HaloPart(2)  NumProgenitors(3)\n");
-  fprintf(fpout_croco,"#      SharedPart(1)    HaloID(2)   HaloPart(3)\n");
+  fprintf(fpout_croco,"#      SharedPart(1)    HaloID(2)   HaloPart(3) merit(4)\n");
   fprintf(fpout_idx,"# HaloID(1) HaloID(2)\n");
   fflush(fpout);
   fflush(fpout_idx);
@@ -1252,12 +1253,11 @@ int write_mtree(char OutFile[MAXSTRING])
         fprintf(fpout,"%"PRIu64"\n",
                 halos[0][ihalo].mtree[icroco].haloid[1]);
         
-        fprintf(fpout_croco,"  %"PRIu64"  %"PRIu64"  %"PRIu64" %g\n",
+        fprintf(fpout_croco,"  %"PRIu64"  %"PRIu64"  %"PRIu64" %lf\n",
                 halos[0][ihalo].mtree[icroco].common,
                 halos[0][ihalo].mtree[icroco].haloid[1],
                 halos[0][ihalo].mtree[icroco].npart[1],
                 halos[0][ihalo].mtree[icroco].merit);
-        
         fflush(fpout);
         fflush(fpout_croco);
       }

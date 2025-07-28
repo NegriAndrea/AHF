@@ -769,4 +769,9 @@ local_log_commarr(io_logging_t log, comm_t comm, int ncpu)
 }
 #endif
 
+#else  /* WITH_MPI */
+
+// ISO standard requires that C files are not empty. Added a static dummy function to silence the warning.
+static void iso_require_non_empty_file(){}
+
  #endif /* WITH_MPI */

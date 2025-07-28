@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
+#include <inttypes.h>
 #ifdef WITH_OPENMP
 #include <omp.h>
 #endif
@@ -27,12 +29,14 @@ info_io     io;
 info_global global;
 gridls     *cur_grid;
 
-long unsigned NGRID, NYQUIST;
+uint64_t NGRID, NYQUIST;
 
 /*===================
  * functions
  *===================*/
+#ifdef GAS_PARTICLES
 long unsigned select_parts(long unsigned, float);
+#endif
 void          assign      (long unsigned no_part, flouble *x, flouble *y, flouble *z, flouble *mass, flouble *dens);
 void          add_gas     (flouble *dens);
 void          get_power   (long unsigned no_part, double no_vpart, flouble *x, flouble *y, flouble *z, flouble *mass, flouble *dens,
@@ -70,7 +74,7 @@ char **argv;
   }
   
   strcpy(indata, argv[1]);
-  NGRID    = (int) atoi(argv[2]);
+  NGRID    = (uint64_t) atoi(argv[2]);
   MAXLEVEL = (int) atoi(argv[3]);
   NYQUIST  = NGRID/2;  /* Nyquist frequency in grid units */
   
@@ -138,7 +142,7 @@ char **argv;
   FFTnorm         = (double)(NGRID*NGRID*NGRID);
   no_part         = io.header.no_part;
   
-  
+#ifdef GAS_PARTICLES
   if(argc==5) {
     no_part = select_parts(no_part, ptype); // access to particles via 'io.fst_part' which will be re-set to a new pointer only pointing to selected particles
     fprintf(fpout,"\n");
@@ -149,6 +153,7 @@ char **argv;
     fprintf(fpout,"\n");
     fflush(fpout);
   }
+#endif
   
   if((dens   = (flouble*) calloc(FFTarray_length,   sizeof(flouble))) == NULL)
   {
@@ -506,8 +511,8 @@ void get_power(long unsigned no_part, double no_vpart, flouble *x, flouble *y, f
  *====================================================================*/
 void assign(long unsigned no_part, flouble *x, flouble *y, flouble *z, flouble *mass, flouble *dens)
 {
-  long          ix, iy, iz, ixp1, iyp1, izp1, ixm1, iym1, izm1;
-  long unsigned ipart;
+  uint64_t      ix, iy, iz, ixp1, iyp1, izp1, ixm1, iym1, izm1;
+  uint64_t      ipart;
   double        rrx, rry, rrz;
   double        hx, hy, hz;
   double        hx0, hy0, hz0, hxp1, hyp1, hzp1, hxm1, hym1, hzm1;
@@ -591,6 +596,7 @@ void assign(long unsigned no_part, flouble *x, flouble *y, flouble *z, flouble *
   }
 }
 
+#ifdef GAS_PARTICLES
 partptr keep_particle(partptr fst_part, partptr cur_part, long unsigned no_part)
 {
   fst_part = (partptr) realloc(fst_part, no_part);
@@ -676,3 +682,4 @@ long unsigned select_parts(long unsigned no_part, float ptype)
   io.fst_part = fst_part_new;
   return(no_part_new);
 }
+#endif // GAS_PARTICLES

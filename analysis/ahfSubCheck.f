@@ -1,7 +1,6 @@
       program NsatInHost
 
       parameter(MAXHALOS = 1000000)
-      parameter(Rfac     = 1.d0)
       parameter(xMmin    = 1.d+01)
 
       real*8          Xc(MAXHALOS),Yc(MAXHALOS),Zc(MAXHALOS)
@@ -28,13 +27,16 @@
       write(*,'(A,$)')' Please give id of host halo              => '
       read*,ihost
       print*,ihost
+      write(*,'(A,$)')' Please give Rfac                         => '
+      read*,Rfac
+      print*,Rfac
 
       !==========================================
       ! open all relevant files
       !==========================================
       open(11,file=infile)
-      open(12,file="subhaloesRvir.geom")
-      open(13,file="subhaloesID.geom")
+      open(12,file="subhaloesRvir.txt")
+      open(13,file="subhaloesID.txt")
 
 
       !==========================================
@@ -106,7 +108,7 @@
                gg = 0.
                bb = 0.
                
-               if(hostHalo(i) .EQ. -1)then
+c               if(hostHalo(i) .EQ. -1)then
                   write(12,111)
      &              Xc(i),Yc(i),Zc(i),Rvir(i),
      &              rr,gg,bb,
@@ -114,7 +116,7 @@
      &              Mvir(i),
      &              idhalo(i), hostHalo(i),
      &              sqrt(dX**2 + dY**2 + dZ**2)
-               endif
+c               endif
  111           FORMAT(4f16.8,3f12.8,A,g16.8,i22,i22,f16.8)
                
                Nsat = Nsat + 1

@@ -104,8 +104,13 @@ void output_grid(gridls *cur_grid, int dumpflag)
    
    for(cur_pquad=cur_grid->pquad; cur_pquad!=NULL; cur_pquad=cur_pquad->next)
      {
+#ifdef AHFlean
       fwrite((void*)&cur_pquad->z,      sizeof(int),  1,outstream);
       fwrite((void*)&cur_pquad->length, sizeof(int),  1,outstream);
+#else
+      fwrite((void*)&cur_pquad->z,      sizeof(long),  1,outstream);
+      fwrite((void*)&cur_pquad->length, sizeof(long),  1,outstream);
+#endif
 #ifdef DEBUG_IO_GRIDS
       fprintf(stderr,"%ld -> z = %ld   length = %ld\n",cur_grid->l1dim, cur_pquad->z, cur_pquad->length);
 #endif
@@ -125,8 +130,13 @@ void output_grid(gridls *cur_grid, int dumpflag)
          
          for(icur_cquad=cur_cquad; icur_cquad!=NULL; icur_cquad=icur_cquad->next)
            {
+#ifdef AHFlean
             fwrite((void*)&icur_cquad->y,      sizeof(int),  1,outstream);
             fwrite((void*)&icur_cquad->length, sizeof(int),  1,outstream);
+#else
+            fwrite((void*)&icur_cquad->y,      sizeof(long),  1,outstream);
+            fwrite((void*)&icur_cquad->length, sizeof(long),  1,outstream);
+#endif
 #ifdef DEBUG_IO_GRIDS
             fprintf(stderr,"%ld -> y = %ld   length = %ld\n",cur_grid->l1dim, cur_cquad->y, cur_cquad->length);
 #endif
@@ -146,8 +156,13 @@ void output_grid(gridls *cur_grid, int dumpflag)
                
                for(icur_nquad=cur_nquad; icur_nquad!=NULL; icur_nquad=icur_nquad->next)
                  {
+#ifdef AHFlean
                   fwrite((void*)&icur_nquad->x,      sizeof(int),  1,outstream);
                   fwrite((void*)&icur_nquad->length, sizeof(int),  1,outstream);
+#else
+                  fwrite((void*)&icur_nquad->x,      sizeof(long),  1,outstream);
+                  fwrite((void*)&icur_nquad->length, sizeof(long),  1,outstream);
+#endif
 #ifdef DEBUG_IO_GRIDS
                   fprintf(stderr,"%ld -> x = %ld   length = %ld\n",cur_grid->l1dim, cur_nquad->x, cur_nquad->length);
 #endif

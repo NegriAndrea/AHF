@@ -55,7 +55,7 @@ typedef struct particle
 #endif
 #if (defined GAS_PARTICLES)
   flouble    u;
-#endif 
+#endif
   
 #if (defined METALHACK)
   flouble    z;
@@ -736,6 +736,8 @@ typedef struct {
   XYZ     E3;
   double  fMhires;       /* fraction of hi-res to all DM particles                       */ 
   double  cNFW;          /* NFW concentration according to Eq.(9) in Prada et al. (2012) */
+  double  cR1;           /* concentration as proposed by Wang et al. (arxiv:2310.00200)  */
+  double  R1;            /* R1 parameter related to cR1                                  */
   double  R_edge;        /* ignore this quantity!                                        */
 
 #ifdef METALHACK

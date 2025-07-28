@@ -35,12 +35,19 @@ void dummy_ahf_gridinfo(void)
 /***************************************************************************
  *   Global variables                                                      *
  ***************************************************************************/
-extern SRINDEX *spatialRefIndex;
-extern int     *numIsoRef;          /* Number of spatially isolated refinements */
-extern int      totnumIsoRef;       /* Number of spatially isolated refinements */
-extern SPATIALREF *spatialRefTail;
-extern COLOURHOLDER    col;
+/*extern SRINDEX *spatialRefIndex;*/
+/*extern int     *numIsoRef;          [> Number of spatially isolated refinements <]*/
+/*extern int      totnumIsoRef;       [> Number of spatially isolated refinements <]*/
+/*extern SPATIALREF *spatialRefTail;*/
+/*SPATIALREF *spatialRefTail = NULL;*/
+SRINDEX *spatialRefIndex = NULL;
+int     *numIsoRef=NULL;
+int      totnumIsoRef=0;
 
+static COLOURHOLDER    col;
+static SPATIALREF *spatialRefTail;
+
+#include "../globals.h"
 
 /*********************************************************************
  *********************************************************************

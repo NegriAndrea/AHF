@@ -1,0 +1,33 @@
+As MergerTree kept growing and growing, being constantly updated during the past decade, I thought it was about time to fully detach it from AHF. It is still distributed here alongside AHF, but you can safely mv the MergerTree/ directory to any other place now. Along with that separation, I also split the code into multiple "libraries" to allow for eeasier development.
+
+As it stands, there is currently no proper documentation, but I provide here some brief description of what the various #define's in src/define.h mean:
+
+src/define.h
+============
+WITH_OPENMP:
+Whenever possible, the for-loops in the code have been parallized using OpenMP. This flag activates it.
+
+USE_PTYPE:
+If the _particles files contain an entry next to the pid about the particle type, you can manually(!) adjust the code to only run MergerTree using a specific type. For that, please adjust check_Ptype() in libutil.c and adjust it to your needs.
+
+MINCOMMON:
+This is the minimum number of particles two halos *must* share for a connection to be considered at all
+
+MTREE_BOTH_WAYS:
+Using this will generate proper trees, i.e. a progenitor can only have single descendant. This is required for SAM modelling. But sometimes you actually want to switch this off, especially when you are interested in *all* possible progenitors, even those that share particles with multiple descendants.
+
+USE_PIDMAP:
+MergerTree by default uses the pids also as the array index! Yes, that makes the code run pretty fast, but will only work if your pids run from [0,Np-1]. If you have 'crazy' pids (like for Gadget star particles), you need to switch this on so that a pid-map will be created.
+
+SNAPSKIPPING:
+If MergerTree cannot find a connection, it will keep that object in memory and continue searchign for it in the next snapshot. There is no limit to this, i.e. MergerTree continues until a connection is found of the analysis has finished.
+
+SNAPSKIPPING_UNCREDIBLEMASSRATIO:
+This number sets a limit on the allowed mass ratio for a main branch progenitor-descendant connection. If that ratio is exceeded, the progenitor is discarded and the halo added to the list for snap-skipping.
+
+SNAPSKIPPING_CONSIDERALLPROGENITORS:
+In general *only* the progenitor with the maximum merit function will be considered. But if that connection is rejected (e.g. because of the mass ratio criterion), you might actually like to move to the next possible progenitor (even though that object has not maximized the merit)?
+
+READ_MPARTICLES:
+If you ran the MPI version of AHF, you get multiple _particles files. This ensures that they are all read in (but you should *only* provide the name of the *.0000.* file in MergerTree.input)
+The rest is basically of no interest to the general user...

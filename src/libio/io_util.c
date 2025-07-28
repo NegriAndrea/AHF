@@ -267,8 +267,10 @@ io_util_getminearr(int32_t numfiles)
 }
 
 #ifdef WITH_HDF5
+
 void io_util_readhdf5(io_logging_t log,
-                    io_gizmo_t f,
+                    uint8_t select,
+                    void* f,
                     char dataset_name[],
                     int type,
                     int dataset_num_values,
@@ -283,7 +285,21 @@ void io_util_readhdf5(io_logging_t log,
     /* Read dataset from particle group */
     hdf5_dataset = H5Dopen(hdf5_grp[type], dataset_name);
 
-    dims[0] = f->header->np[type];
+    // cast to the right structure
+    switch (select) {
+        case 0:
+            // gizmo file
+            dims[0] = ((io_gizmo_t) f)->header->np[type];
+            break;
+        case 1:
+            // pkdgrav file
+            dims[0] = ((io_pkdgrav_t) f)->header->np[type];
+            break;
+        default:
+            fprintf(stderr, "Error in casting void pointer, wrong flag %u\n", select);
+            exit(0);
+    }
+
     dims[1] = dataset_num_values;
     if (dims[1] == 1)
     {
@@ -306,6 +322,50 @@ void io_util_readhdf5(io_logging_t log,
     H5Sclose(hdf5_dataspace_in_memory);
     H5Sclose(hdf5_dataspace_in_file);
     H5Dclose(hdf5_dataset);
+}
+
+void io_util_readhdf5_gizmo(io_logging_t log,
+                    io_gizmo_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer)
+{
+
+    io_util_readhdf5(log,
+                    0,
+                    (void*) f,
+                    dataset_name,
+                    type,
+                    dataset_num_values,
+                    hdf5_datatype,
+                    hdf5_grp,
+                    CommBuffer);
+
+}
+
+void io_util_readhdf5_pkdgrav(io_logging_t log,
+                    io_pkdgrav_t f,
+                    char dataset_name[],
+                    int type,
+                    int dataset_num_values,
+                    hid_t hdf5_datatype,
+                    hid_t hdf5_grp[],
+                    void * CommBuffer)
+{
+
+    io_util_readhdf5(log,
+                        1,
+                        f,
+                        dataset_name,
+                        type,
+                        dataset_num_values,
+                        hdf5_datatype,
+                        hdf5_grp,
+                        CommBuffer);
+
 }
 #endif // WITH_HDF5
 

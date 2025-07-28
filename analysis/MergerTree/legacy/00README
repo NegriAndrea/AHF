@@ -1,0 +1,12 @@
+Here we simply placed the original files of MergerTree.c, MergerTreeMPI.c, and MergerRates.c.
+
+MergerTree.c (as of 24/02/2024) served as the base for "the detachment from AHF".
+
+MergerTreeMPI.c was originally written by Edoardo Carlesi and has not been maintained or updated since he finished his PhD in 2014). It might serve as the starting point for a new parallelisation, but at the moment it is not recommended to use it.
+
+MergerRates.c also required substantial logistical changes to become detached from AHF.
+
+
+Note:
+-----
+None of these codes can be compiled anymore as they have been placed out of context
